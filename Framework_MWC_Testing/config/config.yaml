@@ -1,0 +1,5 @@
+default_env: base
+envs:
+  base:
+    base_url: "https://mwc.com.vn"
+    explicit_wait: 10

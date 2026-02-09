@@ -1,0 +1,72 @@
+Hãy sinh dữ liệu kiểm thử cho chức năng Đăng nhập (Login).
+
+Áp dụng đầy đủ các kỹ thuật kiểm thử:
+- Phân vùng tương đương (EP)
+- Phân tích giá trị biên (BVA)
+- Bảng quyết định (Decision Table)
+
+NGHIỆP VỤ LOGIN:
+- Username là bắt buộc.
+- Password là bắt buộc.
+- Password phải có độ dài từ 8 đến 20 ký tự.
+- Nếu thiếu Username hoặc Password:
+  → "Vui lòng điền vào trường này"
+- Nếu Username hoặc Password không đúng:
+  → "Tên đăng nhập hoặc mật khẩu không đúng!"
+- Nếu thông tin hợp lệ:
+  → Đăng nhập thành công.
+
+SEED ACCOUNT (tài khoản tồn tại trên hệ thống):
+- Trong phần Context sẽ có 1 dòng theo đúng format:
+  SEED_VALID_ACCOUNT Username=<GIÁ_TRỊ_THẬT>; Password=<GIÁ_TRỊ_THẬT>
+  Ví dụ: SEED_VALID_ACCOUNT Username=Ánh Dương Phạm; Password=anhduong@123
+- BẮT BUỘC phải có ít nhất 1 test case đăng nhập thành công.
+- Test case đăng nhập thành công phải dùng CHÍNH XÁC 2 giá trị thật sau dấu '=' từ dòng SEED_VALID_ACCOUNT.
+- TUYỆT ĐỐI KHÔNG được dùng dấu <> hoặc chuỗi placeholder kiểu <seed_username>, <seed_password>.
+
+QUY TẮC EXPECTED (BẮT BUỘC):
+- Nếu đăng nhập THÀNH CÔNG:
+  Expected = Username đã nhập (tức là giá trị của trường "Username" trong test case đó).
+- Nếu THIẾU Username hoặc Password:
+  Expected = "Vui lòng điền vào trường này".
+- Nếu SAI Username hoặc Password:
+  Expected = "Tên đăng nhập hoặc mật khẩu không đúng!".
+
+RÀNG BUỘC CỰC KỲ QUAN TRỌNG (BẮT BUỘC TUÂN THỦ):
+- KHÔNG viết bất kỳ câu chữ nào ngoài JSON.
+- KHÔNG markdown, KHÔNG ```json.
+- KHÔNG viết comment trong JSON (// hoặc /* */).
+- Output phải bắt đầu bằng ký tự '{' và kết thúc bằng ký tự '}'.
+
+TRƯỚC KHI TRẢ JSON, HÃY TỰ KIỂM TRA (không được viết phần kiểm tra ra output):
+- Không có placeholder dạng <...>, không có biểu thức kiểu "a"*7.
+- Có ít nhất 1 ca Username sai (Password đúng seed).
+- JSON bắt đầu bằng { và kết thúc bằng } và chỉ có đúng 5 key mỗi item.
+
+
+YÊU CẦU OUTPUT:
+- Output là JSON OBJECT có key "items".
+- Mỗi item chỉ gồm CHÍNH XÁC 5 cột (viết HOA đúng như sau):
+  1) Testcase
+  2) Username
+  3) Password
+  4) Expected
+  5) _source   (luôn là "AI")
+- Đặt tên Testcase theo thứ tự tăng dần: LG01, LG02, LG03, ...
+- KHÔNG thêm cột khác.
+
+SCHEMA THAM CHIẾU:
+{
+  "items": [
+    {
+      "Testcase": "LG01",
+      "Username": "string",
+      "Password": "string",
+      "Expected": "string",
+      "_source": "AI"
+    }
+  ]
+}
+
+Context:
+{app_context}

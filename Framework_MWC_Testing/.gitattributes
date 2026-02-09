@@ -1,0 +1,16 @@
+# Bỏ qua thư mục và file không phải code Python
+reports/* linguist-vendored
+node_modules/* linguist-vendored
+allure-report/* linguist-vendored
+allure-results/* linguist-vendored
+.allure/* linguist-vendored
+
+*.html linguist-vendored
+*.json linguist-vendored
+*.csv linguist-vendored
+*.js linguist-vendored
+*.css linguist-vendored
+*.bat linguist-vendored
+
+# Python là ngôn ngữ chính
+*.py linguist-detectable=true

@@ -1,0 +1,57 @@
+[
+    {
+        "Testcase":"TK1",
+        "Keyword":"Giày Sandal Nữ MWC E196 - Sandal Nữ Hai Quai Ngang Kết Hợp Quai Dán Tiện Lợi, Cá Tính, Thoải Mái, Bền Đẹp.",
+        "Expected":"Giày Sandal Nữ MWC E196 - Sandal Nữ Hai Quai Ngang Kết Hợp Quai Dán Tiện Lợi, Cá Tính, Thoải Mái, Bền Đẹp."
+    },
+    {
+        "Testcase":"TK2",
+        "Keyword":"E196",
+        "Expected":"Giày Sandal Nữ MWC E196 - Sandal Nữ Hai Quai Ngang Kết Hợp Quai Dán Tiện Lợi, Cá Tính, Thoải Mái, Bền Đẹp."
+    },
+    {
+        "Testcase":"TK3",
+        "Keyword":"Giày",
+        "Expected":"Giày"
+    },
+    {
+        "Testcase":"TK4",
+        "Keyword":"GIÀY",
+        "Expected":"Giày"
+    },
+    {
+        "Testcase":"TK5",
+        "Keyword":"Giay the thao nam",
+        "Expected":"Giày thể thao nam"
+    },
+    {
+        "Testcase":"TK6",
+        "Keyword":"Giay th",
+        "Expected":"Không tìm thấy sản phẩm"
+    },
+        {
+        "Testcase":"TK7",
+        "Keyword":"Bánh bao",
+        "Expected":"Không tìm thấy sản phẩm"
+    },
+        {
+        "Testcase":"TK8",
+        "Keyword":"",
+        "Expected":"Không tìm thấy sản phẩm"
+    },
+    {
+        "Testcase":"TK9",
+        "Keyword":"Giay!#$%",
+        "Expected":"Không tìm thấy sản phẩm"
+    },
+        {
+        "Testcase":"TK10",
+        "Keyword":"196",
+        "Expected":"Giày Sandal Nữ MWC E196 - Sandal Nữ Hai Quai Ngang Kết Hợp Quai Dán Tiện Lợi, Cá Tính, Thoải Mái, Bền Đẹp."
+    },
+    {
+        "Testcase":"TK11",
+        "Keyword":"Màu đen",
+        "Expected":"Màu đen"
+    }
+]

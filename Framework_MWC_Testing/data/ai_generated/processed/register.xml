@@ -1,0 +1,98 @@
+<items>
+  <item>
+    <Testcase>DK01</Testcase>
+    <Expected>Vui lòng điền vào trường tên đăng nhập.</Expected>
+    <Username>empty_username</Username>
+    <Phone></Phone>
+    <ConfirmPassword>password_min</ConfirmPassword>
+    <Password>password_min</Password>
+  </item>
+  <item>
+    <Testcase>DK02</Testcase>
+    <Expected>Vui lòng điền vào trường số điện thoại.</Expected>
+    <Username>username</Username>
+    <Phone></Phone>
+    <ConfirmPassword>password_min</ConfirmPassword>
+    <Password>password_min</Password>
+  </item>
+  <item>
+    <Testcase>DK03</Testcase>
+    <Expected>Số điện thoại không đúng định dạng!</Expected>
+    <Username></Username>
+    <Phone>phone_invalid_length_9</Phone>
+    <ConfirmPassword>password_min</ConfirmPassword>
+    <Password>password_min</Password>
+  </item>
+  <item>
+    <Testcase>DK04</Testcase>
+    <Expected>Số điện thoại không đúng định dạng!</Expected>
+    <Username></Username>
+    <Phone>phone_invalid_length_11</Phone>
+    <ConfirmPassword>password_min</ConfirmPassword>
+    <Password>password_min</Password>
+  </item>
+  <item>
+    <Testcase>DK05</Testcase>
+    <Expected>Số điện thoại không đúng định dạng!</Expected>
+    <Username></Username>
+    <Phone>phone_invalid_start</Phone>
+    <ConfirmPassword>password_min</ConfirmPassword>
+    <Password>password_min</Password>
+  </item>
+  <item>
+    <Testcase>DK06</Testcase>
+    <Expected>Số điện thoại không đúng định dạng!</Expected>
+    <Username></Username>
+    <Phone>phone_invalid_characters</Phone>
+    <ConfirmPassword>password_min</ConfirmPassword>
+    <Password>password_min</Password>
+  </item>
+  <item>
+    <Testcase>DK07</Testcase>
+    <Expected>Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!</Expected>
+    <Username></Username>
+    <Phone>phone_valid</Phone>
+    <ConfirmPassword>password_min - 1</ConfirmPassword>
+    <Password>password_min - 1</Password>
+  </item>
+  <item>
+    <Testcase>DK08</Testcase>
+    <Expected>Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!</Expected>
+    <Username></Username>
+    <Phone>phone_valid</Phone>
+    <ConfirmPassword>password_max + 1</ConfirmPassword>
+    <Password>password_max + 1</Password>
+  </item>
+  <item>
+    <Testcase>DK09</Testcase>
+    <Expected>mật khẩu không giống nhau</Expected>
+    <Username></Username>
+    <Phone>phone_valid</Phone>
+    <ConfirmPassword>password_max + 1</ConfirmPassword>
+    <Password>password_min</Password>
+  </item>
+  <item>
+    <Testcase>DK10</Testcase>
+    <Expected>mật khẩu không giống nhau</Expected>
+    <Username></Username>
+    <Phone>phone_valid</Phone>
+    <ConfirmPassword>password_min_wrong</ConfirmPassword>
+    <Password>password_min</Password>
+  </item>
+  <item>
+    <Testcase>DK11</Testcase>
+    <Expected>tài khoản đã tồn tại trong hệ thống</Expected>
+    <Username>existing_username</Username>
+    <Phone>phone_valid</Phone>
+    <ConfirmPassword>password_min</ConfirmPassword>
+    <Password>password_min</Password>
+  </item>
+  <item>
+    <Testcase>DK12</Testcase>
+    <Expected>valid_username</Expected>
+    <Username>valid_username</Username>
+    <Phone>phone_valid</Phone>
+    <ConfirmPassword>password_min</ConfirmPassword>
+    <Password>password_min</Password>
+  </item>
+</items>

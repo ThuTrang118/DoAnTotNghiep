@@ -1,0 +1,132 @@
+[
+  {
+    "Testcase": "DG1",
+    "FullName": "Ánh Dương Phạm",
+    "Phone": "0321456789",
+    "Email": "anhduong@gmail.com",
+    "Title": "Giày xinh",
+    "Rating": 4,
+    "Content": "Giày rất đẹp, vừa form chân, y như hình",
+    "Expected": "Gửi bình luận thành công!"
+  },
+  {
+    "Testcase": "DG2",
+    "FullName": "",
+    "Phone": "0321456789",
+    "Email": "anhduong@gmail.com",
+    "Title": "Giày xinh",
+    "Rating": 5,
+    "Content": "Giày rất đẹp, vừa form chân, y như hình",
+    "Expected": "Vui lòng nhập!"
+  },
+  {
+    "Testcase": "DG3",
+    "FullName": "Ánh Dương Phạm",
+    "Phone": "",
+    "Email": "anhduong@gmail.com",
+    "Title": "Giày xinh",
+    "Rating": 3,
+    "Content": "Giày rất đẹp, vừa form chân, y như hình",
+    "Expected": "Vui lòng nhập!"
+  },
+  {
+    "Testcase": "DG4",
+    "FullName": "Ánh Dương Phạm",
+    "Phone": "0321456789",
+    "Email": "",
+    "Title": "Giày xinh",
+    "Rating": 2,
+    "Content": "Giày rất đẹp, vừa form chân, y như hình",
+    "Expected": "Vui lòng nhập!"
+  },
+  {
+    "Testcase": "DG5",
+    "FullName": "Ánh Dương Phạm",
+    "Phone": "0321456789",
+    "Email": "anhduong@gmail.com",
+    "Title": "",
+    "Rating": 1,
+    "Content": "Giày rất đẹp, vừa form chân, y như hình",
+    "Expected": "Vui lòng nhập!"
+  },
+  {
+    "Testcase": "DG6",
+    "FullName": "Ánh Dương Phạm",
+    "Phone": "0321456789",
+    "Email": "anhduong@gmail.com",
+    "Title": "Giày xinh",
+    "Rating": 0,
+    "Content": "",
+    "Expected": "Vui lòng nhập!"
+  },
+  {
+    "Testcase": "DG7",
+    "FullName": "Ánh Dương Phạm",
+    "Phone": "03",
+    "Email": "anhduong@gmail.com",
+    "Title": "Giày xinh",
+    "Rating": 5,
+    "Content": "Giày rất đẹp, vừa form chân, y như hình",
+    "Expected": "Số điện thoại không hợp lệ"
+  },
+  {
+    "Testcase": "DG8",
+    "FullName": "Ánh Dương Phạm",
+    "Phone": "abdc",
+    "Email": "anhduong@gmail.com",
+    "Title": "Giày xinh",
+    "Rating": 4,
+    "Content": "Giày rất đẹp, vừa form chân, y như hình",
+    "Expected": "Số điện thoại không hợp lệ"
+  },
+  {
+    "Testcase": "DG9",
+    "FullName": "Ánh Dương Phạm",
+    "Phone": "!@#$%",
+    "Email": "anhduong@gmail.com",
+    "Title": "Giày xinh",
+    "Rating": 5,
+    "Content": "Giày rất đẹp, vừa form chân, y như hình",
+    "Expected": "Số điện thoại không hợp lệ"
+  },
+  {
+    "Testcase": "DG10",
+    "FullName": "Ánh Dương Phạm",
+    "Phone": "032145678999",
+    "Email": "anhduong@gmail.com",
+    "Title": "Giày xinh",
+    "Rating": 4,
+    "Content": "Giày rất đẹp, vừa form chân, y như hình",
+    "Expected": "Số điện thoại không hợp lệ"
+  },
+  {
+    "Testcase": "DG11",
+    "FullName": "Ánh Dương Phạm",
+    "Phone": "0321456789",
+    "Email": "anh1@",
+    "Title": "Giày xinh",
+    "Rating": 4,
+    "Content": "Giày rất đẹp, vừa form chân, y như hình",
+    "Expected": "Email không đúng định dạng"
+  },
+  {
+    "Testcase": "DG12",
+    "FullName": "Ánh Dương Phạm",
+    "Phone": "0321456789",
+    "Email": "anh1@@",
+    "Title": "Giày xinh",
+    "Rating": 5,
+    "Content": "Giày rất đẹp, vừa form chân, y như hình",
+    "Expected": "Email không đúng định dạng"
+  },
+  {
+    "Testcase": "DG13",
+    "FullName": "Ánh Dương Phạm",
+    "Phone": "0321456789",
+    "Email": "anh1@gmail.",
+    "Title": "Giày xinh",
+    "Rating": 5,
+    "Content": "Giày rất đẹp, vừa form chân, y như hình",
+    "Expected": "Email không đúng định dạng"
+  }
+]

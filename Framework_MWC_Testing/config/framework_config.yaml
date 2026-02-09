@@ -1,0 +1,11 @@
+data_mode: "manual"   # manual | ai
+ai_processed_dir: "data/ai_generated/processed"
+manual_dir: "data/manual"
+default_format: "csv" # csv | json | xlsx | yaml
+
+features:
+  login: true
+  order: true
+  search: true
+  profile: true
+  register: true

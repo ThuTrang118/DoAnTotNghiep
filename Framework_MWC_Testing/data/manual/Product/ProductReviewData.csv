@@ -1,0 +1,14 @@
+Testcase,FullName,Phone,Email,Title,Rating,Content,Expected
+DG1,Ánh Dương Phạm,0321456789,anhduong@gmail.com,Giày xinh,4,"Giày rất đẹp, vừa form chân, y như hình",Gửi bình luận thành công!
+DG2,,0321456789,anhduong@gmail.com,Giày xinh,5,"Giày rất đẹp, vừa form chân, y như hình",Vui lòng nhập!
+DG3,Ánh Dương Phạm,,anhduong@gmail.com,Giày xinh,3,"Giày rất đẹp, vừa form chân, y như hình",Vui lòng nhập!
+DG4,Ánh Dương Phạm,0321456789,,Giày xinh,2,"Giày rất đẹp, vừa form chân, y như hình",Vui lòng nhập!
+DG5,Ánh Dương Phạm,0321456789,anhduong@gmail.com,,1,"Giày rất đẹp, vừa form chân, y như hình",Vui lòng nhập!
+DG6,Ánh Dương Phạm,0321456789,anhduong@gmail.com,Giày xinh,0,,Vui lòng nhập!
+DG7,Ánh Dương Phạm,03,anhduong@gmail.com,Giày xinh,5,"Giày rất đẹp, vừa form chân, y như hình",Số điện thoại không hợp lệ
+DG8,Ánh Dương Phạm,abdc,anhduong@gmail.com,Giày xinh,4,"Giày rất đẹp, vừa form chân, y như hình",Số điện thoại không hợp lệ
+DG9,Ánh Dương Phạm,!@#$%,anhduong@gmail.com,Giày xinh,5,"Giày rất đẹp, vừa form chân, y như hình",Số điện thoại không hợp lệ
+DG10,Ánh Dương Phạm,032145678999,anhduong@gmail.com,Giày xinh,4,"Giày rất đẹp, vừa form chân, y như hình",Số điện thoại không hợp lệ
+DG11,Ánh Dương Phạm,0321456789,anh1@,Giày xinh,4,"Giày rất đẹp, vừa form chân, y như hình",Email không đúng định dạng
+DG12,Ánh Dương Phạm,0321456789,anh1@@,Giày xinh,5,"Giày rất đẹp, vừa form chân, y như hình",Email không đúng định dạng
+DG13,Ánh Dương Phạm,0321456789,anh1@gmail.,Giày xinh,5,"Giày rất đẹp, vừa form chân, y như hình",Email không đúng định dạng

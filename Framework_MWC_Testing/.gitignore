@@ -1,0 +1,25 @@
+# Python cache & environment
+__pycache__/
+.pytest_cache/
+.venv/
+*.pyc
+
+# Allure / reports (tự động sinh)
+reports/
+allure-report/
+allure-results/
+.allure/
+
+# Node/JS
+node_modules/
+package-lock.json
+package.json
+
+# HTML/JS/CSS trong báo cáo
+*.html
+*.js
+*.css
+
+# System files
+.DS_Store
+Thumbs.db

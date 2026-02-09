@@ -1,0 +1,73 @@
+items:
+- Testcase: DK01
+  Expected: Vui lòng điền vào trường tên đăng nhập.
+  Username: empty_username
+  Phone: ''
+  ConfirmPassword: password_min
+  Password: password_min
+- Testcase: DK02
+  Expected: Vui lòng điền vào trường số điện thoại.
+  Username: username
+  Phone: ''
+  ConfirmPassword: password_min
+  Password: password_min
+- Testcase: DK03
+  Expected: Số điện thoại không đúng định dạng!
+  Username: ''
+  Phone: phone_invalid_length_9
+  ConfirmPassword: password_min
+  Password: password_min
+- Testcase: DK04
+  Expected: Số điện thoại không đúng định dạng!
+  Username: ''
+  Phone: phone_invalid_length_11
+  ConfirmPassword: password_min
+  Password: password_min
+- Testcase: DK05
+  Expected: Số điện thoại không đúng định dạng!
+  Username: ''
+  Phone: phone_invalid_start
+  ConfirmPassword: password_min
+  Password: password_min
+- Testcase: DK06
+  Expected: Số điện thoại không đúng định dạng!
+  Username: ''
+  Phone: phone_invalid_characters
+  ConfirmPassword: password_min
+  Password: password_min
+- Testcase: DK07
+  Expected: Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!
+  Username: ''
+  Phone: phone_valid
+  ConfirmPassword: password_min - 1
+  Password: password_min - 1
+- Testcase: DK08
+  Expected: Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!
+  Username: ''
+  Phone: phone_valid
+  ConfirmPassword: password_max + 1
+  Password: password_max + 1
+- Testcase: DK09
+  Expected: mật khẩu không giống nhau
+  Username: ''
+  Phone: phone_valid
+  ConfirmPassword: password_max + 1
+  Password: password_min
+- Testcase: DK10
+  Expected: mật khẩu không giống nhau
+  Username: ''
+  Phone: phone_valid
+  ConfirmPassword: password_min_wrong
+  Password: password_min
+- Testcase: DK11
+  Expected: tài khoản đã tồn tại trong hệ thống
+  Username: existing_username
+  Phone: phone_valid
+  ConfirmPassword: password_min
+  Password: password_min
+- Testcase: DK12
+  Expected: valid_username
+  Username: valid_username
+  Phone: phone_valid
+  ConfirmPassword: password_min
+  Password: password_min

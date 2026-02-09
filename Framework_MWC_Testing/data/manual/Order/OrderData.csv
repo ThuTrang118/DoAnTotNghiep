@@ -1,0 +1,10 @@
+Testcase,Keyword,Color,Size,Fullname,Phone,Address,Province,District,Ward,Expected
+DH1,Giày Cao Gót MWC 4431,bạc,39,Phạm Ánh Dương,0905123456,123 Lý Thường Kiệt,TP Hồ Chí Minh,Quận 1,Phường Bến Nghé,Đặt hàng thành công!
+DH2,Giày Cao Gót MWC 4431,bạc,36,,0905123456,123 ABC,TP Cần Thơ,Quận Ninh Kiều,Phường An Bình,Bạn chưa nhập thông tin nhận hàng!
+DH3,Giày Cao Gót MWC 4431,đen,38,Ánh Dương,,123 ABC,TP Hồ Chí Minh,Quận 1,Phường Bến Nghé,Bạn chưa nhập thông tin nhận hàng!
+DH4,Giày Cao Gót MWC 4431,bạc,36,Phạm Ánh,0905123456,,Tây Ninh,Huyện Tân Châu,Xã Suối Ngô,Bạn chưa nhập thông tin nhận hàng!
+DH5,Giày Cao Gót MWC 4431,đen,38,Phạm Dương,0905123456,123 ABC,Chọn Tỉnh/Thành,Chọn Quận/huyện,Chọn Xã/Phường,Bạn chưa nhập thông tin nhận hàng!
+DH6,Giày Cao Gót MWC 4431,bạc,37,Ánh Dương,3321156,456 DEF,TP Hồ Chí Minh,Quận 10,Phường 1,SĐT không đúng định dạng
+DH7,Giày Cao Gót MWC 4431,bạc,35,Phạm Ánh Dương,0905123456666,123 Lý Thường Kiệt,Hậu Giang,Huyện Châu Thành A,Thị trấn Bảy Ngàn,SĐT không đúng định dạng
+DH8,Giày Cao Gót MWC 4431,bạc,36,Phạm Dương,090512345@,123 ABC,Tiền Giang,Thành phố Mỹ Tho,Phường 10,SĐT không đúng định dạng
+DH9,Giày Cao Gót MWC 4431,đen,36,Ánh Dương,09051234ba,456 DEF,Vĩnh Long,Huyện Trà Ôn,Thị trấn Trà Ôn,SĐT không đúng định dạng

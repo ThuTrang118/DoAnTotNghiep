@@ -1,0 +1,17 @@
+provider: ollama
+
+ollama:
+  base_url: "http://localhost:11434"
+  # endpoint_mode: auto | generate | chat
+  endpoint_mode: "generate"
+  model: "mistral:latest"
+  timeout_sec: 300
+  temperature: 0.1
+  top_p: 0.9
+  num_predict: 800
+  seed: 42
+
+generation:
+  output_root: "data/ai_generated"
+  keep_raw: true
+  default_formats: ["json", "csv", "xlsx", "yaml"]
