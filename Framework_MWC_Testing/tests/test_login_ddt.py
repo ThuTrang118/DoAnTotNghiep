@@ -6,7 +6,7 @@ import allure
 
 from pages.login_page import MWCLoginPage
 from pages.profile_page import ProfilePage
-from utils.excel_utils import load_data
+from utils.data_io import load_data
 from utils.logger_utils import create_logger, log_data_source_from_pytest
 
 logger = create_logger("LoginTest")
@@ -37,7 +37,7 @@ MANUAL_ROOT_DIR = os.path.join(DATA_ROOT_DIR, "manual")
 MANUAL_FEATURE_DIR = os.path.join(MANUAL_ROOT_DIR, "Login")
 
 # AI processed
-AI_PROCESSED_DIR = os.path.join(DATA_ROOT_DIR, "ai_generated", "processed")
+AI_PROCESSED_DIR = os.path.join(DATA_ROOT_DIR, "ai_generated")
 
 # ---- Default file mapping ----
 # Manual:
@@ -56,18 +56,18 @@ DEFAULT_MANUAL_FILES = {
 }
 
 # AI:
-#   Convention: data/ai_generated/processed/<fmt>/<feature>.<ext>
+#   Convention: data/ai_generated/<feature>.<ext>
 DEFAULT_AI_FILES = {
-    "csv":  f"{FEATURE_NAME}.csv",
-    "json": f"{FEATURE_NAME}.json",
-    "xlsx": f"{FEATURE_NAME}.xlsx",   
-    "xls":  f"{FEATURE_NAME}.xls",    
-    "yaml": f"{FEATURE_NAME}.yaml",
-    "yml":  f"{FEATURE_NAME}.yml",
-    "xml":  f"{FEATURE_NAME}.xml",
-    "db":   f"{FEATURE_NAME}.sqlite",
-    "sqlite": f"{FEATURE_NAME}.sqlite",
-    "excel": f"{FEATURE_NAME}.xlsx",
+    "csv":  "LoginData.csv",
+    "json": "LoginData.json",
+    "xlsx": "LoginData.xlsx",   
+    "xls":  "LoginData.xls",    
+    "yaml": "LoginData.yaml",
+    "yml":  "LoginData.yml",
+    "xml":  "LoginData.xml",
+    "db":   "LoginData.db",
+    "sqlite": "LoginData.db",
+    "excel": "LoginData.xlsx",
 }
 
 
@@ -121,7 +121,7 @@ def get_test_data(pytestconfig):
 
     else:
         # AI data in processed/<format>/
-        base_dir = os.path.join(AI_PROCESSED_DIR, mode)
+        base_dir = AI_PROCESSED_DIR
 
         file_name = os.path.basename(data_file) if data_file else DEFAULT_AI_FILES.get(mode)
         if not file_name:

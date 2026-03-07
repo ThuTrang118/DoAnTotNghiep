@@ -5,7 +5,7 @@ from datetime import datetime
 import unicodedata
 from pages.login_page import MWCLoginPage
 from pages.profile_update_page import MWCProfileUpdatePage
-from utils.excel_utils import load_data
+from utils.data_io import load_data
 from utils.logger_utils import create_logger, log_data_source_from_pytest
 
 logger = create_logger("ProfileUpdateTest")

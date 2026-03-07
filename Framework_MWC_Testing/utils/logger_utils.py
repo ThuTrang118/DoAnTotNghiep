@@ -186,20 +186,34 @@ def create_logger(name: str = None) -> logging.Logger:
 
 
 # =====================================================================
-# HÀM PHỤ: Tự động ghi loại dữ liệu (excel/csv/json) từ pytest option
+# HÀM PHỤ: Tự động ghi loại dữ liệu và nguồn dữ liệu
 # =====================================================================
 def log_data_source_from_pytest(logger, pytestconfig):
     """
-    Ghi tự động nguồn dữ liệu đầu vào (excel/csv/json)
-    lấy từ tham số pytest: --data-mode
+    Ghi tự động:
+      - Nguồn dữ liệu: manual | ai
+      - Định dạng dữ liệu: xlsx/csv/json/...
+    lấy từ tham số pytest:
+      --data-source
+      --data-mode
     """
+
+    try:
+        source = pytestconfig.getoption("--data-source") or "manual"
+    except Exception:
+        source = "manual"
+
     try:
         mode = pytestconfig.getoption("--data-mode") or "excel"
     except Exception:
         mode = "excel"
 
-    mode = str(mode).strip().upper()
+    source = str(source).strip().lower()
+    mode = str(mode).strip().lower()
+
     logger.info("=" * 60)
-    logger.info(f"Đang đọc dữ liệu test (mode={mode.lower()})...")
+    logger.info(f"Đang truyền dữ liệu: {source.upper()}")
+    logger.info(f"Định dạng file dữ liệu: {mode}")
     logger.info("=" * 60)
-    return mode
+
+    return source, mode

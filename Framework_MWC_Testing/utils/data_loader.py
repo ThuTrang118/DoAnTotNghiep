@@ -39,6 +39,18 @@ def _read_xlsx(path: str, sheet_name: Optional[str] = None) -> List[Dict[str, An
     return df.to_dict(orient="records")
 
 
+def _load_app_config(base_dir: str) -> Dict[str, Any]:
+    """Load config từ <root>/app_config.yaml."""
+    cfg_path = os.path.join(base_dir, "app_config.yaml")
+    if not os.path.exists(cfg_path):
+        raise FileNotFoundError(
+            f"Không tìm thấy app_config.yaml tại: {cfg_path}. "
+            f"Hãy đặt app_config.yaml ở thư mục root (cùng cấp data/, tests/, pages/...)."
+        )
+    with open(cfg_path, "r", encoding="utf-8") as f:
+        return yaml.safe_load(f) or {}
+
+
 def load_test_data(
     base_dir: str,
     feature: str,
@@ -48,34 +60,35 @@ def load_test_data(
     """
     base_dir: thư mục root project (FRAMEWORK_MWC_TESTING)
     feature: login/order/profile/search/register
-    Ưu tiên đọc theo framework_config.yaml, hoặc override bằng pytest option nếu bạn có.
+
+    Đọc config từ: <root>/app_config.yaml
+    Ưu tiên:
+    1) app_config.yaml
+    2) pytest option (nếu bạn có): --data-mode, --data-format
     """
-    import yaml as _yaml
+    cfg = _load_app_config(base_dir)
+    framework_cfg: Dict[str, Any] = (cfg.get("framework") or {}) if isinstance(cfg, dict) else {}
 
-    cfg_path = os.path.join(base_dir, "config", "framework_config.yaml")
-    with open(cfg_path, "r", encoding="utf-8") as f:
-        cfg = _yaml.safe_load(f)
+    data_mode = str(framework_cfg.get("data_mode", "manual")).strip().lower()
+    default_format = str(framework_cfg.get("default_format", "csv")).strip().lower()
 
-    data_mode = cfg.get("data_mode", "manual")
-    default_format = cfg.get("default_format", "csv").lower()
-
-    # Nếu bạn đã có option pytest --data-mode, --data-format thì có thể tự map ở đây
+    # Override bằng pytest option (nếu có)
     if pytestconfig is not None:
         opt_mode = pytestconfig.getoption("--data-mode") if hasattr(pytestconfig, "getoption") else None
         opt_fmt = pytestconfig.getoption("--data-format") if hasattr(pytestconfig, "getoption") else None
         if opt_mode:
-            data_mode = opt_mode
+            data_mode = str(opt_mode).strip().lower()
         if opt_fmt:
-            default_format = str(opt_fmt).lower()
+            default_format = str(opt_fmt).strip().lower()
 
     if data_mode == "ai":
-        root = os.path.join(base_dir, cfg.get("ai_processed_dir", "data/ai_generated/processed"))
+        ai_processed_dir = str(framework_cfg.get("ai_processed_dir", "data/ai_generated/processed"))
+        root = os.path.join(base_dir, ai_processed_dir)
         # processed/<fmt>/<feature>.<fmt>
         path = os.path.join(root, default_format, f"{feature}.{default_format}")
     else:
-        root = os.path.join(base_dir, cfg.get("manual_dir", "data/manual"))
-        # manual/<FeatureData.*> (theo convention bạn đặt)
-        # Map tên file thủ công
+        manual_dir = str(framework_cfg.get("manual_dir", "data/manual"))
+        root = os.path.join(base_dir, manual_dir)
         mapping = {
             "login": f"LoginData.{default_format}",
             "order": f"OrderData.{default_format}",
@@ -92,9 +105,9 @@ def load_test_data(
         return _read_csv(path)
     if default_format == "json":
         return _read_json(path)
-    if default_format == "yaml" or default_format == "yml":
+    if default_format in ("yaml", "yml"):
         return _read_yaml(path)
-    if default_format == "xlsx":
+    if default_format in ("xlsx", "xls"):
         return _read_xlsx(path, sheet_name=sheet_name)
 
     raise ValueError(f"Unsupported format: {default_format}")

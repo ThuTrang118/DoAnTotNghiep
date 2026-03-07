@@ -1,0 +1,7 @@
+Testcase,Username,Password,Expected
+LG01,,,Vui lòng điền vào trường này
+LG02,Ánh Dương Phạm,,Vui lòng điền vào trường này
+LG03,,anhduong@123,Vui lòng điền vào trường này
+LG04,Ánh Dương Phạm,anhduong@123,Ánh Dương Phạm
+LG05,Ánh Dương Phạm,123456,Tên đăng nhập hoặc mật khẩu không đúng!
+LG06,Nguyễn Văn A,anhduong@123,Tên đăng nhập hoặc mật khẩu không đúng!

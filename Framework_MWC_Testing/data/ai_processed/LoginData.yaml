@@ -1,0 +1,25 @@
+items:
+- Testcase: LG01
+  Username: ''
+  Password: ''
+  Expected: Vui lòng điền vào trường này
+- Testcase: LG02
+  Username: Ánh Dương Phạm
+  Password: ''
+  Expected: Vui lòng điền vào trường này
+- Testcase: LG03
+  Username: ''
+  Password: anhduong@123
+  Expected: Vui lòng điền vào trường này
+- Testcase: LG04
+  Username: Ánh Dương Phạm
+  Password: anhduong@123
+  Expected: Ánh Dương Phạm
+- Testcase: LG05
+  Username: Ánh Dương Phạm
+  Password: '123456'
+  Expected: Tên đăng nhập hoặc mật khẩu không đúng!
+- Testcase: LG06
+  Username: Nguyễn Văn A
+  Password: anhduong@123
+  Expected: Tên đăng nhập hoặc mật khẩu không đúng!

@@ -3,7 +3,7 @@ import pytest
 import allure
 from datetime import datetime
 from pages.product_review_page import MWCProductReviewPage
-from utils.excel_utils import load_data
+from utils.data_io import load_data
 from utils.logger_utils import create_logger, log_data_source_from_pytest
 
 logger = create_logger("ProductReviewTest")

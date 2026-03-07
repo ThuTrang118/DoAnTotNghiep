@@ -16,7 +16,7 @@ import webbrowser
 from utils.allure_env import write_allure_environment
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from utils.excel_utils import ResultBook, ensure_dir
+from utils.data_io import ResultBook, ensure_dir
 
 # =========================================================
 # PATH CONFIG

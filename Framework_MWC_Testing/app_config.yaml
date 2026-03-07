@@ -1,0 +1,38 @@
+env:
+  default_env: base
+  envs:
+    base:
+      base_url: https://mwc.com.vn
+      explicit_wait: 10
+
+framework:
+  data_mode: manual
+  ai_processed_dir: data/ai_generated/processed
+  manual_dir: data/manual
+  default_format: csv
+  features:
+    login: true
+    order: true
+    search: true
+    profile: true
+    register: true
+
+ai:
+  provider: ollama
+  ollama:
+    base_url: http://localhost:11434
+    endpoint_mode: generate
+    model: qwen2.5-coder:3b-instruct
+    timeout_sec: 300
+    temperature: 0.1
+    top_p: 0.9
+    num_predict: 800
+    seed: 42
+  generation:
+    output_root: data/ai_generated
+    keep_raw: true
+    default_formats:
+      - json
+      - csv
+      - xlsx
+      - yaml

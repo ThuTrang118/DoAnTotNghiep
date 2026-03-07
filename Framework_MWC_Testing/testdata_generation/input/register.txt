@@ -1,0 +1,97 @@
+Hãy sinh dữ liệu kiểm thử cho chức năng Đăng ký (Register).
+
+FORM ĐĂNG KÝ (4 trường bắt buộc):
+- Username
+- Phone
+- Password
+- ConfirmPassword
+
+BUSINESS RULES (THEO WEBSITE - BẮT BUỘC TUÂN THỦ):
+- Username: bắt buộc
+- Phone: bắt buộc, chỉ gồm chữ số, đúng 10 chữ số, bắt đầu bằng 0 (không khoảng trắng, không ký tự đặc biệt)
+- Password: bắt buộc, độ dài từ 9 đến 19 ký tự (vì >8 và <20)
+- ConfirmPassword: bắt buộc và phải giống Password
+- Username đã tồn tại => không cho đăng ký
+
+SEED (nếu có trong Context):
+- Context có thể chứa 1 dòng theo format:
+  SEED_EXISTING_USERNAME Username=<GIÁ_TRỊ_THẬT>
+- Nếu có seed, BẮT BUỘC phải có ít nhất 1 test case dùng đúng CHÍNH XÁC giá trị Username sau dấu '=' để cover duplicate.
+- TUYỆT ĐỐI KHÔNG dùng placeholder kiểu <seed_username> hoặc SEED_EXISTING_USERNAME.Username.
+
+EXPECTED (PHẢI ĐÚNG NGUYÊN VĂN):
+- Thiếu dữ liệu (thiếu bất kỳ trường bắt buộc nào) => "Vui lòng điền vào trường này."
+- Phone sai => "Số điện thoại không đúng định dạng!"
+- Password sai độ dài => "Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!"
+- Password != ConfirmPassword => "mật khẩu không giống nhau"
+- Username trùng => "tài khoản đã tồn tại trong hệ thống"
+- Thành công => Expected = CHÍNH Username đã nhập (không dùng câu "Đăng ký thành công")
+
+YÊU CẦU COVERAGE (phải đa dạng, hạn chế lặp):
+1) Nhóm thiếu dữ liệu bắt buộc:
+   - thiếu từng trường: Username / Phone / Password / ConfirmPassword
+   - thiếu nhiều trường cùng lúc (ít nhất 1 case)
+2) Nhóm Phone sai định dạng (nhiều dạng sai khác nhau, KHÔNG chỉ 1 kiểu):
+   - có chữ (vd: 09a...)
+   - có ký tự đặc biệt (vd: 09#...)
+   - có khoảng trắng (vd: "0912 345678")
+   - sai độ dài (9 số, 11 số)
+   - không bắt đầu bằng 0
+3) Nhóm Password sai độ dài (BVA):
+   - dưới biên: 8 ký tự
+   - dưới biên - 1: 7 ký tự
+   - trên biên: 20 ký tự
+   - trên biên + 1: 21 ký tự
+4) Nhóm ConfirmPassword không khớp Password:
+   - Password hợp lệ (9-19) nhưng ConfirmPassword khác
+5) Nhóm Username trùng (nếu có seed)
+6) Nhóm thành công:
+   - ít nhất 1 case hợp lệ hoàn toàn (Expected = Username)
+
+QUY TẮC TẠO GIÁ TRỊ:
+- Username: dùng chuỗi thực tế (có thể có dấu), không để toàn ký tự vô nghĩa, không để khoảng trắng-only.
+- Phone hợp lệ: đúng 10 số và bắt đầu bằng 0, ví dụ 0912345678 (chỉ là ví dụ, hãy tạo số khác nhau).
+- Password hợp lệ: 9-19 ký tự, ưu tiên có chữ + số để giống dữ liệu thật (nhưng không thêm rule ngoài website).
+- ConfirmPassword: giống Password ở case hợp lệ; khác Password ở case mismatch.
+
+RÀNG BUỘC OUTPUT (BẮT BUỘC):
+- DÒNG ĐẦU TIÊN của output phải bắt đầu bằng ký tự '{'
+- DÒNG CUỐI CÙNG của output phải kết thúc bằng ký tự '}'
+- Chỉ trả về DUY NHẤT JSON hợp lệ, parse được bằng json.loads().
+- JSON root bắt buộc: { "items": [ ... ] }
+- Mỗi item CHỈ có 6 key, đúng tên (phân biệt hoa thường):
+  1) Testcase
+  2) Username
+  3) Phone
+  4) Password
+  5) ConfirmPassword
+  6) Expected
+- Testcase theo thứ tự tăng dần: DK01, DK02, DK03, ...
+- KHÔNG markdown, KHÔNG giải thích, KHÔNG comment trong JSON.
+- KHÔNG placeholder/biến/cú pháp kiểu "a"*7, <...>, SEED_... .Username
+
+RÀNG BUỘC DỮ LIỆU (BẮT BUỘC):
+- TẤT CẢ giá trị phải là dữ liệu thật, ví dụ:
+  - Phone: "0912345678"
+  - Password: "Abc123456"
+- TUYỆT ĐỐI KHÔNG dùng nhãn mô tả như:
+  "string_empty", "password_min", "password_max+1", "invalid_phone_letters", "string_existing"...
+- Expected KHÔNG được để trống, KHÔNG được kiểu "sẽ điền sau".
+- Expected chỉ được là 1 trong các câu EXPECTED đã nêu hoặc Username (case success).
+
+SCHEMA THAM CHIẾU:
+{
+  "items": [
+    {
+      "Testcase": "DK01",
+      "Username": "string",
+      "Phone": "string",
+      "Password": "string",
+      "ConfirmPassword": "string",
+      "Expected": "string"
+    }
+  ]
+}
+
+Context:
+{app_context}

@@ -1,9 +1,0 @@
-testcase,username,password,expected
-DN1,Ánh Dương Phạm,anhduong@123,Ánh Dương Phạm
-DN2,ÁNH DƯƠNG PHẠM,anhduong@123,Ánh Dương Phạm
-DN3,anhduongpham,anhduong123,anhduongpham
-DN4,,anhduong@124,Vui lòng điền vào trường này.
-DN5,anhduongpham,,Vui lòng điền vào trường này.
-DN6,,,Vui lòng điền vào trường này.
-DN7,anh,anhduong@125,Tên đăng nhập hoặc mật khẩu không đúng!
-DN8,Ánh Dương Phạm,anhduong,Tên đăng nhập hoặc mật khẩu không đúng!

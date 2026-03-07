@@ -1,0 +1,38 @@
+<items>
+  <item>
+    <Testcase>LG01</Testcase>
+    <Username></Username>
+    <Password></Password>
+    <Expected>Vui lòng điền vào trường này</Expected>
+  </item>
+  <item>
+    <Testcase>LG02</Testcase>
+    <Username>Ánh Dương Phạm</Username>
+    <Password></Password>
+    <Expected>Vui lòng điền vào trường này</Expected>
+  </item>
+  <item>
+    <Testcase>LG03</Testcase>
+    <Username></Username>
+    <Password>anhduong@123</Password>
+    <Expected>Vui lòng điền vào trường này</Expected>
+  </item>
+  <item>
+    <Testcase>LG04</Testcase>
+    <Username>Ánh Dương Phạm</Username>
+    <Password>anhduong@123</Password>
+    <Expected>Ánh Dương Phạm</Expected>
+  </item>
+  <item>
+    <Testcase>LG05</Testcase>
+    <Username>Ánh Dương Phạm</Username>
+    <Password>123456</Password>
+    <Expected>Tên đăng nhập hoặc mật khẩu không đúng!</Expected>
+  </item>
+  <item>
+    <Testcase>LG06</Testcase>
+    <Username>Nguyễn Văn A</Username>
+    <Password>anhduong@123</Password>
+    <Expected>Tên đăng nhập hoặc mật khẩu không đúng!</Expected>
+  </item>
+</items>
