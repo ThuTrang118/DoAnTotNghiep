@@ -1,0 +1,82 @@
+<items>
+  <item>
+    <Testcase>DK01</Testcase>
+    <Username></Username>
+    <Phone></Phone>
+    <Password></Password>
+    <ConfirmPassword></ConfirmPassword>
+    <Expected>Vui lòng điền vào trường này.</Expected>
+  </item>
+  <item>
+    <Testcase>DK02</Testcase>
+    <Username>AnhDuong11</Username>
+    <Phone>0987654321</Phone>
+    <Password>AnhDuong@123</Password>
+    <ConfirmPassword>AnhDuong@123</ConfirmPassword>
+    <Expected>Tài khoản đã tồn tại trong hệ thống</Expected>
+  </item>
+  <item>
+    <Testcase>DK03</Testcase>
+    <Username>MinhTrang88</Username>
+    <Phone>0987654321</Phone>
+    <Password>AnhDuong@123</Password>
+    <ConfirmPassword>AnhDuong@123</ConfirmPassword>
+    <Expected>Đăng ký thành công</Expected>
+  </item>
+  <item>
+    <Testcase>DK04</Testcase>
+    <Username>MinhTrang88</Username>
+    <Phone>0987654321</Phone>
+    <Password>AnhDuong@123456789</Password>
+    <ConfirmPassword>AnhDuong@123456789</ConfirmPassword>
+    <Expected>Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!</Expected>
+  </item>
+  <item>
+    <Testcase>DK05</Testcase>
+    <Username>MinhTrang88</Username>
+    <Phone>0987654321</Phone>
+    <Password>AnhDuong@123</Password>
+    <ConfirmPassword>AnhDuong@1234</ConfirmPassword>
+    <Expected>Mật khẩu không giống nhau</Expected>
+  </item>
+  <item>
+    <Testcase>DK06</Testcase>
+    <Username>MinhTrang88</Username>
+    <Phone>0987654321</Phone>
+    <Password>AnhDuong@123</Password>
+    <ConfirmPassword>AnhDuong@123</ConfirmPassword>
+    <Expected>Đăng ký thành công</Expected>
+  </item>
+  <item>
+    <Testcase>DK07</Testcase>
+    <Username>MinhTrang88</Username>
+    <Phone>0987654321</Phone>
+    <Password>AnhDuong@123</Password>
+    <ConfirmPassword>AnhDuong@123</ConfirmPassword>
+    <Expected>Đăng ký thành công</Expected>
+  </item>
+  <item>
+    <Testcase>DK08</Testcase>
+    <Username>MinhTrang88</Username>
+    <Phone>0987654321</Phone>
+    <Password>AnhDuong@123</Password>
+    <ConfirmPassword>AnhDuong@123</ConfirmPassword>
+    <Expected>Đăng ký thành công</Expected>
+  </item>
+  <item>
+    <Testcase>DK09</Testcase>
+    <Username>MinhTrang88</Username>
+    <Phone>0987654321</Phone>
+    <Password>AnhDuong@123</Password>
+    <ConfirmPassword>AnhDuong@123</ConfirmPassword>
+    <Expected>Đăng ký thành công</Expected>
+  </item>
+  <item>
+    <Testcase>DK10</Testcase>
+    <Username>MinhTrang88</Username>
+    <Phone>0987654321</Phone>
+    <Password>AnhDuong@123</Password>
+    <ConfirmPassword>AnhDuong@123</ConfirmPassword>
+    <Expected>Đăng ký thành công</Expected>
+  </item>
+</items>

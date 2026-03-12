@@ -1,4 +1,4 @@
-# testdata_generation/engine/ai_testdata_generator.py
+# testdata_generation/engine/generator.py
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -27,12 +27,14 @@ class GenerationResult:
 
 class AITestDataGenerator:
     """
+    Luồng xử lý:
     1) AI sinh RAW text
     2) Lưu RAW evidence:
        - testdata_generation/output/<feature>_raw.txt
        - testdata_generation/output/<feature>_raw.json
-    3) (Nếu có --formats) convert rows -> các định dạng processed (framework dùng)
-       và lưu vào data/ai/
+    3) Parse JSON từ raw text
+    4) Validate schema + logic cơ bản
+    5) Nếu có --formats thì convert sang dữ liệu processed
     """
 
     def __init__(
@@ -49,8 +51,6 @@ class AITestDataGenerator:
 
         self.parser = LLMOutputParser()
         self.validator = DataSchemaValidator()
-
-        # FIX: DataWriter cần raw_dir và processed_dir
         self.writer = DataWriter(raw_dir=self.raw_evidence_dir, processed_dir=self.processed_dir)
 
     def generate(
@@ -58,7 +58,7 @@ class AITestDataGenerator:
         feature: str,
         prompt: str,
         system: Optional[str] = None,
-        formats: Optional[Iterable[str]] = None,  # None=>ALL, []=>none
+        formats: Optional[Iterable[str]] = None,  # None => ALL, [] => none
         yaml_ext: str = "yaml",
         llm_kwargs: Optional[Dict[str, Any]] = None,
     ) -> GenerationResult:
@@ -72,7 +72,11 @@ class AITestDataGenerator:
         try:
             raw_text = self.client.generate_text(prompt=prompt, system=system, **llm_kwargs)
         except Exception as e:
-            return GenerationResult(ok=False, feature=feature, errors=[f"LLM call failed: {e}"])
+            return GenerationResult(
+                ok=False,
+                feature=feature,
+                errors=[f"LLM call failed: {e}"],
+            )
 
         # 2) Save RAW evidence text
         raw_text_path = self.writer.write_raw_text(feature, raw_text)
@@ -87,8 +91,8 @@ class AITestDataGenerator:
                 raw_path=None,
                 processed_paths={},
                 rows=[],
-                warnings=parsed.warnings or [],
-                errors=parsed.errors or [parsed.error or "Cannot parse JSON from LLM output"],
+                warnings=[],
+                errors=[parsed.error or "Cannot parse JSON from LLM output"],
             )
 
         payload = parsed.data
@@ -104,10 +108,10 @@ class AITestDataGenerator:
                 errors=["Parsed JSON must be an object with key 'items' as a list"],
             )
 
-        # 4) Save RAW evidence json (EXACT payload, không tự ý cắt / dedup)
+        # 4) Save RAW evidence json (giữ nguyên payload AI trả ra)
         raw_json_path = self.writer.write_raw_json(feature, payload)
 
-        # 5) Normalize rows minimally (chỉ giữ dict)
+        # 5) Normalize rows minimally (chỉ giữ item là dict)
         rows: List[Dict[str, Any]] = []
         dropped = 0
         for it in payload.get("items", []):
@@ -115,27 +119,26 @@ class AITestDataGenerator:
                 rows.append(it)
             else:
                 dropped += 1
+
         if dropped:
             warnings.append(f"Dropped {dropped} non-object items from payload.items")
 
         normalized_payload = {"items": rows}
 
-        # 6) Validate (warn-only; validator có thể clean key thừa như _source nếu bạn muốn)
+        # 6) Validate schema + logic
         v = self.validator.validate(feature=feature, data=normalized_payload)
-        if isinstance(v, dict):
-            warnings.extend(v.get("warnings", []) or [])
-            # Không hard-fail vì mục tiêu là evidence + convert
-            # nhưng vẫn ghi nhận lỗi schema nếu có:
-            errors.extend(v.get("errors", []) or [])
-            cleaned_rows = v.get("data", []) or rows
-        else:
-            cleaned_rows = rows
+
+        warnings.extend(v.warnings or [])
+        errors.extend(v.errors or [])
+
+        # validator trả về data={"items": cleaned_items}
+        cleaned_payload = v.data if isinstance(v.data, dict) else {"items": rows}
+        cleaned_rows = cleaned_payload.get("items", rows)
 
         processed_paths: Dict[str, Path] = {}
 
         # 7) Convert processed ONLY if formats != []
         if formats != []:
-            # DataWriter.write_formats sẽ ghi vào processed_dir
             processed_paths = self.writer.write_formats(
                 feature=feature,
                 rows=cleaned_rows,
@@ -143,7 +146,8 @@ class AITestDataGenerator:
                 yaml_ext=yaml_ext,
             )
 
-        ok = len(cleaned_rows) > 0
+        ok = len(cleaned_rows) > 0 and len(errors) == 0
+
         return GenerationResult(
             ok=ok,
             feature=feature,

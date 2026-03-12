@@ -1,41 +1,111 @@
-Bạn là QA/Tester. Hãy sinh dữ liệu kiểm thử cho chức năng Đăng nhập (Login) của website MWC.
-1. Bối cảnh nghiệp vụ
-Form đăng nhập gồm 2 trường:
-    - Username (bắt buộc) 25 ký tự,ko chưa ký (thêm các ràng buộc khác nữa để chi tiết hơn)
-    - Password (bắt buộc) (tối thiểu 8 ký tự, có chứa ký tự hoa, thường, số, ký tự đặc biệt); tách nhỏ từng điều kiện để ktra AI có thể đưa ra được hết các trường hợp ko.
-Hệ thống đã có 1 tài khoản đăng ký tồn tại:
-    - Username: "Ánh Dương Phạm"
-    - Password: "anhduong@123"
-2. Quy tắc xử lý:
-    - Thiếu Username hoặc Password → "Vui lòng điền vào trường này" 
-    - Username không tồn tại hoặc Password không tồn tại  → "Tên đăng nhập hoặc mật khẩu không đúng!"
-    - Username và Password tồn tại → Expected = "Ánh Dương Phạm"
-3. Mục tiêu sinh dữ liệu (dùng chung thì cho file riêng và mô tả rõ để AI hiểu)
-    Sinh bộ testcase theo:
-    Equivalence Partitioning (phân vùng tương đương)
-    Boundary Value Analysis (giá trị biên)
-    Decision Table (bảng quyết định) //tối ưu giảm bớt slg testcaseVD: vs 1 trường hợp testcase chỉ kiểm tra 1 trường
-4. Output bắt buộc
-Chỉ trả về JSON hợp lệ. Không markdown. Không giải thích.
-    Cấu trúc:
-    {
-    "items": [
-    {
-    "Testcase": "LG01",
-    "Username": "...",
-    "Password": "...",
-    "Expected": "..."
-    }
-    ]
-    }
+Generate test cases for the LOGIN feature of the MWC website.
 
-5. Quy tắc output:
-Chỉ đúng 4 trường: Testcase, Username, Password, Expected.
-Testcase tăng dần liên tục LG01, LG02, ...
-Trước khi in JSON, tự kiểm tra và tự sửa nếu vi phạm:
-(1) đã bao phủ đầy đủ các dòng decision table của 2 trường bắt buộc
-(2) đã bao phủ các phân vùng tương đương quan trọng của xác thực khi cả hai có dữ liệu
-(3) seed chỉ xuất hiện đúng 1 lần và chỉ ở testcase thành công (cả cặp)
-(4) không trùng (Username, Password)
-(5) không có 2 testcase cùng ý nghĩa kiểm thử
-Nếu còn thiếu bao phủ hoặc bị dồn về quá ít testcase, phải bổ sung cho đủ bao phủ rồi mới xuất JSON.
+==================================================
+FEATURE DESCRIPTION
+==================================================
+
+Login form has two fields:
+- Username (required)
+- Password (required)
+
+Seed account for successful login:
+- Username: "Ánh Dương Phạm"
+- Password: "anhduong@123"
+
+==================================================
+SYSTEM BEHAVIOR
+==================================================
+
+1. If Username or Password is missing
+→ show: "Vui lòng điền vào trường này"
+
+2. If both fields are present but credentials are incorrect
+→ show: "Tên đăng nhập hoặc mật khẩu không đúng!"
+
+3. If Username and Password exactly match the seed account
+→ login succeeds and Expected is:
+"Ánh Dương Phạm"
+
+==================================================
+TEST DESIGN INSTRUCTION
+==================================================
+
+Use black-box testing techniques described in the knowledge base:
+- Equivalence Partitioning
+- Boundary Value thinking
+- Cause-Effect reasoning
+- Error Guessing
+
+First identify the distinct behavioral groups of the Login feature.
+
+Then generate a compact set of representative test cases that collectively cover:
+- successful login
+- missing required fields
+- incorrect authentication
+- representative equivalence classes of Username and Password
+- boundary-like inputs (for example: empty, very short, unusually long)
+- realistic error-prone inputs (for example: spaces, case differences, special characters)
+
+Do not generate multiple test cases from the same equivalence class if they produce the same behavior and the same expected result, unless a new case adds a meaningful boundary or a new error-prone behavior.
+
+Each new test case must add new behavioral coverage.
+
+Stop generating when additional cases no longer add meaningful new coverage.
+
+==================================================
+EXPECTED RESULTS
+==================================================
+
+Expected must be one of:
+
+"Ánh Dương Phạm"
+"Vui lòng điền vào trường này"
+"Tên đăng nhập hoặc mật khẩu không đúng!"
+
+Do not invent other messages.
+
+==================================================
+OUTPUT FORMAT
+==================================================
+
+Return JSON only.
+
+Structure:
+
+{
+  "items": [
+    {
+      "Testcase": "LG01",
+      "Username": "...",
+      "Password": "...",
+      "Expected": "..."
+    }
+  ]
+}
+
+Rules:
+- Use sequential IDs: LG01, LG02, ...
+- Each item must contain exactly these four fields:
+  - Testcase
+  - Username
+  - Password
+  - Expected
+- Do not output explanations
+- Do not output markdown
+- Do not output extra keys
+
+==================================================
+FINAL CHECK BEFORE OUTPUT
+==================================================
+
+Before producing the final JSON, check that the test set includes distinct coverage for:
+- successful login
+- missing Username
+- missing Password
+- both fields missing if it creates distinct behavior
+- wrong Username
+- wrong Password
+- both wrong if it creates distinct behavior
+- at least some representative edge/error-prone inputs
+
+Remove redundant cases that repeat the same logic path without adding new coverage.

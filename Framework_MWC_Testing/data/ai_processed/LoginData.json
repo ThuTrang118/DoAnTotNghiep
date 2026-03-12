@@ -2,27 +2,27 @@
   "items": [
     {
       "Testcase": "LG01",
-      "Username": "",
-      "Password": "",
-      "Expected": "Vui lòng điền vào trường này"
+      "Username": "Ánh Dương Phạm",
+      "Password": "anhduong@123",
+      "Expected": "Ánh Dương Phạm"
     },
     {
       "Testcase": "LG02",
-      "Username": "Ánh Dương Phạm",
-      "Password": "",
+      "Username": "",
+      "Password": "anhduong@123",
       "Expected": "Vui lòng điền vào trường này"
     },
     {
       "Testcase": "LG03",
-      "Username": "",
-      "Password": "anhduong@123",
+      "Username": "Ánh Dương Phạm",
+      "Password": "",
       "Expected": "Vui lòng điền vào trường này"
     },
     {
       "Testcase": "LG04",
-      "Username": "Ánh Dương Phạm",
-      "Password": "anhduong@123",
-      "Expected": "Ánh Dương Phạm"
+      "Username": "",
+      "Password": "",
+      "Expected": "Vui lòng điền vào trường này"
     },
     {
       "Testcase": "LG05",
@@ -32,9 +32,201 @@
     },
     {
       "Testcase": "LG06",
-      "Username": "Nguyễn Văn A",
+      "Username": "anhduong@123",
       "Password": "anhduong@123",
       "Expected": "Tên đăng nhập hoặc mật khẩu không đúng!"
+    },
+    {
+      "Testcase": "LG07",
+      "Username": "anhduong@123",
+      "Password": "anhduong@1234",
+      "Expected": "Tên đăng nhập hoặc mật khẩu không đúng!"
+    },
+    {
+      "Testcase": "LG08",
+      "Username": "anhduong@123",
+      "Password": "anhduong@12345",
+      "Expected": "Tên đăng nhập hoặc mật khẩu không đúng!"
+    },
+    {
+      "Testcase": "LG09",
+      "Username": "anhduong@123",
+      "Password": "anhduong@1234567",
+      "Expected": "Tên đăng nhập hoặc mật khẩu không đúng!"
+    },
+    {
+      "Testcase": "LG10",
+      "Username": "anhduong@123",
+      "Password": "anhduong@12345678",
+      "Expected": "Tên đăng nhập hoặc mật khẩu không đúng!"
+    },
+    {
+      "Testcase": "LG11",
+      "Username": "anhduong@123",
+      "Password": "anhduong@123456789",
+      "Expected": "Tên đăng nhập hoặc mật khẩu không đúng!"
+    },
+    {
+      "Testcase": "LG12",
+      "Username": "anhduong@123",
+      "Password": "anhduong@1234567890",
+      "Expected": "Tên đăng nhập hoặc mật khẩu không đúng!"
+    },
+    {
+      "Testcase": "LG13",
+      "Username": "anhduong@123",
+      "Password": "anhduong@12345678901",
+      "Expected": "Tên đăng nhập hoặc mật khẩu không đúng!"
+    },
+    {
+      "Testcase": "LG14",
+      "Username": "anhduong@123",
+      "Password": "anhduong@123456789012",
+      "Expected": "Tên đăng nhập hoặc mật khẩu không đúng!"
+    },
+    {
+      "Testcase": "LG15",
+      "Username": "anhduong@123",
+      "Password": "anhduong@1234567890123",
+      "Expected": "Tên đăng nhập hoặc mật khẩu không đúng!"
+    },
+    {
+      "Testcase": "LG16",
+      "Username": "anhduong@123",
+      "Password": "anhduong@12345678901234",
+      "Expected": "Tên đăng nhập hoặc mật khẩu không đúng!"
+    },
+    {
+      "Testcase": "LG17",
+      "Username": "anhduong@123",
+      "Password": "anhduong@123456789012345",
+      "Expected": "Tên đăng nhập hoặc mật khẩu không đúng!"
+    },
+    {
+      "Testcase": "LG18",
+      "Username": "anhduong@123",
+      "Password": "anhduong@1234567890123456",
+      "Expected": "Tên đăng nhập hoặc mật khẩu không đúng!"
+    },
+    {
+      "Testcase": "LG19",
+      "Username": "anhduong@123",
+      "Password": "anhduong@12345678901234567",
+      "Expected": "Tên đăng nhập hoặc mật khẩu không đúng!"
+    },
+    {
+      "Testcase": "LG20",
+      "Username": "anhduong@123",
+      "Password": "anhduong@123456789012345678",
+      "Expected": "Tên đăng nhập hoặc mật khẩu không đúng!"
+    },
+    {
+      "Testcase": "LG21",
+      "Username": "anhduong@123",
+      "Password": "anhduong@1234567890123456789",
+      "Expected": "Tên đăng nhập hoặc mật khẩu không đúng!"
+    },
+    {
+      "Testcase": "LG22",
+      "Username": "anhduong@123",
+      "Password": "anhduong@12345678901234567890",
+      "Expected": "Tên đăng nhập hoặc mật khẩu không đúng!"
+    },
+    {
+      "Testcase": "LG23",
+      "Username": "anhduong@123",
+      "Password": "anhduong@123456789012345678901",
+      "Expected": "Tên đăng nhập hoặc mật khẩu không đúng!"
+    },
+    {
+      "Testcase": "LG24",
+      "Username": "anhduong@123",
+      "Password": "anhduong@1234567890123456789012",
+      "Expected": "Tên đăng nhập hoặc mật khẩu không đúng!"
+    },
+    {
+      "Testcase": "LG25",
+      "Username": "anhduong@123",
+      "Password": "anhduong@12345678901234567890123",
+      "Expected": "Tên đăng nhập hoặc mật khẩu không đúng!"
+    },
+    {
+      "Testcase": "LG26",
+      "Username": "anhduong@123",
+      "Password": "anhduong@123456789012345678901234",
+      "Expected": "Tên đăng nhập hoặc mật khẩu không đúng!"
+    },
+    {
+      "Testcase": "LG27",
+      "Username": "anhduong@123",
+      "Password": "anhduong@1234567890123456789012345",
+      "Expected": "Tên đăng nhập hoặc mật khẩu không đúng!"
+    },
+    {
+      "Testcase": "LG28",
+      "Username": "anhduong@123",
+      "Password": "anhduong@12345678901234567890123456",
+      "Expected": "Tên đăng nhập hoặc mật khẩu không đúng!"
+    },
+    {
+      "Testcase": "LG29",
+      "Username": "anhduong@123",
+      "Password": "anhduong@123456789012345678901234567",
+      "Expected": "Tên đăng nhập hoặc mật khẩu không đúng!"
+    },
+    {
+      "Testcase": "LG30",
+      "Username": "anhduong@123",
+      "Password": "anhduong@1234567890123456789012345678",
+      "Expected": "Tên đăng nhập hoặc mật khẩu không đúng!"
+    },
+    {
+      "Testcase": "LG31",
+      "Username": "anhduong@123",
+      "Password": "anhduong@12345678901234567890123456789",
+      "Expected": "Tên đăng nhập hoặc mật khẩu không đúng!"
+    },
+    {
+      "Testcase": "LG32",
+      "Username": "anhduong@123",
+      "Password": "anhduong@123456789012345678901234567890",
+      "Expected": "Tên đăng nhập hoặc mật khẩu không đúng!"
+    },
+    {
+      "Testcase": "LG33",
+      "Username": "anhduong@123",
+      "Password": "anhduong@1234567890123456789012345678901",
+      "Expected": "Tên đăng nhập hoặc mật khẩu không đúng!"
+    },
+    {
+      "Testcase": "LG34",
+      "Username": "anhduong@123",
+      "Password": "anhduong@12345678901234567890123456789012",
+      "Expected": "Tên đăng nhập hoặc mật khẩu không đúng!"
+    },
+    {
+      "Testcase": "LG35",
+      "Username": "anhduong@123",
+      "Password": "anhduong@123456789012345678901234567890123",
+      "Expected": "Tên đăng nhập hoặc mật khẩu không đúng!"
+    },
+    {
+      "Testcase": "LG36",
+      "Username": "anhduong@123",
+      "Password": "anhduong@1234567890123456789012345678901234",
+      "Expected": "Tên đăng nhập hoặc mật khẩu không đúng!"
+    },
+    {
+      "Testcase": "LG37",
+      "Username": "anhduong@123",
+      "Password": "anhduong@12345678901234567890123456789012345",
+      "Expected": "Tên đăng nhập hoặc mật khẩu không đúng!"
+    },
+    {
+      "Testcase": "LG38",
+      "Username": "",
+      "Password": "",
+      "Expected": ""
     }
   ]
 }

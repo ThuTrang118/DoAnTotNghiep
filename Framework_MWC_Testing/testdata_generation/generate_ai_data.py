@@ -1,10 +1,14 @@
 from __future__ import annotations
+
 import argparse
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+
 import yaml
+
 from testdata_generation.engine.generator import AITestDataGenerator
 from testdata_generation.engine.llm_client import OllamaClient
+
 
 def load_app_config(project_root: Path) -> Dict[str, Any]:
     p = project_root / "app_config.yaml"
@@ -12,30 +16,64 @@ def load_app_config(project_root: Path) -> Dict[str, Any]:
         return {}
     return yaml.safe_load(p.read_text(encoding="utf-8")) or {}
 
+
 def parse_formats(value: Optional[str]) -> Tuple[Optional[List[str]], bool]:
     """
     - omit --formats => ONLY RAW
     - --formats all => export ALL
     - --formats csv,json => export those
-    Returns: (formats, want_export)
-      formats=None means ALL (pass through)
-      formats=[] means none
+
+    Returns:
+      (formats, want_export)
+      - formats=None means ALL (pass through)
+      - formats=[] means none
     """
     if value is None:
         return ([], False)
+
     v = value.strip().lower()
     if not v:
         return ([], False)
+
     if v == "all":
         return (None, True)
+
     parts = [x.strip().lower() for x in v.split(",") if x.strip()]
     return (parts or [], True)
 
-def read_prompt_file(project_root: Path, feature: str) -> str:
-    p = project_root / "testdata_generation" / "input" / f"{feature}.txt"
-    if not p.exists():
-        raise FileNotFoundError(f"Prompt file not found: {p}")
-    return p.read_text(encoding="utf-8")
+
+def read_text_file(path: Path) -> str:
+    if not path.exists():
+        raise FileNotFoundError(f"Prompt file not found: {path}")
+    return path.read_text(encoding="utf-8").strip()
+
+
+def build_prompt(project_root: Path, feature: str) -> str:
+    """
+    Ghép prompt theo kiến trúc mới:
+    - engine/blackbox_techniques.txt
+    - input/<feature>.txt
+    """
+
+    input_dir = project_root / "testdata_generation" / "input"
+    engine_dir = project_root / "testdata_generation" / "engine"
+
+    blackbox_path = engine_dir / "blackbox_techniques.txt"
+    feature_path = input_dir / f"{feature}.txt"
+
+    blackbox_prompt = read_text_file(blackbox_path)
+    feature_prompt = read_text_file(feature_path)
+
+    final_prompt = "\n\n".join([
+        blackbox_prompt,
+        feature_prompt,
+    ])
+
+    if "{app_context}" in final_prompt:
+        final_prompt = final_prompt.replace("{app_context}", "")
+
+    return final_prompt
+
 
 def main() -> int:
     ap = argparse.ArgumentParser()
@@ -56,15 +94,17 @@ def main() -> int:
     cfg = load_app_config(root)
 
     ai_cfg = cfg.get("ai", {}) if isinstance(cfg.get("ai", {}), dict) else {}
-    ollama_cfg = ai_cfg.get("ollama", {}) if isinstance(ai_cfg.get("ollama", {}), dict) else {}
+    ollama_cfg = ai_cfg.get("ollama", {}) if isinstance(ai_cfg.get("ai", {}).get("ollama", {}), dict) else cfg.get("ai", {}).get("ollama", {})
+    if not isinstance(ollama_cfg, dict):
+        ollama_cfg = {}
 
     base_url = args.base_url or ollama_cfg.get("base_url") or "http://localhost:11434"
-    model = args.model or ollama_cfg.get("model") or "qwen2.5-coder:3b-instruct"
+    model = args.model or ollama_cfg.get("model") or "deepseek-r1:8b"
     timeout_sec = args.timeout_sec if args.timeout_sec is not None else int(ollama_cfg.get("timeout_sec", 300))
     endpoint_mode = args.endpoint_mode or ollama_cfg.get("endpoint_mode") or "auto"
-    temperature = args.temperature if args.temperature is not None else float(ollama_cfg.get("temperature", 0.2))
-    top_p = args.top_p if args.top_p is not None else float(ollama_cfg.get("top_p", 0.9))
-    num_predict = args.num_predict if args.num_predict is not None else int(ollama_cfg.get("num_predict", 600))
+    temperature = args.temperature if args.temperature is not None else float(ollama_cfg.get("temperature", 0.0))
+    top_p = args.top_p if args.top_p is not None else float(ollama_cfg.get("top_p", 0.8))
+    num_predict = args.num_predict if args.num_predict is not None else int(ollama_cfg.get("num_predict", 800))
     seed = args.seed if args.seed is not None else ollama_cfg.get("seed", None)
 
     client = OllamaClient(
@@ -79,21 +119,11 @@ def main() -> int:
     )
 
     feature = args.feature.strip().lower()
-
-    # Prompt now contains seed directly (NO LoginSeedAccounts.json)
-    prompt = read_prompt_file(root, feature)
-
-    # Backward-compatible: if old prompt still contains {app_context}, replace with empty string
-    # so you don't have to edit prompt immediately.
-    if "{app_context}" in prompt:
-        prompt = prompt.replace("{app_context}", "")
+    prompt = build_prompt(root, feature)
 
     formats, want_export = parse_formats(args.formats)
 
-    # RAW
     raw_dir = root / "testdata_generation" / "output"
-
-    # PROCESSED
     processed_dir = root / "data" / "ai_processed"
 
     gen = AITestDataGenerator(
@@ -129,6 +159,7 @@ def main() -> int:
         print("Warnings:")
         for w in result.warnings:
             print(f"  - {w}")
+
     if result.errors:
         print("Errors:")
         for e in result.errors:

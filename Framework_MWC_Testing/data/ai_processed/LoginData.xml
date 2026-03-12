@@ -1,27 +1,27 @@
 <items>
   <item>
     <Testcase>LG01</Testcase>
-    <Username></Username>
-    <Password></Password>
-    <Expected>Vui lòng điền vào trường này</Expected>
+    <Username>Ánh Dương Phạm</Username>
+    <Password>anhduong@123</Password>
+    <Expected>Ánh Dương Phạm</Expected>
   </item>
   <item>
     <Testcase>LG02</Testcase>
-    <Username>Ánh Dương Phạm</Username>
-    <Password></Password>
+    <Username></Username>
+    <Password>anhduong@123</Password>
     <Expected>Vui lòng điền vào trường này</Expected>
   </item>
   <item>
     <Testcase>LG03</Testcase>
-    <Username></Username>
-    <Password>anhduong@123</Password>
+    <Username>Ánh Dương Phạm</Username>
+    <Password></Password>
     <Expected>Vui lòng điền vào trường này</Expected>
   </item>
   <item>
     <Testcase>LG04</Testcase>
-    <Username>Ánh Dương Phạm</Username>
-    <Password>anhduong@123</Password>
-    <Expected>Ánh Dương Phạm</Expected>
+    <Username></Username>
+    <Password></Password>
+    <Expected>Vui lòng điền vào trường này</Expected>
   </item>
   <item>
     <Testcase>LG05</Testcase>
@@ -31,8 +31,200 @@
   </item>
   <item>
     <Testcase>LG06</Testcase>
-    <Username>Nguyễn Văn A</Username>
+    <Username>anhduong@123</Username>
     <Password>anhduong@123</Password>
     <Expected>Tên đăng nhập hoặc mật khẩu không đúng!</Expected>
+  </item>
+  <item>
+    <Testcase>LG07</Testcase>
+    <Username>anhduong@123</Username>
+    <Password>anhduong@1234</Password>
+    <Expected>Tên đăng nhập hoặc mật khẩu không đúng!</Expected>
+  </item>
+  <item>
+    <Testcase>LG08</Testcase>
+    <Username>anhduong@123</Username>
+    <Password>anhduong@12345</Password>
+    <Expected>Tên đăng nhập hoặc mật khẩu không đúng!</Expected>
+  </item>
+  <item>
+    <Testcase>LG09</Testcase>
+    <Username>anhduong@123</Username>
+    <Password>anhduong@1234567</Password>
+    <Expected>Tên đăng nhập hoặc mật khẩu không đúng!</Expected>
+  </item>
+  <item>
+    <Testcase>LG10</Testcase>
+    <Username>anhduong@123</Username>
+    <Password>anhduong@12345678</Password>
+    <Expected>Tên đăng nhập hoặc mật khẩu không đúng!</Expected>
+  </item>
+  <item>
+    <Testcase>LG11</Testcase>
+    <Username>anhduong@123</Username>
+    <Password>anhduong@123456789</Password>
+    <Expected>Tên đăng nhập hoặc mật khẩu không đúng!</Expected>
+  </item>
+  <item>
+    <Testcase>LG12</Testcase>
+    <Username>anhduong@123</Username>
+    <Password>anhduong@1234567890</Password>
+    <Expected>Tên đăng nhập hoặc mật khẩu không đúng!</Expected>
+  </item>
+  <item>
+    <Testcase>LG13</Testcase>
+    <Username>anhduong@123</Username>
+    <Password>anhduong@12345678901</Password>
+    <Expected>Tên đăng nhập hoặc mật khẩu không đúng!</Expected>
+  </item>
+  <item>
+    <Testcase>LG14</Testcase>
+    <Username>anhduong@123</Username>
+    <Password>anhduong@123456789012</Password>
+    <Expected>Tên đăng nhập hoặc mật khẩu không đúng!</Expected>
+  </item>
+  <item>
+    <Testcase>LG15</Testcase>
+    <Username>anhduong@123</Username>
+    <Password>anhduong@1234567890123</Password>
+    <Expected>Tên đăng nhập hoặc mật khẩu không đúng!</Expected>
+  </item>
+  <item>
+    <Testcase>LG16</Testcase>
+    <Username>anhduong@123</Username>
+    <Password>anhduong@12345678901234</Password>
+    <Expected>Tên đăng nhập hoặc mật khẩu không đúng!</Expected>
+  </item>
+  <item>
+    <Testcase>LG17</Testcase>
+    <Username>anhduong@123</Username>
+    <Password>anhduong@123456789012345</Password>
+    <Expected>Tên đăng nhập hoặc mật khẩu không đúng!</Expected>
+  </item>
+  <item>
+    <Testcase>LG18</Testcase>
+    <Username>anhduong@123</Username>
+    <Password>anhduong@1234567890123456</Password>
+    <Expected>Tên đăng nhập hoặc mật khẩu không đúng!</Expected>
+  </item>
+  <item>
+    <Testcase>LG19</Testcase>
+    <Username>anhduong@123</Username>
+    <Password>anhduong@12345678901234567</Password>
+    <Expected>Tên đăng nhập hoặc mật khẩu không đúng!</Expected>
+  </item>
+  <item>
+    <Testcase>LG20</Testcase>
+    <Username>anhduong@123</Username>
+    <Password>anhduong@123456789012345678</Password>
+    <Expected>Tên đăng nhập hoặc mật khẩu không đúng!</Expected>
+  </item>
+  <item>
+    <Testcase>LG21</Testcase>
+    <Username>anhduong@123</Username>
+    <Password>anhduong@1234567890123456789</Password>
+    <Expected>Tên đăng nhập hoặc mật khẩu không đúng!</Expected>
+  </item>
+  <item>
+    <Testcase>LG22</Testcase>
+    <Username>anhduong@123</Username>
+    <Password>anhduong@12345678901234567890</Password>
+    <Expected>Tên đăng nhập hoặc mật khẩu không đúng!</Expected>
+  </item>
+  <item>
+    <Testcase>LG23</Testcase>
+    <Username>anhduong@123</Username>
+    <Password>anhduong@123456789012345678901</Password>
+    <Expected>Tên đăng nhập hoặc mật khẩu không đúng!</Expected>
+  </item>
+  <item>
+    <Testcase>LG24</Testcase>
+    <Username>anhduong@123</Username>
+    <Password>anhduong@1234567890123456789012</Password>
+    <Expected>Tên đăng nhập hoặc mật khẩu không đúng!</Expected>
+  </item>
+  <item>
+    <Testcase>LG25</Testcase>
+    <Username>anhduong@123</Username>
+    <Password>anhduong@12345678901234567890123</Password>
+    <Expected>Tên đăng nhập hoặc mật khẩu không đúng!</Expected>
+  </item>
+  <item>
+    <Testcase>LG26</Testcase>
+    <Username>anhduong@123</Username>
+    <Password>anhduong@123456789012345678901234</Password>
+    <Expected>Tên đăng nhập hoặc mật khẩu không đúng!</Expected>
+  </item>
+  <item>
+    <Testcase>LG27</Testcase>
+    <Username>anhduong@123</Username>
+    <Password>anhduong@1234567890123456789012345</Password>
+    <Expected>Tên đăng nhập hoặc mật khẩu không đúng!</Expected>
+  </item>
+  <item>
+    <Testcase>LG28</Testcase>
+    <Username>anhduong@123</Username>
+    <Password>anhduong@12345678901234567890123456</Password>
+    <Expected>Tên đăng nhập hoặc mật khẩu không đúng!</Expected>
+  </item>
+  <item>
+    <Testcase>LG29</Testcase>
+    <Username>anhduong@123</Username>
+    <Password>anhduong@123456789012345678901234567</Password>
+    <Expected>Tên đăng nhập hoặc mật khẩu không đúng!</Expected>
+  </item>
+  <item>
+    <Testcase>LG30</Testcase>
+    <Username>anhduong@123</Username>
+    <Password>anhduong@1234567890123456789012345678</Password>
+    <Expected>Tên đăng nhập hoặc mật khẩu không đúng!</Expected>
+  </item>
+  <item>
+    <Testcase>LG31</Testcase>
+    <Username>anhduong@123</Username>
+    <Password>anhduong@12345678901234567890123456789</Password>
+    <Expected>Tên đăng nhập hoặc mật khẩu không đúng!</Expected>
+  </item>
+  <item>
+    <Testcase>LG32</Testcase>
+    <Username>anhduong@123</Username>
+    <Password>anhduong@123456789012345678901234567890</Password>
+    <Expected>Tên đăng nhập hoặc mật khẩu không đúng!</Expected>
+  </item>
+  <item>
+    <Testcase>LG33</Testcase>
+    <Username>anhduong@123</Username>
+    <Password>anhduong@1234567890123456789012345678901</Password>
+    <Expected>Tên đăng nhập hoặc mật khẩu không đúng!</Expected>
+  </item>
+  <item>
+    <Testcase>LG34</Testcase>
+    <Username>anhduong@123</Username>
+    <Password>anhduong@12345678901234567890123456789012</Password>
+    <Expected>Tên đăng nhập hoặc mật khẩu không đúng!</Expected>
+  </item>
+  <item>
+    <Testcase>LG35</Testcase>
+    <Username>anhduong@123</Username>
+    <Password>anhduong@123456789012345678901234567890123</Password>
+    <Expected>Tên đăng nhập hoặc mật khẩu không đúng!</Expected>
+  </item>
+  <item>
+    <Testcase>LG36</Testcase>
+    <Username>anhduong@123</Username>
+    <Password>anhduong@1234567890123456789012345678901234</Password>
+    <Expected>Tên đăng nhập hoặc mật khẩu không đúng!</Expected>
+  </item>
+  <item>
+    <Testcase>LG37</Testcase>
+    <Username>anhduong@123</Username>
+    <Password>anhduong@12345678901234567890123456789012345</Password>
+    <Expected>Tên đăng nhập hoặc mật khẩu không đúng!</Expected>
+  </item>
+  <item>
+    <Testcase>LG38</Testcase>
+    <Username></Username>
+    <Password></Password>
+    <Expected></Expected>
   </item>
 </items>

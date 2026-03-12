@@ -1,4 +1,3 @@
-# testdata_generation/engine/llm_client.py
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -25,16 +24,16 @@ class OllamaClient(BaseLLMClient):
         self,
         base_url: Optional[str] = None,
         model: Optional[str] = None,
-        timeout_sec: int = 300,
+        timeout_sec: int = 900,
         endpoint_mode: str = "auto",
-        temperature: float = 0.2,
+        temperature: float = 0.0,
         top_p: float = 0.9,
-        num_predict: int = 800,
+        num_predict: int = 2000,
         seed: Optional[int] = 42,
         connect_timeout_sec: int = 10,
     ):
         self.base_url = (base_url or "http://localhost:11434").rstrip("/")
-        self.model = (model or "qwen2.5-coder:3b-instruct")
+        self.model = (model or "deepseek-r1:8b")
         self.timeout_sec = int(timeout_sec)
         self.connect_timeout_sec = int(connect_timeout_sec)
         self.endpoint_mode = (endpoint_mode or "auto").lower()

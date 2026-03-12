@@ -12,19 +12,24 @@ import pandas as pd
 class DataWriter:
     """
     Writer tách bạch 2 nơi:
-    - raw_dir: chỉ lưu evidence AI trả về (testdata_generation/output)
-    - processed_dir: dữ liệu chuẩn hoá để framework test dùng (data/ai_generated)
+    - raw_dir: chỉ lưu evidence AI trả về
+    - processed_dir: dữ liệu chuẩn hoá để framework test dùng
     """
 
     SUPPORTED_FORMATS = {"csv", "json", "xlsx", "xls", "xml", "yaml", "yml", "db"}
 
-    # Tên file processed (flat ở data/ai_generated)
+    FEATURE_ALIASES: Dict[str, str] = {
+        "profile": "profile_update",  # hỗ trợ tên cũ
+    }
+
+    # Tên file processed
     FEATURE_BASENAME: Dict[str, str] = {
         "login": "LoginData",
         "register": "RegisterData",
         "search": "SearchData",
         "order": "OrderData",
-        "profile": "ProfileData",
+        "profile_update": "ProfileUpdateData",
+        "product_review": "ProductReviewData",
     }
 
     # Thứ tự cột chuẩn theo từng feature
@@ -33,7 +38,8 @@ class DataWriter:
         "register": ["Testcase", "Username", "Phone", "Password", "ConfirmPassword", "Expected"],
         "search": ["Testcase", "Keyword", "Expected"],
         "order": ["Testcase", "Product", "Quantity", "Expected"],
-        "profile": ["Testcase", "Field", "Value", "Expected"],
+        "profile_update": ["Testcase", "Field", "Value", "Expected"],
+        "product_review": ["Testcase", "Product", "Rating", "Comment", "Expected"],
     }
 
     def __init__(self, raw_dir: Path, processed_dir: Path):
@@ -45,8 +51,12 @@ class DataWriter:
     # -------------------------
     # Helpers
     # -------------------------
-    def _get_headers(self, feature: str, rows: List[Dict[str, Any]]) -> List[str]:
+    def _normalize_feature(self, feature: str) -> str:
         f = (feature or "").strip().lower()
+        return self.FEATURE_ALIASES.get(f, f)
+
+    def _get_headers(self, feature: str, rows: List[Dict[str, Any]]) -> List[str]:
+        f = self._normalize_feature(feature)
         if f in self.FEATURE_COLUMN_ORDER:
             return self.FEATURE_COLUMN_ORDER[f]
         return list(rows[0].keys()) if rows else []
@@ -58,7 +68,7 @@ class DataWriter:
         return normalized
 
     def _processed_basename(self, feature: str) -> str:
-        f = (feature or "").strip().lower()
+        f = self._normalize_feature(feature)
         return self.FEATURE_BASENAME.get(f, f"{f.capitalize()}Data" if f else "TestData")
 
     # -------- RAW (Evidence) --------
@@ -77,13 +87,19 @@ class DataWriter:
     def write_processed_json(self, feature: str, rows: List[Dict[str, Any]]) -> Path:
         name = self._processed_basename(feature)
         path = self.processed_dir / f"{name}.json"
+
+        headers = self._get_headers(feature, rows)
+        rows_norm = self._normalize_rows(rows, headers) if headers else rows
+
         with path.open("w", encoding="utf-8") as f:
-            json.dump({"items": rows}, f, ensure_ascii=False, indent=2)
+            json.dump({"items": rows_norm}, f, ensure_ascii=False, indent=2)
+
         return path
 
     def write_processed_csv(self, feature: str, rows: List[Dict[str, Any]]) -> Path:
         name = self._processed_basename(feature)
         path = self.processed_dir / f"{name}.csv"
+
         if not rows:
             path.write_text("", encoding="utf-8")
             return path
@@ -95,17 +111,20 @@ class DataWriter:
             w = csv.DictWriter(f, fieldnames=headers)
             w.writeheader()
             w.writerows(rows_norm)
+
         return path
 
     def write_processed_xlsx(self, feature: str, rows: List[Dict[str, Any]]) -> Path:
         name = self._processed_basename(feature)
         path = self.processed_dir / f"{name}.xlsx"
+
         headers = self._get_headers(feature, rows)
         rows_norm = self._normalize_rows(rows, headers)
 
         df = pd.DataFrame(rows_norm, columns=headers)
-        sheet = (name[:31] if name else "Sheet1")
+        sheet = name[:31] if name else "Sheet1"
         df.to_excel(path, index=False, sheet_name=sheet)
+
         return path
 
     def write_processed_xls(self, feature: str, rows: List[Dict[str, Any]]) -> Path:
@@ -121,7 +140,7 @@ class DataWriter:
         path = self.processed_dir / f"{name}.xls"
 
         wb = xlwt.Workbook()
-        ws = wb.add_sheet((name[:31] if name else "Sheet1"))
+        ws = wb.add_sheet(name[:31] if name else "Sheet1")
 
         headers = self._get_headers(feature, rows)
         rows_norm = self._normalize_rows(rows, headers)
@@ -141,6 +160,9 @@ class DataWriter:
         name = self._processed_basename(feature)
         path = self.processed_dir / f"{name}.xml"
 
+        headers = self._get_headers(feature, rows)
+        rows_norm = self._normalize_rows(rows, headers) if headers else rows
+
         def esc(s: str) -> str:
             return (
                 s.replace("&", "&amp;")
@@ -151,9 +173,10 @@ class DataWriter:
             )
 
         lines = ["<items>"]
-        for row in rows:
+        for row in rows_norm:
             lines.append("  <item>")
-            for k, v in row.items():
+            for k in headers:
+                v = row.get(k, "")
                 lines.append(f"    <{k}>{esc('' if v is None else str(v))}</{k}>")
             lines.append("  </item>")
         lines.append("</items>")
@@ -169,14 +192,19 @@ class DataWriter:
 
         name = self._processed_basename(feature)
         path = self.processed_dir / f"{name}.{ext}"
+
+        headers = self._get_headers(feature, rows)
+        rows_norm = self._normalize_rows(rows, headers) if headers else rows
+
         with path.open("w", encoding="utf-8") as f:
-            yaml.safe_dump({"items": rows}, f, allow_unicode=True, sort_keys=False)
+            yaml.safe_dump({"items": rows_norm}, f, allow_unicode=True, sort_keys=False)
+
         return path
 
     def write_processed_db(self, feature: str, rows: List[Dict[str, Any]]) -> Path:
         name = self._processed_basename(feature)
         path = self.processed_dir / f"{name}.db"
-        table = (feature or "testdata").lower()
+        table = self._normalize_feature(feature) or "testdata"
 
         conn = sqlite3.connect(path)
         try:

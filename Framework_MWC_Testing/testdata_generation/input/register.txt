@@ -1,97 +1,191 @@
-Hãy sinh dữ liệu kiểm thử cho chức năng Đăng ký (Register).
+CHỨC NĂNG HIỆN TẠI: REGISTER
 
-FORM ĐĂNG KÝ (4 trường bắt buộc):
+Bạn là AI sinh dữ liệu kiểm thử cho kiểm thử hộp đen.
+
+Nhiệm vụ của bạn là sinh test case cho đúng chức năng Register
+dựa trên nghiệp vụ và các kỹ thuật kiểm thử.
+
+Chỉ sinh test case cho Register.
+Không sinh test case của Login hoặc chức năng khác.
+
+Output phải là DUY NHẤT một JSON object hợp lệ.
+Không giải thích.
+Không markdown.
+Không có văn bản ngoài JSON.
+
+
+MÔ TẢ FORM REGISTER
+
+Form đăng ký gồm 4 trường:
+
 - Username
 - Phone
 - Password
 - ConfirmPassword
 
-BUSINESS RULES (THEO WEBSITE - BẮT BUỘC TUÂN THỦ):
-- Username: bắt buộc
-- Phone: bắt buộc, chỉ gồm chữ số, đúng 10 chữ số, bắt đầu bằng 0 (không khoảng trắng, không ký tự đặc biệt)
-- Password: bắt buộc, độ dài từ 9 đến 19 ký tự (vì >8 và <20)
-- ConfirmPassword: bắt buộc và phải giống Password
-- Username đã tồn tại => không cho đăng ký
+RÀNG BUỘC NGHIỆP VỤ
 
-SEED (nếu có trong Context):
-- Context có thể chứa 1 dòng theo format:
-  SEED_EXISTING_USERNAME Username=<GIÁ_TRỊ_THẬT>
-- Nếu có seed, BẮT BUỘC phải có ít nhất 1 test case dùng đúng CHÍNH XÁC giá trị Username sau dấu '=' để cover duplicate.
-- TUYỆT ĐỐI KHÔNG dùng placeholder kiểu <seed_username> hoặc SEED_EXISTING_USERNAME.Username.
 
-EXPECTED (PHẢI ĐÚNG NGUYÊN VĂN):
-- Thiếu dữ liệu (thiếu bất kỳ trường bắt buộc nào) => "Vui lòng điền vào trường này."
-- Phone sai => "Số điện thoại không đúng định dạng!"
-- Password sai độ dài => "Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!"
-- Password != ConfirmPassword => "mật khẩu không giống nhau"
-- Username trùng => "tài khoản đã tồn tại trong hệ thống"
-- Thành công => Expected = CHÍNH Username đã nhập (không dùng câu "Đăng ký thành công")
+1. Username
+- bắt buộc nhập
+- nếu Username đã tồn tại thì không cho đăng ký
 
-YÊU CẦU COVERAGE (phải đa dạng, hạn chế lặp):
-1) Nhóm thiếu dữ liệu bắt buộc:
-   - thiếu từng trường: Username / Phone / Password / ConfirmPassword
-   - thiếu nhiều trường cùng lúc (ít nhất 1 case)
-2) Nhóm Phone sai định dạng (nhiều dạng sai khác nhau, KHÔNG chỉ 1 kiểu):
-   - có chữ (vd: 09a...)
-   - có ký tự đặc biệt (vd: 09#...)
-   - có khoảng trắng (vd: "0912 345678")
-   - sai độ dài (9 số, 11 số)
-   - không bắt đầu bằng 0
-3) Nhóm Password sai độ dài (BVA):
-   - dưới biên: 8 ký tự
-   - dưới biên - 1: 7 ký tự
-   - trên biên: 20 ký tự
-   - trên biên + 1: 21 ký tự
-4) Nhóm ConfirmPassword không khớp Password:
-   - Password hợp lệ (9-19) nhưng ConfirmPassword khác
-5) Nhóm Username trùng (nếu có seed)
-6) Nhóm thành công:
-   - ít nhất 1 case hợp lệ hoàn toàn (Expected = Username)
+2. Phone
+- bắt buộc nhập
+- phải bắt đầu bằng số 0
+- chỉ gồm chữ số
+- đúng 10 chữ số
+- không chứa khoảng trắng
+- không chứa ký tự đặc biệt
 
-QUY TẮC TẠO GIÁ TRỊ:
-- Username: dùng chuỗi thực tế (có thể có dấu), không để toàn ký tự vô nghĩa, không để khoảng trắng-only.
-- Phone hợp lệ: đúng 10 số và bắt đầu bằng 0, ví dụ 0912345678 (chỉ là ví dụ, hãy tạo số khác nhau).
-- Password hợp lệ: 9-19 ký tự, ưu tiên có chữ + số để giống dữ liệu thật (nhưng không thêm rule ngoài website).
-- ConfirmPassword: giống Password ở case hợp lệ; khác Password ở case mismatch.
+3. Password
+- bắt buộc nhập
+- độ dài lớn hơn 8 và nhỏ hơn 20 ký tự
 
-RÀNG BUỘC OUTPUT (BẮT BUỘC):
-- DÒNG ĐẦU TIÊN của output phải bắt đầu bằng ký tự '{'
-- DÒNG CUỐI CÙNG của output phải kết thúc bằng ký tự '}'
-- Chỉ trả về DUY NHẤT JSON hợp lệ, parse được bằng json.loads().
-- JSON root bắt buộc: { "items": [ ... ] }
-- Mỗi item CHỈ có 6 key, đúng tên (phân biệt hoa thường):
-  1) Testcase
-  2) Username
-  3) Phone
-  4) Password
-  5) ConfirmPassword
-  6) Expected
-- Testcase theo thứ tự tăng dần: DK01, DK02, DK03, ...
-- KHÔNG markdown, KHÔNG giải thích, KHÔNG comment trong JSON.
-- KHÔNG placeholder/biến/cú pháp kiểu "a"*7, <...>, SEED_... .Username
+4. ConfirmPassword
+- bắt buộc nhập
+- phải giống Password
 
-RÀNG BUỘC DỮ LIỆU (BẮT BUỘC):
-- TẤT CẢ giá trị phải là dữ liệu thật, ví dụ:
-  - Phone: "0912345678"
-  - Password: "Abc123456"
-- TUYỆT ĐỐI KHÔNG dùng nhãn mô tả như:
-  "string_empty", "password_min", "password_max+1", "invalid_phone_letters", "string_existing"...
-- Expected KHÔNG được để trống, KHÔNG được kiểu "sẽ điền sau".
-- Expected chỉ được là 1 trong các câu EXPECTED đã nêu hoặc Username (case success).
 
-SCHEMA THAM CHIẾU:
+EXPECTED RESPONSE
+
+1. Thiếu Username / Phone / Password / ConfirmPassword
+Expected:
+"Vui lòng điền vào trường này."
+
+2. Phone sai định dạng
+Expected:
+"Số điện thoại không đúng định dạng!"
+
+3. Password sai độ dài
+Expected:
+"Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!"
+
+4. ConfirmPassword khác Password
+Expected:
+"Mật khẩu không giống nhau"
+
+5. Username đã tồn tại
+Expected:
+"Tài khoản đã tồn tại trong hệ thống"
+
+6. Đăng ký thành công
+Expected phải chính là Username của test case đó.
+
+SEED ACCOUNT
+
+Hệ thống đã có sẵn một tài khoản:
+
+Username: "AnhDuong11"
+Password: "AnhDuong@123"
+
+Nếu Username của test case = "AnhDuong11"
+thì Expected bắt buộc phải là:
+
+"Tài khoản đã tồn tại trong hệ thống"
+
+KỸ THUẬT KIỂM THỬ PHẢI ÁP DỤNG
+
+Áp dụng khi phù hợp:
+
+- Equivalence Partitioning (phân vùng tương đương)
+- Boundary Value Analysis (giá trị biên)
+- Error Guessing (phỏng đoán lỗi)
+
+QUY TRÌNH SUY LUẬN
+
+Trước khi sinh test case, phải:
+
+1. Phân tích nghiệp vụ của Register.
+2. Xác định các nhóm tình huống kiểm thử chính.
+3. Bảo đảm mỗi nhóm tình huống quan trọng đều có test case đại diện.
+4. Kiểm tra sự nhất quán giữa dữ liệu đầu vào và Expected.
+
+NGUYÊN TẮC SINH DỮ LIỆU
+- dữ liệu phải giống dữ liệu người dùng thực tế
+- không dùng placeholder như user1, username_test
+- không dùng chuỗi vô nghĩa
+
+Khi kiểm tra lỗi của một trường
+các trường còn lại phải hợp lệ
+để cô lập nguyên nhân lỗi.
+
+Nếu Expected là lỗi Phone
+→ Username / Password / ConfirmPassword phải hợp lệ.
+
+Nếu Expected là lỗi Password
+→ Username / Phone / ConfirmPassword phải hợp lệ.
+
+Nếu Expected là lỗi ConfirmPassword
+→ Password phải hợp lệ.
+
+Nếu Expected là thành công
+→ tất cả dữ liệu phải hợp lệ.
+
+PHÂN BỔ TEST CASE
+Output phải bao phủ đầy đủ các loại tình huống:
+
+- thiếu trường bắt buộc
+- Phone sai định dạng
+- Password sai độ dài
+- ConfirmPassword không khớp
+- Username trùng
+- đăng ký thành công
+
+Không được để các test case thành công
+chiếm phần lớn output.
+
+QUY TẮC CHỐNG TRÙNG
+Không được sinh:
+- test case trùng dữ liệu đầu vào
+- test case trùng mục đích kiểm thử
+- test case chỉ khác dữ liệu bề mặt nhưng cùng ý nghĩa kiểm thử
+
+
+ĐỊNH DẠNG OUTPUT
+JSON root:
+
 {
-  "items": [
-    {
-      "Testcase": "DK01",
-      "Username": "string",
-      "Phone": "string",
-      "Password": "string",
-      "ConfirmPassword": "string",
-      "Expected": "string"
-    }
-  ]
+  "items": [ ... ]
 }
 
-Context:
-{app_context}
+Mỗi item phải có đúng 6 trường:
+
+- Testcase
+- Username
+- Phone
+- Password
+- ConfirmPassword
+- Expected
+
+
+Testcase đánh số:
+
+DK01
+DK02
+DK03
+...
+
+
+QUY TẮC CASE THÀNH CÔNG
+Expected phải chính là Username của test case đó.
+
+Ví dụ đúng:
+
+Username: MinhTrang88
+Expected: MinhTrang88
+
+Không được dùng:
+"Đăng ký thành công"
+
+
+KIỂM TRA CUỐI CÙNG
+Trước khi xuất JSON:
+
+- bảo đảm JSON hợp lệ
+- bảo đảm không có testcase trùng
+- bảo đảm Expected đúng chính tả
+- bảo đảm không có test case của Login
+- bảo đảm toàn bộ output thuộc schema Register
+
+Sau khi hoàn thành JSON thì dừng ngay.
