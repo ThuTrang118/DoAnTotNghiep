@@ -1,4 +1,3 @@
-# testdata_generation/engine/generator.py
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -31,7 +30,7 @@ class AITestDataGenerator:
     1) AI sinh RAW text
     2) Lưu RAW evidence:
        - testdata_generation/output/<feature>_raw.txt
-       - testdata_generation/output/<feature>_raw.json
+       - testdata_generation/output/<feature>_raw.json (nếu bật save_raw_json)
     3) Parse JSON từ raw text
     4) Validate schema + logic cơ bản
     5) Nếu có --formats thì convert sang dữ liệu processed
@@ -61,6 +60,7 @@ class AITestDataGenerator:
         formats: Optional[Iterable[str]] = None,  # None => ALL, [] => none
         yaml_ext: str = "yaml",
         llm_kwargs: Optional[Dict[str, Any]] = None,
+        save_raw_json: bool = True,
     ) -> GenerationResult:
         llm_kwargs = llm_kwargs or {}
         feature = (feature or "").strip().lower()
@@ -108,8 +108,10 @@ class AITestDataGenerator:
                 errors=["Parsed JSON must be an object with key 'items' as a list"],
             )
 
-        # 4) Save RAW evidence json (giữ nguyên payload AI trả ra)
-        raw_json_path = self.writer.write_raw_json(feature, payload)
+        # 4) Save RAW evidence json (tuỳ chọn)
+        raw_json_path: Optional[Path] = None
+        if save_raw_json:
+            raw_json_path = self.writer.write_raw_json(feature, payload)
 
         # 5) Normalize rows minimally (chỉ giữ item là dict)
         rows: List[Dict[str, Any]] = []
@@ -131,7 +133,6 @@ class AITestDataGenerator:
         warnings.extend(v.warnings or [])
         errors.extend(v.errors or [])
 
-        # validator trả về data={"items": cleaned_items}
         cleaned_payload = v.data if isinstance(v.data, dict) else {"items": rows}
         cleaned_rows = cleaned_payload.get("items", rows)
 

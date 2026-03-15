@@ -1,9 +1,8 @@
-# testdata_generation/engine/schema_validator.py
 from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import Any, Dict, List, Set, Tuple
+from typing import Any, Dict, List
 
 
 @dataclass
@@ -15,379 +14,353 @@ class ValidationResult:
 
 
 class DataSchemaValidator:
-    """
-    Validator theo từng chức năng.
-
-    Nhiệm vụ:
-    - Kiểm tra root JSON và key "items"
-    - Giữ lại đúng các cột hợp lệ
-    - Bổ sung cột thiếu bằng chuỗi rỗng
-    - Cảnh báo nếu item thiếu cột / thừa cột / sai kiểu
-    - Kiểm tra thêm logic nghiệp vụ cơ bản cho từng feature
-    - Cảnh báo trường hợp trùng input
-    - Cảnh báo thiếu các nhóm test quan trọng
-    """
-
     FEATURE_ALIASES: Dict[str, str] = {
-        "profile": "profile_update",  # hỗ trợ tương thích tên cũ
+        "profile": "profile_update",
     }
 
-    FEATURE_REQUIRED_KEYS: Dict[str, Set[str]] = {
-        "login": {"Testcase", "Username", "Password", "Expected"},
-        "register": {"Testcase", "Username", "Phone", "Password", "ConfirmPassword", "Expected"},
-        "search": {"Testcase", "Keyword", "Expected"},
-        "order": {"Testcase", "Product", "Quantity", "Expected"},
-        "profile_update": {"Testcase", "Field", "Value", "Expected"},
-        "product_review": {"Testcase", "Product", "Rating", "Comment", "Expected"},
+    FEATURE_COLUMNS: Dict[str, List[str]] = {
+        "login": ["Testcase", "Username", "Password", "Expected"],
+        "login_groups": ["GroupID", "BehaviorGroup", "UsernamePattern", "PasswordPattern", "Expected"],
+
+        "register": ["Testcase", "Username", "Phone", "Password", "ConfirmPassword", "Expected"],
+        "register_groups": [
+            "GroupID",
+            "BehaviorGroup",
+            "UsernamePattern",
+            "PhonePattern",
+            "PasswordPattern",
+            "ConfirmPasswordPattern",
+            "Expected",
+        ],
+
+        "search": ["Testcase", "Keyword", "Expected"],
+        "order": ["Testcase", "Product", "Quantity", "Expected"],
+        "profile_update": ["Testcase", "Field", "Value", "Expected"],
+        "product_review": ["Testcase", "Product", "Rating", "Comment", "Expected"],
     }
 
-    FEATURE_ALLOWED_KEYS: Dict[str, Set[str]] = {
-        "login": {"Testcase", "Username", "Password", "Expected"},
-        "register": {"Testcase", "Username", "Phone", "Password", "ConfirmPassword", "Expected"},
-        "search": {"Testcase", "Keyword", "Expected"},
-        "order": {"Testcase", "Product", "Quantity", "Expected"},
-        "profile_update": {"Testcase", "Field", "Value", "Expected"},
-        "product_review": {"Testcase", "Product", "Rating", "Comment", "Expected"},
-    }
+    LOGIN_SEED_USERNAME = "AnhDuong11"
+    LOGIN_SEED_PASSWORD = "anhduong@123"
+    LOGIN_EXPECTED_MISSING = "Vui lòng điền vào trường này"
+    LOGIN_EXPECTED_WRONG = "Tên đăng nhập hoặc mật khẩu không đúng!"
 
-    DEFAULT_REQUIRED_KEYS: Set[str] = {"Testcase", "Expected"}
-    DEFAULT_ALLOWED_KEYS: Set[str] = {"Testcase", "Expected"}
-
-    REGISTER_EXPECTED_SET: Set[str] = {
-        "Vui lòng điền vào trường này.",
-        "Số điện thoại không đúng định dạng!",
-        "Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!",
-        "mật khẩu không giống nhau",
-        "tài khoản đã tồn tại trong hệ thống",
-    }
-
-    LOGIN_EXPECTED_SET: Set[str] = {
-        "Vui lòng điền vào trường này",
-        "Tên đăng nhập hoặc mật khẩu không đúng!",
-    }
+    REGISTER_EXISTING_USERNAME = "AnhDuong11"
+    REGISTER_EXPECTED_REQUIRED = "Vui lòng điền vào trường này."
+    REGISTER_EXPECTED_PHONE = "Số điện thoại không đúng định dạng!"
+    REGISTER_EXPECTED_PASSWORD = "Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!"
+    REGISTER_EXPECTED_CONFIRM = "Mật khẩu không giống nhau"
+    REGISTER_EXPECTED_DUPLICATE = "Tài khoản đã tồn tại trong hệ thống"
 
     def _normalize_feature(self, feature: str) -> str:
         f = (feature or "").strip().lower()
         return self.FEATURE_ALIASES.get(f, f)
 
     def _as_str(self, value: Any) -> str:
-        if value is None:
-            return ""
-        return str(value)
+        return "" if value is None else str(value)
 
-    # ============================================================
-    # LOGIN LOGIC
-    # ============================================================
-    def _validate_login_logic(self, items: List[Dict[str, Any]], warnings: List[str]) -> None:
-        seen_inputs: Set[Tuple[str, str]] = set()
+    def _normalize_item(self, item: Dict[str, Any], columns: List[str]) -> Dict[str, str]:
+        cleaned: Dict[str, str] = {}
+        for col in columns:
+            cleaned[col] = self._as_str(item.get(col, ""))
+        return cleaned
 
-        seen_success = False
-        seen_missing_username = False
-        seen_missing_password = False
-        seen_wrong_username_or_password = False
+    # =====================================================
+    # LOGIN
+    # =====================================================
+    def _normalize_login_expected(self, username: str, password: str, expected: str) -> str:
+        if username == "" or password == "":
+            return self.LOGIN_EXPECTED_MISSING
+        if username == self.LOGIN_SEED_USERNAME and password == self.LOGIN_SEED_PASSWORD:
+            return self.LOGIN_SEED_USERNAME
+        return self.LOGIN_EXPECTED_WRONG
 
-        for i, it in enumerate(items):
-            username = self._as_str(it.get("Username", ""))
-            password = self._as_str(it.get("Password", ""))
-            expected = self._as_str(it.get("Expected", ""))
+    def _sanitize_login_items_preserve_count(
+        self,
+        items: List[Dict[str, str]],
+        warnings: List[str],
+    ) -> List[Dict[str, str]]:
+        normalized: List[Dict[str, str]] = []
 
-            key = (username, password)
-            if key in seen_inputs:
-                warnings.append(f"Item[{i}] duplicated input for login: Username + Password")
-            seen_inputs.add(key)
+        seen_exact = set()
+        seen_input = set()
 
-            missing_username = username == ""
-            missing_password = password == ""
-            missing_any = missing_username or missing_password
+        for idx, item in enumerate(items):
+            username = self._as_str(item.get("Username", ""))
+            password = self._as_str(item.get("Password", ""))
+            expected_old = self._as_str(item.get("Expected", ""))
+            expected_new = self._normalize_login_expected(username, password, expected_old)
 
-            if missing_username:
-                seen_missing_username = True
-            if missing_password:
-                seen_missing_password = True
+            if expected_old != expected_new:
+                warnings.append(
+                    f"Item[{idx}] login Expected adjusted from '{expected_old}' to '{expected_new}'"
+                )
 
-            if expected == "Vui lòng điền vào trường này":
-                if not missing_any:
-                    warnings.append(
-                        f"Item[{i}] login expected missing-field message but Username/Password are not empty"
-                    )
+            key_exact = (username, password, expected_new)
+            key_input = (username, password)
 
-            elif expected == "Tên đăng nhập hoặc mật khẩu không đúng!":
-                if missing_any:
-                    warnings.append(
-                        f"Item[{i}] login expected wrong-auth message but some required field is empty"
-                    )
-                else:
-                    seen_wrong_username_or_password = True
-
+            if key_exact in seen_exact:
+                warnings.append(f"Item[{idx}] duplicated login row detected but kept")
             else:
-                # success case: expected được xem là username hiển thị / username thành công
-                if missing_any:
-                    warnings.append(
-                        f"Item[{i}] login success-like expected but some required field is empty"
-                    )
-                seen_success = True
+                seen_exact.add(key_exact)
 
-        # coverage warnings
-        if items and not seen_success:
+            if key_input in seen_input:
+                warnings.append(f"Item[{idx}] duplicated login input detected but kept")
+            else:
+                seen_input.add(key_input)
+
+            normalized.append(
+                {
+                    "Testcase": self._as_str(item.get("Testcase", "")),
+                    "Username": username,
+                    "Password": password,
+                    "Expected": expected_new,
+                }
+            )
+
+        for idx, item in enumerate(normalized, start=1):
+            item["Testcase"] = f"LG{idx:02d}"
+
+        return normalized
+
+    def _sanitize_login_groups_items_preserve_count(
+        self,
+        items: List[Dict[str, str]],
+        warnings: List[str],
+    ) -> List[Dict[str, str]]:
+        normalized: List[Dict[str, str]] = []
+
+        seen_exact = set()
+        seen_input = set()
+
+        for idx, item in enumerate(items):
+            username = self._as_str(item.get("UsernamePattern", ""))
+            password = self._as_str(item.get("PasswordPattern", ""))
+            expected_old = self._as_str(item.get("Expected", ""))
+            expected_new = self._normalize_login_expected(username, password, expected_old)
+
+            if expected_old != expected_new:
+                warnings.append(
+                    f"Item[{idx}] login_groups Expected adjusted from '{expected_old}' to '{expected_new}'"
+                )
+
+            row = {
+                "GroupID": self._as_str(item.get("GroupID", "")),
+                "BehaviorGroup": self._as_str(item.get("BehaviorGroup", "")),
+                "UsernamePattern": username,
+                "PasswordPattern": password,
+                "Expected": expected_new,
+            }
+
+            key_exact = (username, password, expected_new)
+            key_input = (username, password)
+
+            if key_exact in seen_exact:
+                warnings.append(f"Item[{idx}] duplicated login_groups row detected but kept")
+            else:
+                seen_exact.add(key_exact)
+
+            if key_input in seen_input:
+                warnings.append(f"Item[{idx}] duplicated login_groups input detected but kept")
+            else:
+                seen_input.add(key_input)
+
+            gid = self._as_str(row.get("GroupID", "")).strip().upper()
+            row["GroupID"] = gid if re.fullmatch(r"LGG\d+", gid) else f"LGG{idx + 1:02d}"
+
+            if not row["BehaviorGroup"].strip():
+                row["BehaviorGroup"] = f"Login group {idx + 1}"
+
+            normalized.append(row)
+
+        return normalized
+
+    def _validate_login_coverage(self, items: List[Dict[str, str]], warnings: List[str]) -> None:
+        has_success = any(it["Expected"] == self.LOGIN_SEED_USERNAME for it in items)
+        has_empty_username = any(it["Username"] == "" for it in items)
+        has_empty_password = any(it["Password"] == "" for it in items)
+        has_both_empty = any(it["Username"] == "" and it["Password"] == "" for it in items)
+        has_wrong = any(it["Expected"] == self.LOGIN_EXPECTED_WRONG for it in items)
+        has_spaces = any(it["Username"] == "   " or it["Password"] == "   " for it in items)
+        has_trim = any(
+            (it["Username"] != "" and it["Username"] != it["Username"].strip())
+            or (it["Password"] != "" and it["Password"] != it["Password"].strip())
+            for it in items
+        )
+        has_case = any(
+            (it["Username"].lower() == self.LOGIN_SEED_USERNAME.lower() and it["Username"] != self.LOGIN_SEED_USERNAME)
+            or (it["Password"].lower() == self.LOGIN_SEED_PASSWORD.lower() and it["Password"] != self.LOGIN_SEED_PASSWORD)
+            for it in items
+        )
+
+        if not has_success:
             warnings.append("Login coverage warning: missing success case")
-        if items and not seen_missing_username:
-            warnings.append("Login coverage warning: missing case with empty Username")
-        if items and not seen_missing_password:
-            warnings.append("Login coverage warning: missing case with empty Password")
-        if items and not seen_wrong_username_or_password:
+        if not has_empty_username:
+            warnings.append("Login coverage warning: missing empty Username case")
+        if not has_empty_password:
+            warnings.append("Login coverage warning: missing empty Password case")
+        if not has_both_empty:
+            warnings.append("Login coverage warning: missing both-empty case")
+        if not has_wrong:
             warnings.append("Login coverage warning: missing wrong-auth case")
+        if not has_spaces:
+            warnings.append("Login coverage warning: missing spaces-only case")
+        if not has_trim:
+            warnings.append("Login coverage warning: missing leading/trailing spaces case")
+        if not has_case:
+            warnings.append("Login coverage warning: missing case-sensitive case")
 
-    # ============================================================
-    # REGISTER LOGIC
-    # ============================================================
-    def _is_valid_phone_register(self, phone: str) -> bool:
-        return bool(re.fullmatch(r"0\d{9}", phone))
+    # =====================================================
+    # REGISTER
+    # =====================================================
+    def _is_phone_invalid(self, phone: str) -> bool:
+        if phone == "":
+            return False
+        if len(phone) != 10:
+            return True
+        if not phone.startswith("0"):
+            return True
+        if not phone.isdigit():
+            return True
+        if " " in phone:
+            return True
+        return False
 
-    def _is_valid_password_register(self, password: str) -> bool:
-        return 8 < len(password) < 20
+    def _is_password_length_invalid(self, password: str) -> bool:
+        if password == "":
+            return False
+        return not (len(password) > 8 and len(password) < 20)
 
-    def _validate_register_logic(self, items: List[Dict[str, Any]], warnings: List[str]) -> None:
-        seen_inputs: Set[Tuple[str, str, str, str]] = set()
+    def _normalize_register_expected(
+        self,
+        username: str,
+        phone: str,
+        password: str,
+        confirm: str,
+        expected: str,
+    ) -> str:
+        if username == "" or phone == "" or password == "" or confirm == "":
+            return self.REGISTER_EXPECTED_REQUIRED
+        if username == self.REGISTER_EXISTING_USERNAME:
+            return self.REGISTER_EXPECTED_DUPLICATE
+        if self._is_phone_invalid(phone):
+            return self.REGISTER_EXPECTED_PHONE
+        if self._is_password_length_invalid(password):
+            return self.REGISTER_EXPECTED_PASSWORD
+        if confirm != password:
+            return self.REGISTER_EXPECTED_CONFIRM
+        return username
 
-        # coverage tracking
-        seen_missing_username = False
-        seen_missing_phone = False
-        seen_missing_password = False
-        seen_missing_confirm = False
-        seen_missing_multi = False
+    def _sanitize_register_items_preserve_count(
+        self,
+        items: List[Dict[str, str]],
+        warnings: List[str],
+    ) -> List[Dict[str, str]]:
+        normalized: List[Dict[str, str]] = []
 
-        seen_phone_invalid = False
-        seen_phone_invalid_letter = False
-        seen_phone_invalid_special = False
-        seen_phone_invalid_space = False
-        seen_phone_invalid_length = False
-        seen_phone_invalid_not_start_0 = False
+        seen_exact = set()
+        seen_input = set()
 
-        seen_password_invalid = False
-        seen_password_len_7 = False
-        seen_password_len_8 = False
-        seen_password_len_20 = False
-        seen_password_len_21 = False
+        for idx, item in enumerate(items):
+            username = self._as_str(item.get("Username", ""))
+            phone = self._as_str(item.get("Phone", ""))
+            password = self._as_str(item.get("Password", ""))
+            confirm = self._as_str(item.get("ConfirmPassword", ""))
+            expected_old = self._as_str(item.get("Expected", ""))
+            expected_new = self._normalize_register_expected(username, phone, password, confirm, expected_old)
 
-        seen_confirm_mismatch = False
-        seen_duplicate_username = False
-        seen_success = False
+            if expected_old != expected_new:
+                warnings.append(
+                    f"Item[{idx}] register Expected adjusted from '{expected_old}' to '{expected_new}'"
+                )
 
-        for i, it in enumerate(items):
-            username = self._as_str(it.get("Username", ""))
-            phone = self._as_str(it.get("Phone", ""))
-            password = self._as_str(it.get("Password", ""))
-            confirm = self._as_str(it.get("ConfirmPassword", ""))
-            expected = self._as_str(it.get("Expected", ""))
+            key_exact = (username, phone, password, confirm, expected_new)
+            key_input = (username, phone, password, confirm)
 
-            # duplicate input
-            key = (username, phone, password, confirm)
-            if key in seen_inputs:
-                warnings.append(f"Item[{i}] duplicated input for register")
-            seen_inputs.add(key)
-
-            # basic field state
-            missing_username = username == ""
-            missing_phone = phone == ""
-            missing_password = password == ""
-            missing_confirm = confirm == ""
-            missing_count = sum([missing_username, missing_phone, missing_password, missing_confirm])
-            missing_any = missing_count > 0
-
-            if missing_username:
-                seen_missing_username = True
-            if missing_phone:
-                seen_missing_phone = True
-            if missing_password:
-                seen_missing_password = True
-            if missing_confirm:
-                seen_missing_confirm = True
-            if missing_count >= 2:
-                seen_missing_multi = True
-
-            # phone analysis
-            phone_valid = self._is_valid_phone_register(phone)
-
-            if phone != "":
-                if any(ch.isalpha() for ch in phone):
-                    seen_phone_invalid = True
-                    seen_phone_invalid_letter = True
-
-                if any((not ch.isdigit()) and (not ch.isspace()) for ch in phone):
-                    seen_phone_invalid = True
-                    seen_phone_invalid_special = True
-
-                if any(ch.isspace() for ch in phone):
-                    seen_phone_invalid = True
-                    seen_phone_invalid_space = True
-
-                if phone.isdigit() and len(phone) != 10:
-                    seen_phone_invalid = True
-                    seen_phone_invalid_length = True
-
-                if phone.isdigit() and len(phone) == 10 and not phone.startswith("0"):
-                    seen_phone_invalid = True
-                    seen_phone_invalid_not_start_0 = True
-
-                if not phone_valid:
-                    seen_phone_invalid = True
-
-            # password analysis
-            pw_len = len(password)
-            pw_valid = self._is_valid_password_register(password)
-
-            if password != "":
-                if not pw_valid:
-                    seen_password_invalid = True
-                if pw_len == 7:
-                    seen_password_len_7 = True
-                if pw_len == 8:
-                    seen_password_len_8 = True
-                if pw_len == 20:
-                    seen_password_len_20 = True
-                if pw_len == 21:
-                    seen_password_len_21 = True
-
-            confirm_match = password == confirm
-
-            # ------------------------------------------------
-            # consistency checks giữa dữ liệu và expected
-            # ------------------------------------------------
-            if expected == "Vui lòng điền vào trường này.":
-                if not missing_any:
-                    warnings.append(
-                        f"Item[{i}] register expected missing-field message but no required field is empty"
-                    )
-
-            elif expected == "Số điện thoại không đúng định dạng!":
-                if missing_any:
-                    warnings.append(
-                        f"Item[{i}] register expected phone-format error but some required field is empty"
-                    )
-                if phone_valid:
-                    warnings.append(
-                        f"Item[{i}] register expected phone-format error but Phone is valid"
-                    )
-                else:
-                    # đảm bảo đây là nhóm phone invalid
-                    seen_phone_invalid = True
-
-            elif expected == "Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!":
-                if missing_any:
-                    warnings.append(
-                        f"Item[{i}] register expected password-length error but some required field is empty"
-                    )
-                if pw_valid:
-                    warnings.append(
-                        f"Item[{i}] register expected password-length error but Password length is valid"
-                    )
-                else:
-                    seen_password_invalid = True
-
-            elif expected == "mật khẩu không giống nhau":
-                if missing_any:
-                    warnings.append(
-                        f"Item[{i}] register expected confirm-mismatch but some required field is empty"
-                    )
-                if confirm_match:
-                    warnings.append(
-                        f"Item[{i}] register expected confirm-mismatch but Password == ConfirmPassword"
-                    )
-                else:
-                    seen_confirm_mismatch = True
-
-            elif expected == "tài khoản đã tồn tại trong hệ thống":
-                if missing_any:
-                    warnings.append(
-                        f"Item[{i}] register expected duplicate-username but some required field is empty"
-                    )
-                # không thể xác thực trùng thật nếu không có seed, nên chỉ đánh dấu coverage
-                seen_duplicate_username = True
-
+            if key_exact in seen_exact:
+                warnings.append(f"Item[{idx}] duplicated register row detected but kept")
             else:
-                # success case: Expected phải là chính Username
-                if expected != username:
-                    warnings.append(
-                        f"Item[{i}] register success case expected must equal Username, got Expected='{expected}', Username='{username}'"
-                    )
+                seen_exact.add(key_exact)
 
-                if missing_any:
-                    warnings.append(
-                        f"Item[{i}] register success case but some required field is empty"
-                    )
+            if key_input in seen_input:
+                warnings.append(f"Item[{idx}] duplicated register input detected but kept")
+            else:
+                seen_input.add(key_input)
 
-                if not phone_valid:
-                    warnings.append(
-                        f"Item[{i}] register success case but Phone is invalid"
-                    )
+            normalized.append(
+                {
+                    "Testcase": self._as_str(item.get("Testcase", "")),
+                    "Username": username,
+                    "Phone": phone,
+                    "Password": password,
+                    "ConfirmPassword": confirm,
+                    "Expected": expected_new,
+                }
+            )
 
-                if not pw_valid:
-                    warnings.append(
-                        f"Item[{i}] register success case but Password length is invalid"
-                    )
+        for idx, item in enumerate(normalized, start=1):
+            item["Testcase"] = f"DK{idx:02d}"
 
-                if not confirm_match:
-                    warnings.append(
-                        f"Item[{i}] register success case but ConfirmPassword does not match Password"
-                    )
+        return normalized
 
-                seen_success = True
+    def _sanitize_register_groups_items_preserve_count(
+        self,
+        items: List[Dict[str, str]],
+        warnings: List[str],
+    ) -> List[Dict[str, str]]:
+        normalized: List[Dict[str, str]] = []
 
-        # ------------------------------------------------
-        # coverage warnings
-        # ------------------------------------------------
-        if items and not seen_missing_username:
-            warnings.append("Register coverage warning: missing case with empty Username")
-        if items and not seen_missing_phone:
-            warnings.append("Register coverage warning: missing case with empty Phone")
-        if items and not seen_missing_password:
-            warnings.append("Register coverage warning: missing case with empty Password")
-        if items and not seen_missing_confirm:
-            warnings.append("Register coverage warning: missing case with empty ConfirmPassword")
-        if items and not seen_missing_multi:
-            warnings.append("Register coverage warning: missing case with multiple empty required fields")
+        seen_exact = set()
+        seen_input = set()
 
-        if items and not seen_phone_invalid:
-            warnings.append("Register coverage warning: missing phone invalid case")
-        else:
-            if items and not seen_phone_invalid_letter:
-                warnings.append("Register coverage warning: missing phone invalid case with letters")
-            if items and not seen_phone_invalid_special:
-                warnings.append("Register coverage warning: missing phone invalid case with special characters")
-            if items and not seen_phone_invalid_space:
-                warnings.append("Register coverage warning: missing phone invalid case with whitespace")
-            if items and not seen_phone_invalid_length:
-                warnings.append("Register coverage warning: missing phone invalid case with wrong length")
-            if items and not seen_phone_invalid_not_start_0:
-                warnings.append("Register coverage warning: missing phone invalid case not starting with 0")
+        for idx, item in enumerate(items):
+            username = self._as_str(item.get("UsernamePattern", ""))
+            phone = self._as_str(item.get("PhonePattern", ""))
+            password = self._as_str(item.get("PasswordPattern", ""))
+            confirm = self._as_str(item.get("ConfirmPasswordPattern", ""))
+            expected_old = self._as_str(item.get("Expected", ""))
+            expected_new = self._normalize_register_expected(username, phone, password, confirm, expected_old)
 
-        if items and not seen_password_invalid:
-            warnings.append("Register coverage warning: missing password invalid-length case")
-        else:
-            if items and not seen_password_len_7:
-                warnings.append("Register coverage warning: missing password boundary case length 7")
-            if items and not seen_password_len_8:
-                warnings.append("Register coverage warning: missing password boundary case length 8")
-            if items and not seen_password_len_20:
-                warnings.append("Register coverage warning: missing password boundary case length 20")
-            if items and not seen_password_len_21:
-                warnings.append("Register coverage warning: missing password boundary case length 21")
+            if expected_old != expected_new:
+                warnings.append(
+                    f"Item[{idx}] register_groups Expected adjusted from '{expected_old}' to '{expected_new}'"
+                )
 
-        if items and not seen_confirm_mismatch:
-            warnings.append("Register coverage warning: missing ConfirmPassword mismatch case")
-        if items and not seen_success:
-            warnings.append("Register coverage warning: missing success case")
-        if items and not seen_duplicate_username:
-            warnings.append("Register coverage warning: missing duplicate username case")
+            row = {
+                "GroupID": self._as_str(item.get("GroupID", "")),
+                "BehaviorGroup": self._as_str(item.get("BehaviorGroup", "")),
+                "UsernamePattern": username,
+                "PhonePattern": phone,
+                "PasswordPattern": password,
+                "ConfirmPasswordPattern": confirm,
+                "Expected": expected_new,
+            }
 
-    # ============================================================
-    # PUBLIC VALIDATE
-    # ============================================================
+            key_exact = (username, phone, password, confirm, expected_new)
+            key_input = (username, phone, password, confirm)
+
+            if key_exact in seen_exact:
+                warnings.append(f"Item[{idx}] duplicated register_groups row detected but kept")
+            else:
+                seen_exact.add(key_exact)
+
+            if key_input in seen_input:
+                warnings.append(f"Item[{idx}] duplicated register_groups input detected but kept")
+            else:
+                seen_input.add(key_input)
+
+            gid = self._as_str(row.get("GroupID", "")).strip().upper()
+            row["GroupID"] = gid if re.fullmatch(r"RGG\d+", gid) else f"RGG{idx + 1:02d}"
+
+            if not row["BehaviorGroup"].strip():
+                row["BehaviorGroup"] = f"Register group {idx + 1}"
+
+            normalized.append(row)
+
+        return normalized
+
     def validate(self, feature: str, data: Any) -> ValidationResult:
         feature_norm = self._normalize_feature(feature)
-
-        errors: List[str] = []
-        warnings: List[str] = []
+        columns = self.FEATURE_COLUMNS.get(feature_norm, ["Testcase", "Expected"])
 
         if not isinstance(data, dict):
             return ValidationResult(
@@ -414,53 +387,48 @@ class DataSchemaValidator:
                 data={"items": []},
             )
 
-        required = self.FEATURE_REQUIRED_KEYS.get(feature_norm, self.DEFAULT_REQUIRED_KEYS)
-        allowed = self.FEATURE_ALLOWED_KEYS.get(feature_norm, self.DEFAULT_ALLOWED_KEYS)
+        warnings: List[str] = []
+        cleaned_items: List[Dict[str, str]] = []
 
-        cleaned_items: List[Dict[str, Any]] = []
-
-        for idx, it in enumerate(items):
-            if not isinstance(it, dict):
+        for idx, raw_item in enumerate(items):
+            if not isinstance(raw_item, dict):
                 warnings.append(f"Item[{idx}] is not an object -> dropped")
                 continue
 
-            missing = [k for k in required if k not in it]
-            if missing:
-                warnings.append(f"Item[{idx}] missing keys: {missing}")
-
-            extra = [k for k in it.keys() if k not in allowed]
+            extra = [k for k in raw_item.keys() if k not in columns]
             if extra:
                 warnings.append(f"Item[{idx}] extra keys dropped: {extra}")
 
-            cleaned: Dict[str, Any] = {}
+            missing = [k for k in columns if k not in raw_item]
+            if missing:
+                warnings.append(f"Item[{idx}] missing keys filled with empty string: {missing}")
 
-            # Giữ đúng các cột hợp lệ, ép None -> ""
-            for k in allowed:
-                if k in it:
-                    cleaned[k] = "" if it.get(k) is None else it.get(k)
+            cleaned_items.append(self._normalize_item(raw_item, columns))
 
-            # Bổ sung cột bắt buộc còn thiếu
-            for k in required:
-                cleaned.setdefault(k, "")
+        if feature_norm == "login":
+            cleaned_items = self._sanitize_login_items_preserve_count(cleaned_items, warnings)
+            self._validate_login_coverage(cleaned_items, warnings)
 
-            cleaned_items.append(cleaned)
+        elif feature_norm == "login_groups":
+            cleaned_items = self._sanitize_login_groups_items_preserve_count(cleaned_items, warnings)
 
+        elif feature_norm == "register":
+            cleaned_items = self._sanitize_register_items_preserve_count(cleaned_items, warnings)
+
+        elif feature_norm == "register_groups":
+            cleaned_items = self._sanitize_register_groups_items_preserve_count(cleaned_items, warnings)
+
+        else:
+            for idx, item in enumerate(cleaned_items, start=1):
+                if "Testcase" in item and not item["Testcase"].strip():
+                    item["Testcase"] = f"TC{idx:02d}"
+
+        errors: List[str] = []
         if not cleaned_items:
             errors.append("No valid items after validation")
 
-        # ------------------------------------------------
-        # feature-specific logic checks
-        # ------------------------------------------------
-        if cleaned_items:
-            if feature_norm == "login":
-                self._validate_login_logic(cleaned_items, warnings)
-            elif feature_norm == "register":
-                self._validate_register_logic(cleaned_items, warnings)
-
-        ok = len(errors) == 0 and len(cleaned_items) > 0
-
         return ValidationResult(
-            ok=ok,
+            ok=(len(errors) == 0),
             errors=errors,
             warnings=warnings,
             data={"items": cleaned_items},

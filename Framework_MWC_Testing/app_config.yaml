@@ -23,10 +23,10 @@ ai:
     base_url: http://localhost:11434
     endpoint_mode: generate
     model: "qwen2.5-coder:3b-instruct"
-    timeout_sec: 1000
-    temperature: 0.2
-    top_p: 0.9
-    num_predict: 2500
+    timeout_sec: 2200
+    temperature: 0.1
+    top_p: 0.8
+    num_predict: 3000
     seed: 42
   generation:
     output_root: data/ai_generated

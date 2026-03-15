@@ -1,111 +1,165 @@
-Generate test cases for the LOGIN feature of the MWC website.
+PHÂN TÍCH CHỨC NĂNG ĐĂNG NHẬP
+
+Bạn hãy phân tích chức năng LOGIN của website MWC và sinh ra các nhóm hành vi kiểm thử theo phương pháp kiểm thử hộp đen.
 
 ==================================================
-FEATURE DESCRIPTION
+1. MÔ TẢ CHỨC NĂNG
 ==================================================
 
-Login form has two fields:
-- Username (required)
-- Password (required)
+Form đăng nhập có 2 trường:
 
-Seed account for successful login:
-- Username: "Ánh Dương Phạm"
-- Password: "anhduong@123"
+- Username
+- Password
 
-==================================================
-SYSTEM BEHAVIOR
-==================================================
-
-1. If Username or Password is missing
-→ show: "Vui lòng điền vào trường này"
-
-2. If both fields are present but credentials are incorrect
-→ show: "Tên đăng nhập hoặc mật khẩu không đúng!"
-
-3. If Username and Password exactly match the seed account
-→ login succeeds and Expected is:
-"Ánh Dương Phạm"
+Người dùng nhập dữ liệu và gửi form để xác thực tài khoản.
 
 ==================================================
-TEST DESIGN INSTRUCTION
+2. RÀNG BUỘC DỮ LIỆU
 ==================================================
 
-Use black-box testing techniques described in the knowledge base:
+Username:
+- bắt buộc
+- tối đa 25 ký tự
+
+Password:
+- bắt buộc
+- độ dài từ 8 đến 20 ký tự
+- phải chứa tối thiểu:
+  - 1 chữ hoa
+  - 1 chữ thường
+  - 1 chữ số
+  - 1 ký tự đặc biệt
+
+==================================================
+3. TÀI KHOẢN HỢP LỆ
+==================================================
+
+Tài khoản hợp lệ duy nhất dùng để kiểm thử:
+
+Username: AnhDuong11
+Password: anhduong@123
+
+==================================================
+4. QUY TẮC HỆ THỐNG
+==================================================
+
+Nếu Username hoặc Password là chuỗi rỗng ""
+=> Expected: Vui lòng điền vào trường này
+
+Nếu Username và Password đều có dữ liệu nhưng không khớp chính xác tài khoản hợp lệ
+=> Expected: Tên đăng nhập hoặc mật khẩu không đúng!
+
+Nếu Username = "AnhDuong11" và Password = "anhduong@123"
+=> Expected: AnhDuong11
+
+==================================================
+5. QUY TẮC SO SÁNH
+==================================================
+
+Username và Password được so sánh chính xác tuyệt đối.
+
+Chỉ cần khác một ký tự cũng được xem là sai.
+
+Các trường hợp sau đều được xem là dữ liệu sai:
+
+- chỉ chứa khoảng trắng
+- có khoảng trắng đầu hoặc cuối
+- khác chữ hoa chữ thường
+
+Chuỗi chỉ chứa khoảng trắng KHÔNG phải chuỗi rỗng.
+
+==================================================
+6. MỤC TIÊU SINH DỮ LIỆU
+==================================================
+
+Hãy áp dụng các kỹ thuật kiểm thử hộp đen sau để suy luận các nhóm hành vi kiểm thử:
+
 - Equivalence Partitioning
-- Boundary Value thinking
-- Cause-Effect reasoning
+- Boundary Value Analysis
 - Error Guessing
+- Cause–Effect reasoning
 
-First identify the distinct behavioral groups of the Login feature.
+Từ các ràng buộc dữ liệu và rule hệ thống, hãy sinh ra các trường hợp kiểm thử đại diện cho:
 
-Then generate a compact set of representative test cases that collectively cover:
-- successful login
-- missing required fields
-- incorrect authentication
-- representative equivalence classes of Username and Password
-- boundary-like inputs (for example: empty, very short, unusually long)
-- realistic error-prone inputs (for example: spaces, case differences, special characters)
+- dữ liệu hợp lệ
+- dữ liệu thiếu
+- dữ liệu vượt giới hạn
+- dữ liệu ở giá trị biên
+- dữ liệu vi phạm quy tắc định dạng
+- các lỗi nhập liệu thường gặp
 
-Do not generate multiple test cases from the same equivalence class if they produce the same behavior and the same expected result, unless a new case adds a meaningful boundary or a new error-prone behavior.
+Chỉ sinh các trường hợp cần thiết để bao phủ các hành vi khác biệt thật sự.
 
-Each new test case must add new behavioral coverage.
-
-Stop generating when additional cases no longer add meaningful new coverage.
+Không cần sinh các biến thể lặp lại nếu chúng không làm tăng coverage.
 
 ==================================================
-EXPECTED RESULTS
+7. QUY TẮC CHỐNG TRÙNG
 ==================================================
 
-Expected must be one of:
+Không được tạo 2 item có cùng:
 
-"Ánh Dương Phạm"
-"Vui lòng điền vào trường này"
-"Tên đăng nhập hoặc mật khẩu không đúng!"
+- UsernamePattern
+- PasswordPattern
+- Expected
 
-Do not invent other messages.
+Mỗi item phải đại diện cho một hành vi kiểm thử khác nhau.
 
 ==================================================
-OUTPUT FORMAT
+8. QUY TẮC EXPECTED
 ==================================================
 
-Return JSON only.
+Chỉ được dùng đúng 3 giá trị Expected sau:
 
-Structure:
+1. Vui lòng điền vào trường này
+2. Tên đăng nhập hoặc mật khẩu không đúng!
+3. AnhDuong11
+
+Không được để Expected rỗng.
+
+==================================================
+9. ĐỊNH DẠNG OUTPUT
+==================================================
+
+Chỉ trả về DUY NHẤT một JSON object hợp lệ theo mẫu:
 
 {
   "items": [
     {
-      "Testcase": "LG01",
-      "Username": "...",
-      "Password": "...",
-      "Expected": "..."
+      "GroupID": "LGG01",
+      "BehaviorGroup": "Đăng nhập hợp lệ",
+      "UsernamePattern": "AnhDuong11",
+      "PasswordPattern": "anhduong@123",
+      "Expected": "AnhDuong11"
     }
   ]
 }
 
-Rules:
-- Use sequential IDs: LG01, LG02, ...
-- Each item must contain exactly these four fields:
-  - Testcase
-  - Username
-  - Password
-  - Expected
-- Do not output explanations
-- Do not output markdown
-- Do not output extra keys
-
 ==================================================
-FINAL CHECK BEFORE OUTPUT
+10. QUY TẮC OUTPUT
 ==================================================
 
-Before producing the final JSON, check that the test set includes distinct coverage for:
-- successful login
-- missing Username
-- missing Password
-- both fields missing if it creates distinct behavior
-- wrong Username
-- wrong Password
-- both wrong if it creates distinct behavior
-- at least some representative edge/error-prone inputs
+- Chỉ JSON
+- Không markdown
+- Không code block
+- Không giải thích
+- Không viết chữ trước JSON
+- Không viết chữ sau JSON
 
-Remove redundant cases that repeat the same logic path without adding new coverage.
+Mỗi item chỉ có đúng 5 trường:
+
+GroupID
+BehaviorGroup
+UsernamePattern
+PasswordPattern
+Expected
+
+==================================================
+11. KIỂM TRA TRƯỚC KHI TRẢ KẾT QUẢ
+==================================================
+
+Trước khi trả kết quả, tự kiểm tra:
+
+- mọi item đều đủ 5 trường
+- JSON đóng đủ ngoặc
+- không có item trùng
+- các giá trị Expected hợp lệ
