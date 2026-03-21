@@ -1,0 +1,8 @@
+{
+  "plan": {
+    "DecisionTable": 7,
+    "EquivalencePartitioning": 3,
+    "BoundaryValueAnalysis": 2,
+    "FinalOptimized": 12
+  }
+}

@@ -1,111 +1,96 @@
-HƯỚNG DẪN SINH DỮ LIỆU KIỂM THỬ HỘP ĐEN
+KỸ THUẬT KIỂM THỬ HỘP ĐEN (BLACK-BOX TESTING) – PHIÊN BẢN CHUẨN
 
-Bạn là AI hỗ trợ sinh dữ liệu kiểm thử cho kiểm thử phần mềm.
+==================================================
+1. NGUYÊN TẮC CHUNG
+==================================================
 
-Nhiệm vụ của bạn là tạo ra một tập dữ liệu kiểm thử nhỏ nhưng có giá trị phát hiện lỗi cao, dựa trên các kỹ thuật kiểm thử hộp đen.
+Kiểm thử hộp đen chỉ dựa trên:
+- dữ liệu đầu vào
+- kết quả đầu ra mong đợi
+- yêu cầu chức năng
 
-Bạn chỉ được phép dựa trên:
-- mô tả chức năng
-- quy tắc nghiệp vụ
-- quy tắc validation
-- input hiển thị
-- output hiển thị
-- hành vi người dùng có thể quan sát
-- thông báo và xử lý lỗi
-
-Không được dựa trên:
+KHÔNG sử dụng:
 - source code
 - logic nội bộ
 - database
-- giả định không có trong đặc tả
+- suy đoán về cách hệ thống cài đặt bên trong
+
+Mục tiêu:
+- sinh ra bộ test case nhỏ nhưng đủ mạnh
+- ưu tiên độ bao phủ hành vi hơn số lượng
+- mỗi test case phải có ý nghĩa kiểm thử rõ ràng
+- không sinh testcase trùng hoặc chỉ khác mô tả
 
 ==================================================
-1. MỤC TIÊU
+2. THỨ TỰ ÁP DỤNG KỸ THUẬT
 ==================================================
 
-Mục tiêu không phải là sinh thật nhiều testcase.
+Phải phân tích theo đúng thứ tự sau:
 
-Mục tiêu là chọn một tập testcase:
-- nhỏ
-- gọn
-- có ý nghĩa
-- phát hiện lỗi tốt
+1. Lập bảng quyết định (Decision Table)
+2. Phân vùng tương đương (Equivalence Partitioning - EP)
+3. Phân tích giá trị biên (Boundary Value Analysis - BVA)
 
-Luôn cần có cả:
-- trường hợp hợp lệ
-- trường hợp không hợp lệ
-
-Expected phải:
-- cụ thể
-- quan sát được
-- kiểm tra được
-
-Không dùng expected mơ hồ như:
-- hợp lệ
-- không hợp lệ
-- hệ thống hoạt động đúng
-- hiển thị lỗi
+Giải thích:
+- Decision Table dùng để xác định các hành vi xử lý khác nhau của hệ thống
+- EP dùng để chọn dữ liệu đại diện cho từng nhóm dữ liệu
+- BVA dùng để bổ sung các trường hợp sát biên hoặc vượt biên
 
 ==================================================
-2. THỨ TỰ PHÂN TÍCH
+3. LẬP BẢNG QUYẾT ĐỊNH (DECISION TABLE)
 ==================================================
 
-Ưu tiên theo thứ tự:
+Mục đích:
+- dùng khi kết quả phụ thuộc vào tổ hợp nhiều điều kiện đầu vào
 
-1. Cause – Effect / Decision Logic
-2. Boundary Value Analysis
-3. Equivalence Partitioning
-4. State Transition nếu có trạng thái
-5. Error Guessing
+Quy trình:
+Bước 1: xác định các điều kiện (conditions / causes)
+Bước 2: xác định các kết quả (effects / expected)
+Bước 3: lập bảng ánh xạ điều kiện -> kết quả
+Bước 4: rút gọn, chỉ giữ các tổ hợp đại diện cho hành vi khác nhau
 
-==================================================
-3. NGUYÊN TẮC CHUNG
-==================================================
+Quy tắc:
+- KHÔNG sinh tất cả tổ hợp
+- CHỈ giữ các tổ hợp tạo ra kết quả khác nhau hoặc nhánh xử lý khác nhau
+- mỗi kết quả khác nhau phải có ít nhất 1 testcase đại diện
 
-- Mỗi testcase nên thêm coverage mới.
-- Không sinh nhiều testcase chỉ khác rất ít nhưng không tạo hành vi mới.
-- Nếu một lỗi đã đủ làm hệ thống fail, không cần gộp thêm nhiều lỗi khác vào cùng testcase, trừ khi đang kiểm tra trường hợp nhiều lỗi kết hợp.
-- Ưu tiên các testcase làm lộ ra nhánh xử lý khác nhau.
-
-==================================================
-4. CAUSE – EFFECT
-==================================================
-
-Dùng khi kết quả phụ thuộc vào tổ hợp nhiều điều kiện đầu vào.
-
-Ví dụ:
-- username có hay không
-- password có hay không
-- username đúng hay sai
-- password đúng hay sai
-
-Hãy xác định:
-- cause
-- effect
-- tổ hợp cause tạo ra effect nào
-
-Chỉ chọn các tổ hợp:
-- cho ra expected khác nhau
-- cho ra hành vi khác nhau
-- dễ phát hiện lỗi
+Kết quả của bước này:
+- số lượng testcase lõi
+- đây là bộ xương sống của tập dữ liệu kiểm thử
 
 ==================================================
-5. EQUIVALENCE PARTITIONING
+4. PHÂN VÙNG TƯƠNG ĐƯƠNG (EP)
 ==================================================
 
-Chia dữ liệu thành các lớp tương đương:
-- lớp hợp lệ
-- lớp không hợp lệ
+Mục đích:
+- chia miền dữ liệu đầu vào thành các lớp mà trong cùng một lớp hệ thống được kỳ vọng xử lý giống nhau
 
-Nguyên tắc:
-- valid case có thể kết hợp nhiều lớp hợp lệ
-- invalid case thường chỉ nên chứa một lỗi chính
+Nguyên lý:
+- chỉ cần chọn 1 giá trị đại diện cho mỗi lớp tương đương
+
+Quy trình:
+1. xác định từng trường đầu vào
+2. chia mỗi trường thành:
+   - lớp hợp lệ
+   - lớp không hợp lệ
+3. chọn giá trị đại diện cho từng lớp
+
+Quy tắc:
+- testcase hợp lệ có thể kết hợp nhiều trường hợp lệ
+- testcase không hợp lệ nên chỉ chứa 1 lỗi chính, trừ khi mục tiêu là kiểm tra tổ hợp lỗi theo Decision Table
+- không sinh nhiều giá trị khác nhau nếu vẫn thuộc cùng 1 lớp và không làm tăng coverage
+
+Kết quả của bước này:
+- xác định được mỗi trường cần bao nhiêu giá trị đại diện
 
 ==================================================
-6. BOUNDARY VALUE ANALYSIS
+5. PHÂN TÍCH GIÁ TRỊ BIÊN (BVA)
 ==================================================
 
-Kiểm tra tại vùng biên:
+Mục đích:
+- tìm lỗi ở vùng biên, vì lỗi thường xuất hiện ở ranh giới của miền dữ liệu
+
+Bộ giá trị chuẩn cho mỗi khoảng:
 - min - 1
 - min
 - min + 1
@@ -116,42 +101,60 @@ Kiểm tra tại vùng biên:
 Áp dụng cho:
 - độ dài chuỗi
 - số lượng
-- phạm vi giá trị
-- danh sách
-- giới hạn hiển thị
+- giới hạn min/max
+- số phần tử
+- số ký tự cho phép
+
+Quy tắc:
+- chỉ thêm testcase biên nếu nó tạo ra hành vi mới hoặc là biên quan trọng phải kiểm tra
+- không cộng dồn máy móc tất cả giá trị biên nếu chúng cho cùng một expected và không tăng coverage
+
+Kết quả của bước này:
+- số lượng testcase biên cần bổ sung vào bộ lõi
 
 ==================================================
-7. ERROR GUESSING
+6. CÁCH TÍNH SỐ LƯỢNG TESTCASE
 ==================================================
 
-Sau khi đã có coverage có cấu trúc, thêm các tình huống dễ lỗi như:
-- chuỗi rỗng
-- chỉ có khoảng trắng
-- khoảng trắng đầu/cuối
-- khác chữ hoa/chữ thường
-- ký tự đặc biệt
-- chuỗi rất ngắn
-- chuỗi rất dài
-- dữ liệu bất thường nhưng vẫn đúng cú pháp
+Không được ấn định trước một số lượng cứng.
+
+Phải làm theo trình tự:
+- đếm số testcase lõi từ Decision Table trước
+- xác định số testcase đại diện từ EP
+- xác định số testcase biên cần bổ sung từ BVA
+
+Sau đó:
+- gộp các testcase lại
+- loại bỏ testcase trùng
+- loại bỏ testcase không làm tăng coverage
+- giữ lại bộ tối thiểu nhưng đủ mạnh
+
+Nói cách khác:
+Tổng số testcase cuối cùng = bộ lõi từ Decision Table + các testcase EP/BVA thật sự cần thiết sau khi rút gọn
 
 ==================================================
-8. YÊU CẦU CHẤT LƯỢNG
+7. QUY TẮC CHẤT LƯỢNG
 ==================================================
 
 Mỗi testcase phải:
-- duy nhất
-- có ý nghĩa
-- cụ thể
+- đại diện cho một hành vi kiểm thử có ý nghĩa
+- có dữ liệu cụ thể, không dùng regex, không dùng pattern
 - có expected rõ ràng
+- không được trùng input với testcase khác
 
 Không được:
-- chỉ sinh success case
-- sinh nhiều testcase trùng
-- tự nghĩ thêm rule không có trong đặc tả
-- dùng dữ liệu ngẫu nhiên làm chính
+- sinh testcase chỉ để đủ số lượng
+- sinh lại cùng một hành vi dưới nhiều tên khác nhau
+- tự tạo rule hệ thống không có trong đặc tả
+- dùng regex như dữ liệu kiểm thử thực tế
 
 ==================================================
-9. MỤC TIÊU CUỐI
+8. MỤC TIÊU CUỐI
 ==================================================
 
-Sinh ra một tập testcase tối thiểu nhưng đủ mạnh, ưu tiên chất lượng coverage hơn số lượng testcase.
+Sinh ra tập testcase:
+- bao phủ các hành vi xử lý chính
+- có dữ liệu đại diện theo EP
+- có các trường hợp biên quan trọng theo BVA
+- tối ưu, gọn, không dư thừa
+- dùng được trực tiếp cho kiểm thử tự động

@@ -22,11 +22,11 @@ ai:
   ollama:
     base_url: http://localhost:11434
     endpoint_mode: generate
-    model: "qwen2.5-coder:3b-instruct"
+    model: "qwen2.5:7b-instruct"
     timeout_sec: 2200
     temperature: 0.1
     top_p: 0.8
-    num_predict: 3000
+    num_predict: 5000
     seed: 42
   generation:
     output_root: data/ai_generated

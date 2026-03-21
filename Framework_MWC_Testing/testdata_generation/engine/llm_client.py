@@ -33,7 +33,7 @@ class OllamaClient(BaseLLMClient):
         json_mode: bool = True,
     ):
         self.base_url = (base_url or "http://localhost:11434").rstrip("/")
-        self.model = model or "qwen2.5-coder:3b-instruct"
+        self.model = model or "qwen2.5:7b-instruct"
         self.timeout_sec = int(timeout_sec)
         self.connect_timeout_sec = int(connect_timeout_sec)
         self.endpoint_mode = (endpoint_mode or "auto").lower()

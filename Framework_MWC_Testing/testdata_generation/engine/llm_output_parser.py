@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import dataclass
-from typing import Any, Optional, List
+from typing import Any, Optional, List, Tuple
 
 
 @dataclass
@@ -23,33 +23,39 @@ class LLMOutputParser:
         cleaned = self._strip_code_fences(raw_text.strip())
         cleaned = self._remove_json_comments(cleaned)
 
-        # 1) Try direct
-        data = self._try_load_with_repair(cleaned)
-        if data is not None:
-            return ParseResult(ok=True, data=data, cleaned_text=cleaned)
+        candidates: List[Tuple[str, str]] = []
 
-        # 2) Extract first JSON block by bracket matching (needs full close)
-        block = self._extract_first_json_block(cleaned)
-        if block:
-            block2 = self._remove_json_comments(block)
-            data2 = self._try_load_with_repair(block2)
-            if data2 is not None:
-                return ParseResult(ok=True, data=data2, cleaned_text=block2)
+        def add_candidate(name: str, text: Optional[str]) -> None:
+            if text and text.strip():
+                t = self._remove_json_comments(text.strip())
+                candidates.append((name, t))
 
-        # 3) Salvage between first open and last close (works only if last close exists)
-        salvaged = self._salvage_between_outer_braces(cleaned)
-        if salvaged:
-            salvaged2 = self._remove_json_comments(salvaged)
-            data3 = self._try_load_with_repair(salvaged2)
-            if data3 is not None:
-                return ParseResult(ok=True, data=data3, cleaned_text=salvaged2)
+        add_candidate("direct", cleaned)
+        add_candidate("items_root", self._salvage_root_object_with_items(cleaned))
+        add_candidate("outer_braces", self._salvage_between_outer_braces(cleaned))
+        add_candidate("truncated", self._salvage_truncated_json(cleaned))
+        add_candidate("last_block", self._extract_last_json_block(cleaned))
+        add_candidate("first_block", self._extract_first_json_block(cleaned))
 
-        # 4) NEW: salvage truncated JSON by cutting to last safe position, then auto-close
-        salvaged_trunc = self._salvage_truncated_json(cleaned)
-        if salvaged_trunc:
-            data4 = self._try_load_with_repair(salvaged_trunc)
-            if data4 is not None:
-                return ParseResult(ok=True, data=data4, cleaned_text=salvaged_trunc)
+        best_data: Any = None
+        best_text = ""
+        best_score = -1
+
+        for _, candidate in candidates:
+            data = self._try_load_with_repair(candidate)
+            if data is None:
+                continue
+
+            score = self._score_parsed_json(data)
+            if score > best_score:
+                best_score = score
+                best_data = data
+                best_text = candidate
+                if score >= 100:
+                    break
+
+        if best_score >= 0:
+            return ParseResult(ok=True, data=best_data, cleaned_text=best_text)
 
         return ParseResult(
             ok=False,
@@ -57,7 +63,22 @@ class LLMOutputParser:
             error="Cannot parse JSON from LLM output (no valid JSON object/array found)",
         )
 
-    # -------------------------
+    def _score_parsed_json(self, data: Any) -> int:
+        if isinstance(data, dict):
+            score = 10
+            if isinstance(data.get("items"), list):
+                score += 100
+            if isinstance(data.get("plan"), dict):
+                score += 20
+            if any(k in data for k in ("items", "plan", "data", "result", "payload")):
+                score += 5
+            return score
+
+        if isinstance(data, list):
+            return 30
+
+        return 0
+
     def _try_load_with_repair(self, text: str) -> Any:
         if not text:
             return None
@@ -141,6 +162,53 @@ class LLMOutputParser:
 
         return None
 
+    def _extract_last_json_block(self, text: str) -> Optional[str]:
+        if not text:
+            return None
+
+        end_obj = text.rfind("}")
+        end_arr = text.rfind("]")
+        if end_obj == -1 and end_arr == -1:
+            return None
+
+        if end_obj > end_arr:
+            end = end_obj
+            open_ch, close_ch = "{", "}"
+        else:
+            end = end_arr
+            open_ch, close_ch = "[", "]"
+
+        depth = 0
+        in_str = False
+        esc = False
+
+        for i in range(end, -1, -1):
+            ch = text[i]
+
+            if in_str:
+                if esc:
+                    esc = False
+                    continue
+                if ch == "\\":
+                    esc = True
+                    continue
+                if ch == '"':
+                    in_str = False
+                continue
+
+            if ch == '"':
+                in_str = True
+                continue
+
+            if ch == close_ch:
+                depth += 1
+            elif ch == open_ch:
+                depth -= 1
+                if depth == 0:
+                    return text[i:end + 1].strip()
+
+        return None
+
     def _salvage_between_outer_braces(self, text: str) -> Optional[str]:
         if not text:
             return None
@@ -156,6 +224,69 @@ class LLMOutputParser:
             return text[first_arr:last_arr + 1].strip()
 
         return None
+
+    def _salvage_root_object_with_items(self, text: str) -> Optional[str]:
+        """
+        Trường hợp root JSON có dạng { ..., "items": [ {...}, {...}, ... ] }
+        nhưng bị cắt giữa chừng ở một item cuối.
+
+        Ý tưởng:
+        - giữ nguyên phần prefix trước dấu '[' của items
+        - chỉ nhặt các object hoàn chỉnh trong mảng items
+        - đóng lại ] và } để tạo root JSON hợp lệ
+        """
+        if not text or '"items"' not in text:
+            return None
+
+        items_key_pos = text.find('"items"')
+        array_start = text.find('[', items_key_pos)
+        if array_start == -1:
+            return None
+
+        prefix = text[: array_start + 1]
+        suffix = "]}"
+
+        objs: List[str] = []
+        in_str = False
+        esc = False
+        depth = 0
+        obj_start: Optional[int] = None
+
+        for i in range(array_start + 1, len(text)):
+            ch = text[i]
+
+            if in_str:
+                if esc:
+                    esc = False
+                    continue
+                if ch == "\\":
+                    esc = True
+                    continue
+                if ch == '"':
+                    in_str = False
+                continue
+
+            if ch == '"':
+                in_str = True
+                continue
+
+            if ch == "{":
+                if depth == 0:
+                    obj_start = i
+                depth += 1
+            elif ch == "}":
+                if depth > 0:
+                    depth -= 1
+                    if depth == 0 and obj_start is not None:
+                        objs.append(text[obj_start:i + 1].strip())
+                        obj_start = None
+            elif ch == "]":
+                break
+
+        if not objs:
+            return None
+
+        return prefix + ", ".join(objs) + suffix
 
     def _salvage_truncated_json(self, text: str) -> Optional[str]:
         if not text:
@@ -186,6 +317,7 @@ class LLMOutputParser:
                     continue
                 if ch == '"':
                     in_str = False
+                    last_safe_idx = i
                 continue
 
             if ch == '"':
@@ -203,14 +335,11 @@ class LLMOutputParser:
             elif ch == ",":
                 last_safe_idx = i
 
-        # If cut inside a string OR unclosed brackets => cut to last safe point
         if (in_str or stack) and last_safe_idx is not None:
             candidate = candidate[: last_safe_idx + 1].rstrip()
 
-        # strip trailing comma after cutting
         candidate = re.sub(r",\s*$", "", candidate)
 
-        # recompute stack and close
         stack = []
         in_str2 = False
         esc2 = False

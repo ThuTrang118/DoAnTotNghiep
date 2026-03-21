@@ -1,0 +1,143 @@
+Bạn là QA Engineer. Hãy lập TESTCASE COVERAGE PLAN cho chức năng LOGIN của website MWC.
+
+MỤC TIÊU:
+- Chỉ sinh plan
+- Không sinh items
+- Không sinh testcase chi tiết
+- Chỉ trả về DUY NHẤT 1 JSON object hợp lệ có key "plan"
+
+==================================================
+1. MÔ TẢ CHỨC NĂNG
+==================================================
+
+Form đăng nhập có 2 trường:
+- Username
+- Password
+
+Tài khoản hợp lệ duy nhất:
+- Username: "AnhDuong11"
+- Password: "AnhDuong@123"
+
+==================================================
+2. RÀNG BUỘC DỮ LIỆU
+==================================================
+
+Username:
+- bắt buộc
+- độ dài hợp lệ: từ 1 đến 25 ký tự
+
+Password:
+- bắt buộc
+- độ dài hợp lệ: từ 8 đến 20 ký tự
+
+==================================================
+3. QUY TẮC XỬ LÝ
+==================================================
+
+Áp dụng đúng thứ tự ưu tiên sau:
+
+Rule 1:
+Nếu Username = "" hoặc Password = ""
+=> "Vui lòng điền vào trường này"
+
+Rule 2:
+Nếu cả hai trường đều có dữ liệu nhưng không khớp chính xác tài khoản hợp lệ
+=> "Tên đăng nhập hoặc mật khẩu không đúng!"
+
+Rule 3:
+Nếu Username = "AnhDuong11" và Password = "AnhDuong@123"
+=> "AnhDuong11"
+
+Lưu ý:
+- "   " KHÔNG phải chuỗi rỗng
+- dữ liệu chỉ chứa khoảng trắng vẫn được xem là có dữ liệu
+- dữ liệu có khoảng trắng đầu hoặc cuối vẫn được xem là có dữ liệu
+- so sánh tuyệt đối, phân biệt hoa thường
+- chỉ cần khác 1 ký tự cũng là sai
+- nếu dữ liệu vượt ngoài độ dài hợp lệ nhưng vẫn không rỗng thì vẫn được xem là có dữ liệu để áp dụng Rule 2
+- KHÔNG được tự ý tạo thông báo lỗi mới ngoài 3 giá trị đã định nghĩa
+
+==================================================
+4. CÁCH TÍNH PLAN BẮT BUỘC
+==================================================
+
+Bước 1 - Decision Table:
+Phải cover đủ đúng 7 nhóm lõi:
+1. Username đúng + Password đúng
+2. Username rỗng + Password có dữ liệu
+3. Username có dữ liệu + Password rỗng
+4. Username rỗng + Password rỗng
+5. Username sai + Password đúng
+6. Username đúng + Password sai
+7. Username sai + Password sai
+
+=> DecisionTable phải bằng 7
+
+Bước 2 - Equivalence Partitioning:
+Chỉ đếm các nhóm EP thật sự khác biệt và có thể materialize rõ ràng thành items.
+Ưu tiên tối đa 3 nhóm EP sau:
+- dữ liệu chỉ chứa khoảng trắng
+- dữ liệu có khoảng trắng đầu hoặc cuối
+- dữ liệu sai khác hoa thường
+
+Nếu một nhóm EP không tạo thêm coverage rõ ràng so với DT thì không cộng thêm.
+
+Bước 3 - Boundary Value Analysis:
+Chỉ đếm các boundary thật sự quan trọng và dễ materialize rõ ràng.
+Ưu tiên tối đa 2 nhóm BVA sau:
+- Username vượt max length 26 ký tự
+- Password vượt max length 21 ký tự
+
+Không cộng các mốc biên khác nếu chúng không tạo thêm behavior group rõ ràng hơn.
+
+Bước 4 - FinalOptimized:
+FinalOptimized = tổng số behavior groups thực sự khác nhau sau khi gộp DT + EP + BVA và loại trùng.
+
+==================================================
+5. RÀNG BUỘC CHỐNG SAI PLAN
+==================================================
+
+- DecisionTable phải bằng 7
+- EquivalencePartitioning chỉ được từ 0 đến 3
+- BoundaryValueAnalysis chỉ được từ 0 đến 2
+- FinalOptimized không được nhỏ hơn 7
+- FinalOptimized không được lớn hơn 12
+- FinalOptimized phải đúng bằng số behavior groups thực sự có thể triển khai thành items không trùng logic
+
+==================================================
+6. YÊU CẦU OUTPUT
+==================================================
+
+Chỉ trả về DUY NHẤT 1 JSON object hợp lệ:
+
+{
+  "plan": {
+    "DecisionTable": 0,
+    "EquivalencePartitioning": 0,
+    "BoundaryValueAnalysis": 0,
+    "FinalOptimized": 0
+  }
+}
+
+==================================================
+7. QUY TẮC FORMAT
+==================================================
+
+- Chỉ JSON
+- Không markdown
+- Không code block
+- Không giải thích
+- Không ghi chú
+- Không chữ nào trước JSON
+- Không chữ nào sau JSON
+
+==================================================
+8. TỰ KIỂM TRA
+==================================================
+
+Trước khi trả kết quả, tự kiểm tra:
+- DecisionTable = 7
+- FinalOptimized = DecisionTable + EP + BVA sau khi loại trùng
+- FinalOptimized không vượt 12
+- plan có thể triển khai thành items thật, không bị thiếu số lượng
+- JSON hợp lệ

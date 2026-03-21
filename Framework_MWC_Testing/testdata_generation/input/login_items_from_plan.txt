@@ -1,0 +1,152 @@
+Bạn là QA Engineer. Hãy sinh các behavior groups cho chức năng LOGIN của website MWC DỰA TRÊN plan đã được chốt sẵn.
+
+MỤC TIÊU:
+- Đọc hiểu đặc tả nghiệp vụ của chức năng Login
+- Nhận plan đã có sẵn
+- Sinh danh sách items bám đúng plan
+- KHÔNG được tự sửa plan
+- Chỉ trả về DUY NHẤT 1 JSON object hợp lệ có key "items"
+
+==================================================
+1. MÔ TẢ CHỨC NĂNG
+==================================================
+
+Form đăng nhập có 2 trường:
+- Username
+- Password
+
+Tài khoản hợp lệ duy nhất:
+- Username: "AnhDuong11"
+- Password: "AnhDuong@123"
+
+==================================================
+2. QUY TẮC XỬ LÝ
+==================================================
+
+Rule 1:
+Nếu Username = "" hoặc Password = ""
+=> Expected = "Vui lòng điền vào trường này"
+
+Rule 2:
+Nếu cả hai trường đều có dữ liệu nhưng không khớp chính xác tài khoản hợp lệ
+=> Expected = "Tên đăng nhập hoặc mật khẩu không đúng!"
+
+Rule 3:
+Nếu Username = "AnhDuong11" và Password = "AnhDuong@123"
+=> Expected = "AnhDuong11"
+
+Lưu ý rất quan trọng:
+- "   " KHÔNG phải chuỗi rỗng
+- dữ liệu chỉ chứa khoảng trắng vẫn là có dữ liệu
+- dữ liệu có khoảng trắng đầu hoặc cuối vẫn là có dữ liệu
+- "   " với password đúng phải map sang "Tên đăng nhập hoặc mật khẩu không đúng!"
+- dữ liệu vượt max length nhưng không rỗng vẫn map theo Rule 2
+
+==================================================
+3. PLAN ĐÃ CHỐT
+==================================================
+
+{locked_plan_json}
+
+Bạn phải tuân thủ plan này tuyệt đối.
+
+==================================================
+4. DANH SÁCH NHÓM ƯU TIÊN
+==================================================
+
+Phải cover đủ các nhóm theo thứ tự ưu tiên sau:
+
+A. 7 nhóm Decision Table bắt buộc:
+1. Đăng nhập hợp lệ
+2. Username rỗng
+3. Password rỗng
+4. Username và Password cùng rỗng
+5. Username sai, Password đúng
+6. Username đúng, Password sai
+7. Username và Password cùng sai
+
+B. Nhóm EP ưu tiên:
+8. Username chỉ chứa khoảng trắng
+9. Username có khoảng trắng cuối
+10. Username sai khác hoa thường
+
+C. Nhóm BVA ưu tiên:
+11. Username vượt max length 26 ký tự
+12. Password vượt max length 21 ký tự
+
+Nếu plan.FinalOptimized < 12:
+- chỉ lấy từ trên xuống dưới cho đủ số lượng
+
+Nếu plan.FinalOptimized = 12:
+- phải dùng đúng 12 nhóm trên
+
+Nếu plan.FinalOptimized > 12:
+- sau khi dùng đủ 12 nhóm trên, mới được thêm nhóm khác
+- nhóm thêm phải là boundary thật sự hoặc EP thật sự, không được mơ hồ
+- không được lặp logic với 12 nhóm đã có
+
+==================================================
+5. QUY TẮC CHỐNG TRÙNG
+==================================================
+
+- Không được tạo 2 item có cùng cặp UsernamePattern + PasswordPattern
+- Không được tạo 2 item cùng logic kiểm thử
+- Không được đổi tên BehaviorGroup để che trùng logic
+
+==================================================
+6. QUY TẮC DỮ LIỆU
+==================================================
+
+- Phải dùng dữ liệu cụ thể
+- Không dùng regex
+- Không dùng placeholder
+
+Ví dụ được phép:
+- "AnhDuong11"
+- "AnhDuong12"
+- ""
+- "   "
+- "AnhDuong11 "
+- "ANHDUONG11"
+- "AAAAAAAAAAAAAAAAAAAAAAAAAA"
+- "123456789012345678901"
+
+==================================================
+7. QUY TẮC EXPECTED
+==================================================
+
+Chỉ được dùng đúng 3 giá trị sau:
+- "Vui lòng điền vào trường này"
+- "Tên đăng nhập hoặc mật khẩu không đúng!"
+- "AnhDuong11"
+
+==================================================
+8. YÊU CẦU OUTPUT
+==================================================
+
+Chỉ trả về DUY NHẤT 1 JSON object hợp lệ theo đúng schema sau:
+
+{
+  "items": [
+    {
+      "GroupID": "LGG01",
+      "BehaviorGroup": "Đăng nhập hợp lệ",
+      "UsernamePattern": "AnhDuong11",
+      "PasswordPattern": "AnhDuong@123",
+      "Expected": "AnhDuong11"
+    }
+  ]
+}
+
+==================================================
+9. TỰ KIỂM TRA TRƯỚC KHI TRẢ KẾT QUẢ
+==================================================
+
+Trước khi xuất JSON, phải tự kiểm tra:
+- số item đúng bằng plan.FinalOptimized
+- đủ 7 nhóm DT trước
+- nếu có "Username chỉ chứa khoảng trắng" thì Expected phải là "Tên đăng nhập hoặc mật khẩu không đúng!"
+- không có item trùng input
+- không có item trùng logic
+- mọi item đều có đủ 5 key
+- JSON hợp lệ

@@ -1,0 +1,88 @@
+{
+  "items": [
+    {
+      "GroupID": "LGG01",
+      "BehaviorGroup": "Đăng nhập hợp lệ",
+      "UsernamePattern": "AnhDuong11",
+      "PasswordPattern": "AnhDuong@123",
+      "Expected": "AnhDuong11"
+    },
+    {
+      "GroupID": "LGG02",
+      "BehaviorGroup": "Username rỗng",
+      "UsernamePattern": "",
+      "PasswordPattern": "AnhDuong@123",
+      "Expected": "Vui lòng điền vào trường này"
+    },
+    {
+      "GroupID": "LGG03",
+      "BehaviorGroup": "Password rỗng",
+      "UsernamePattern": "AnhDuong11",
+      "PasswordPattern": "",
+      "Expected": "Vui lòng điền vào trường này"
+    },
+    {
+      "GroupID": "LGG04",
+      "BehaviorGroup": "Username và Password cùng rỗng",
+      "UsernamePattern": "",
+      "PasswordPattern": "",
+      "Expected": "Vui lòng điền vào trường này"
+    },
+    {
+      "GroupID": "LGG05",
+      "BehaviorGroup": "Username sai, Password đúng",
+      "UsernamePattern": "DuongAnh11",
+      "PasswordPattern": "AnhDuong@123",
+      "Expected": "Tên đăng nhập hoặc mật khẩu không đúng!"
+    },
+    {
+      "GroupID": "LGG06",
+      "BehaviorGroup": "Username đúng, Password sai",
+      "UsernamePattern": "AnhDuong11",
+      "PasswordPattern": "DuongAnh@123",
+      "Expected": "Tên đăng nhập hoặc mật khẩu không đúng!"
+    },
+    {
+      "GroupID": "LGG07",
+      "BehaviorGroup": "Username và Password cùng sai",
+      "UsernamePattern": "DuongAnh11",
+      "PasswordPattern": "DuongAnh@123",
+      "Expected": "Tên đăng nhập hoặc mật khẩu không đúng!"
+    },
+    {
+      "GroupID": "LGG08",
+      "BehaviorGroup": "Username chỉ chứa khoảng trắng",
+      "UsernamePattern": "   ",
+      "PasswordPattern": "AnhDuong@123",
+      "Expected": "Vui lòng điền vào trường này"
+    },
+    {
+      "GroupID": "LGG09",
+      "BehaviorGroup": "Username có khoảng trắng cuối",
+      "UsernamePattern": "AnhDuong11 ",
+      "PasswordPattern": "AnhDuong@123",
+      "Expected": "Tên đăng nhập hoặc mật khẩu không đúng!"
+    },
+    {
+      "GroupID": "LGG10",
+      "BehaviorGroup": "Username sai khác hoa thường",
+      "UsernamePattern": "anhduong11",
+      "PasswordPattern": "AnhDuong@123",
+      "Expected": "Tên đăng nhập hoặc mật khẩu không đúng!"
+    },
+    {
+      "GroupID": "LGG11",
+      "BehaviorGroup": "Username vượt max length 26 ký tự",
+      "UsernamePattern": "AAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "PasswordPattern": "AnhDuong@123",
+      "Expected": "Tên đăng nhập hoặc mật khẩu không đúng!"
+    },
+    {
+      "GroupID": "LGG12",
+      "BehaviorGroup": "Password vượt max length 21 ký tự",
+      "UsernamePattern": "AnhDuong11",
+      "PasswordPattern": "123456789012345678901",
+      "Expected": "Tên đăng nhập hoặc mật khẩu không đúng!"
+    }
+  ]
+}
