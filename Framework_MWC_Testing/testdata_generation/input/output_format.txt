@@ -29,7 +29,6 @@ JSON SCHEMA
   "items": [
     {
       "Testcase": "",
-      "SummaryRef": "",
       "Objective": "",
       "Username": "",
       "Password": "",
@@ -49,7 +48,6 @@ QUY TẮC CHI TIẾT CHO CÁC TRƯỜNG (FIELD RULES)
    - FinalOptimized = Tổng các test case thực tế trong mảng "items".
 4. items: Danh sách test case cụ thể hóa từ Summary.
    - Testcase ID: LG01, LG02... (Dựa theo bảng mapping PREFIX).
-   - SummaryRef: Phải khớp chính xác với Id trong phần Reasoning.
    - Objective: Viết bằng Tiếng Việt, mô tả kịch bản test cụ thể.
 
 ==================================================

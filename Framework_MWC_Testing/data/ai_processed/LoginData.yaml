@@ -1,14 +1,14 @@
 items:
 - Testcase: LG01
   Username: ''
-  Password: ''
-  Expected: Vui lòng điền vào trường này
-- Testcase: LG02
-  Username: ''
   Password: AnhDuong@123
   Expected: Vui lòng điền vào trường này
-- Testcase: LG03
+- Testcase: LG02
   Username: AnhDuong11
+  Password: ''
+  Expected: Vui lòng điền vào trường này
+- Testcase: LG03
+  Username: ''
   Password: ''
   Expected: Vui lòng điền vào trường này
 - Testcase: LG04
@@ -16,14 +16,14 @@ items:
   Password: AnhDuong@123
   Expected: AnhDuong11
 - Testcase: LG05
-  Username: InvalidUser
-  Password: AnhDuong@123
+  Username: AnhDuong11
+  Password: Sai@123
   Expected: Username hoặc Password không đúng!
 - Testcase: LG06
-  Username: AnhDuong11
-  Password: InvalidPass@123
+  Username: KhongDung11
+  Password: AnhDuong@123
   Expected: Username hoặc Password không đúng!
 - Testcase: LG07
-  Username: InvalidUser
-  Password: InvalidPass@123
+  Username: KhongDung11
+  Password: Sai@123
   Expected: Username hoặc Password không đúng!

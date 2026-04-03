@@ -40,7 +40,8 @@ Bước 5: Đối soát và Loại bỏ trùng lặp: Kiểm tra bảng "items",
 ==================================================================================
 4. CHỈ THỊ VỀ TÍNH NHẤT QUÁN
 ==================================================================================
-- Tính tách biệt: Case kiểm tra "Bỏ trống trường A" phải nhập liệu "Valid" cho các trường còn lại để cô lập lỗi.
-- Reasoning: Phải giải thích tại sao chọn kỹ thuật. Nếu bỏ qua BVA, phải ghi "Bỏ qua BVA vì đặc tả không có giới hạn định lượng".
-- Mapping: Sử dụng Prefix chuẩn (LG, RE, SE...) và SummaryRef tham chiếu chính xác đến danh sách Reasoning.
-- JSON Standard: Trả về duy nhất 1 JSON object hợp lệ, không có văn bản giải thích thừa.
+- Ngôn ngữ & Độ chi tiết: Mọi mô tả trong Reasoning -> Summary và Objective phải sử dụng TIẾNG VIỆT và mô tả CHI TIẾT trạng thái dữ liệu của các trường.
+- Tính tách biệt: Case kiểm tra "Để trống trường A" phải nhập liệu "Hợp lệ" cho trường B để cô lập hành vi hệ thống.
+- Reasoning: Giải thích ngắn gọn lý do chọn hoặc BỎ QUA kỹ thuật (Ví dụ: "Bỏ qua BVA vì đặc tả không có giới hạn định lượng").
+- Mapping: Sử dụng Prefix mã Test Case chuẩn (LG, RE, SE...) và SummaryRef tham chiếu chính xác đến ID trong phần Reasoning.
+- JSON Standard: Trả về DUY NHẤT 1 JSON object hợp lệ theo Schema, không có văn bản giải thích ngoài lề.

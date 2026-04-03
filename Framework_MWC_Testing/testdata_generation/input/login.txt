@@ -15,10 +15,10 @@ Ràng buộc dữ liệu:
 
 Kết quả mong đợi:
 1. Nếu Username rỗng hoặc Password rỗng
-   -> Vui lòng điền vào trường này
+   - Expected = "Vui lòng điền vào trường này"
 
 2. Nếu Username = AnhDuong11 và Password = AnhDuong@123
-   -> AnhDuong11
+   -> Expected = "AnhDuong11"
 
 3. Các trường hợp còn lại
-   -> Username hoặc Password không đúng!
+   -> Expected = "Username hoặc Password không đúng!"
