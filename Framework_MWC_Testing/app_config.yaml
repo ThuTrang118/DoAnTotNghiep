@@ -20,13 +20,13 @@ framework:
 ai:
   provider: ollama
   ollama:
-    base_url: http://localhost:11434
+    base_url: http://127.0.0.1:11434
     endpoint_mode: generate
     model: "qwen2.5:7b-instruct"
-    timeout_sec: 2200
+    timeout_sec: 2000
     temperature: 0.1
     top_p: 0.8
-    num_predict: 5000
+    num_predict: 2000
     seed: 42
   generation:
     output_root: data/ai_generated

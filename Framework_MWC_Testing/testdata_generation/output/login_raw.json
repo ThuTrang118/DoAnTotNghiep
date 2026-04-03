@@ -1,76 +1,89 @@
 {
+  "feature": "Đăng nhập",
+  "Reasoning": {
+    "EquivalencePartitioning": {
+      "Count": 3,
+      "Summary": [
+        "EP01: Username - Valid, Invalid, Empty",
+        "EP02: Password - Valid, Invalid, Empty"
+      ]
+    },
+    "DecisionTable": {
+      "Count": 4,
+      "Summary": [
+        "DT01: All Valid",
+        "DT02: Single-Fault - Username Invalid",
+        "DT03: Single-Fault - Password Invalid",
+        "DT04: Invalid Combination"
+      ]
+    },
+    "BoundaryValueAnalysis": {
+      "Count": 0,
+      "Summary": []
+    }
+  },
+  "Plan": {
+    "EquivalencePartitioning": 3,
+    "DecisionTable": 4,
+    "BoundaryValueAnalysis": 0,
+    "FinalOptimized": 7
+  },
   "items": [
     {
       "Testcase": "LG01",
-      "Username": "AnhDuong11",
-      "Password": "AnhDuong@123",
-      "Expected": "AnhDuong11"
+      "SummaryRef": "EP01, EP02",
+      "Objective": "Kiểm tra trường hợp Username và Password đều rỗng.",
+      "Username": "",
+      "Password": "",
+      "Expected": "Vui lòng điền vào trường này"
     },
     {
       "Testcase": "LG02",
+      "SummaryRef": "EP01, EP02",
+      "Objective": "Kiểm tra trường hợp Username rỗng và Password hợp lệ.",
       "Username": "",
       "Password": "AnhDuong@123",
       "Expected": "Vui lòng điền vào trường này"
     },
     {
       "Testcase": "LG03",
+      "SummaryRef": "EP01, EP02",
+      "Objective": "Kiểm tra trường hợp Username hợp lệ và Password rỗng.",
       "Username": "AnhDuong11",
       "Password": "",
       "Expected": "Vui lòng điền vào trường này"
     },
     {
       "Testcase": "LG04",
-      "Username": "",
-      "Password": "",
-      "Expected": "Vui lòng điền vào trường này"
+      "SummaryRef": "DT01, DT02, DT03, DT04",
+      "Objective": "Kiểm tra trường hợp Username và Password đều hợp lệ.",
+      "Username": "AnhDuong11",
+      "Password": "AnhDuong@123",
+      "Expected": "AnhDuong11"
     },
     {
       "Testcase": "LG05",
-      "Username": "DuongAnh11",
+      "SummaryRef": "DT02, DT04",
+      "Objective": "Kiểm tra trường hợp Username không hợp lệ.",
+      "Username": "InvalidUser",
       "Password": "AnhDuong@123",
-      "Expected": "Tên đăng nhập hoặc mật khẩu không đúng!"
+      "Expected": "Username hoặc Password không đúng!"
     },
     {
       "Testcase": "LG06",
+      "SummaryRef": "DT03, DT04",
+      "Objective": "Kiểm tra trường hợp Password không hợp lệ.",
       "Username": "AnhDuong11",
-      "Password": "DuongAnh@123",
-      "Expected": "Tên đăng nhập hoặc mật khẩu không đúng!"
+      "Password": "InvalidPass@123",
+      "Expected": "Username hoặc Password không đúng!"
     },
     {
       "Testcase": "LG07",
-      "Username": "DuongAnh11",
-      "Password": "DuongAnh@123",
-      "Expected": "Tên đăng nhập hoặc mật khẩu không đúng!"
-    },
-    {
-      "Testcase": "LG08",
-      "Username": "   ",
-      "Password": "AnhDuong@123",
-      "Expected": "Vui lòng điền vào trường này"
-    },
-    {
-      "Testcase": "LG09",
-      "Username": "AnhDuong11 ",
-      "Password": "AnhDuong@123",
-      "Expected": "Tên đăng nhập hoặc mật khẩu không đúng!"
-    },
-    {
-      "Testcase": "LG10",
-      "Username": "anhduong11",
-      "Password": "AnhDuong@123",
-      "Expected": "Tên đăng nhập hoặc mật khẩu không đúng!"
-    },
-    {
-      "Testcase": "LG11",
-      "Username": "AAAAAAAAAAAAAAAAAAAAAAAAAA",
-      "Password": "AnhDuong@123",
-      "Expected": "Tên đăng nhập hoặc mật khẩu không đúng!"
-    },
-    {
-      "Testcase": "LG12",
-      "Username": "AnhDuong11",
-      "Password": "123456789012345678901",
-      "Expected": "Tên đăng nhập hoặc mật khẩu không đúng!"
+      "SummaryRef": "DT04",
+      "Objective": "Kiểm tra trường hợp Username và Password đều không hợp lệ.",
+      "Username": "InvalidUser",
+      "Password": "InvalidPass@123",
+      "Expected": "Username hoặc Password không đúng!"
     }
   ]
 }

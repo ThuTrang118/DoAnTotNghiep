@@ -1,0 +1,24 @@
+Chức năng: Đăng nhập
+
+Mô tả:
+- Chức năng đăng nhập cho phép người dùng truy cập vào hệ thống bằng Username và Password đã đăng ký trước đó.
+- Sau khi người dùng nhấn nút Đăng nhập, hệ thống kiểm tra dữ liệu đầu vào và xác thực thông tin tài khoản.
+- Nếu thông tin đúng, hệ thống đăng nhập thành công.
+- Nếu thông tin không hợp lệ hoặc không đúng, hệ thống hiển thị thông báo lỗi tương ứng.
+
+Ràng buộc dữ liệu:
+1. Username là bắt buộc
+2. Password là bắt buộc
+3. Chỉ có một tài khoản hợp lệ duy nhất trong hệ thống:
+   - Username: AnhDuong11
+   - Password: AnhDuong@123
+
+Kết quả mong đợi:
+1. Nếu Username rỗng hoặc Password rỗng
+   -> Vui lòng điền vào trường này
+
+2. Nếu Username = AnhDuong11 và Password = AnhDuong@123
+   -> AnhDuong11
+
+3. Các trường hợp còn lại
+   -> Username hoặc Password không đúng!

@@ -9,20 +9,26 @@ from typing import Any, Dict, Iterable, List, Optional
 import pandas as pd
 
 
-class DataWriter:
+class DataExporter:
     """
-    Writer tách bạch 2 nơi:
+    Exporter dùng chung cho pipeline mới.
+
+    Hỗ trợ 2 nhóm output:
     - raw_dir: chỉ lưu evidence AI trả về
     - processed_dir: dữ liệu chuẩn hoá để framework test dùng
+
+    Tương thích với:
+    - generate_ai_data.py mới
+    - generation_pipeline.py mới
+    - code cũ đang dùng DataWriter
     """
 
     SUPPORTED_FORMATS = {"csv", "json", "xlsx", "xls", "xml", "yaml", "yml", "db"}
 
     FEATURE_ALIASES: Dict[str, str] = {
-        "profile": "profile_update",  # hỗ trợ tên cũ
+        "profile": "profile_update",
     }
 
-    # Tên file processed
     FEATURE_BASENAME: Dict[str, str] = {
         "login": "LoginData",
         "register": "RegisterData",
@@ -32,7 +38,6 @@ class DataWriter:
         "product_review": "ProductReviewData",
     }
 
-    # Thứ tự cột chuẩn theo từng feature
     FEATURE_COLUMN_ORDER: Dict[str, List[str]] = {
         "login": ["Testcase", "Username", "Password", "Expected"],
         "register": ["Testcase", "Username", "Phone", "Password", "ConfirmPassword", "Expected"],
@@ -42,52 +47,121 @@ class DataWriter:
         "product_review": ["Testcase", "Product", "Rating", "Comment", "Expected"],
     }
 
-    def __init__(self, raw_dir: Path, processed_dir: Path):
-        self.raw_dir = raw_dir
-        self.processed_dir = processed_dir
+    def __init__(
+        self,
+        output_dir: Optional[str | Path] = None,
+        raw_dir: Optional[str | Path] = None,
+        processed_dir: Optional[str | Path] = None,
+    ) -> None:
+        """
+        Hỗ trợ 2 cách khởi tạo:
+
+        1) Kiểu mới:
+           DataExporter(output_dir="...")
+
+           -> raw_dir = <output_dir>
+           -> processed_dir = <output_dir>/processed
+
+        2) Kiểu cũ:
+           DataExporter(raw_dir="...", processed_dir="...")
+
+        Nếu không truyền gì:
+           raw_dir = testdata_generation/output
+           processed_dir = data/ai_processed
+        """
+        project_root = Path(__file__).resolve().parents[2]
+
+        if output_dir is not None:
+            base = Path(output_dir).resolve()
+            self.raw_dir = base
+            self.processed_dir = base / "processed"
+        else:
+            self.raw_dir = (
+                Path(raw_dir).resolve()
+                if raw_dir is not None
+                else (project_root / "testdata_generation" / "output")
+            )
+            self.processed_dir = (
+                Path(processed_dir).resolve()
+                if processed_dir is not None
+                else (project_root / "data" / "ai_processed")
+            )
+
         self.raw_dir.mkdir(parents=True, exist_ok=True)
         self.processed_dir.mkdir(parents=True, exist_ok=True)
 
-    # -------------------------
+    # =========================================================
     # Helpers
-    # -------------------------
+    # =========================================================
     def _normalize_feature(self, feature: str) -> str:
         f = (feature or "").strip().lower()
         return self.FEATURE_ALIASES.get(f, f)
-
-    def _get_headers(self, feature: str, rows: List[Dict[str, Any]]) -> List[str]:
-        f = self._normalize_feature(feature)
-        if f in self.FEATURE_COLUMN_ORDER:
-            return self.FEATURE_COLUMN_ORDER[f]
-        return list(rows[0].keys()) if rows else []
-
-    def _normalize_rows(self, rows: List[Dict[str, Any]], headers: List[str]) -> List[Dict[str, Any]]:
-        normalized: List[Dict[str, Any]] = []
-        for r in rows:
-            normalized.append({h: ("" if r.get(h) is None else r.get(h)) for h in headers})
-        return normalized
 
     def _processed_basename(self, feature: str) -> str:
         f = self._normalize_feature(feature)
         return self.FEATURE_BASENAME.get(f, f"{f.capitalize()}Data" if f else "TestData")
 
-    # -------- RAW (Evidence) --------
-    def write_raw_text(self, feature: str, raw_text: str) -> Path:
-        path = self.raw_dir / f"{feature}_raw.txt"
+    def _get_headers(self, feature: str, rows: List[Dict[str, Any]]) -> List[str]:
+        f = self._normalize_feature(feature)
+        if f in self.FEATURE_COLUMN_ORDER:
+            return self.FEATURE_COLUMN_ORDER[f]
+
+        if not rows:
+            return []
+
+        return list(rows[0].keys())
+
+    def _normalize_rows(
+        self,
+        rows: List[Dict[str, Any]],
+        headers: List[str],
+    ) -> List[Dict[str, Any]]:
+        normalized: List[Dict[str, Any]] = []
+        for row in rows:
+            normalized_row: Dict[str, Any] = {}
+            for h in headers:
+                value = row.get(h, "")
+                normalized_row[h] = "" if value is None else value
+            normalized.append(normalized_row)
+        return normalized
+
+    def _drop_non_processed_columns(
+        self,
+        rows: List[Dict[str, Any]],
+    ) -> List[Dict[str, Any]]:
+        """
+        Dữ liệu processed cho framework test hiện không cần Technique.
+        Vì vậy nếu item có Technique thì loại bỏ khi export processed.
+        """
+        cleaned: List[Dict[str, Any]] = []
+        for row in rows:
+            row_copy = dict(row)
+            row_copy.pop("Technique", None)
+            cleaned.append(row_copy)
+        return cleaned
+
+    # =========================================================
+    # RAW (Evidence)
+    # =========================================================
+    def write_raw_text(self, feature: str, raw_text: str, suffix: str = "raw") -> Path:
+        path = self.raw_dir / f"{feature}_{suffix}.txt"
         path.write_text(raw_text or "", encoding="utf-8")
         return path
 
-    def write_raw_json(self, feature: str, data: Dict[str, Any]) -> Path:
-        path = self.raw_dir / f"{feature}_raw.json"
+    def write_raw_json(self, feature: str, data: Dict[str, Any], suffix: str = "raw") -> Path:
+        path = self.raw_dir / f"{feature}_{suffix}.json"
         with path.open("w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
         return path
 
-    # -------- PROCESSED (for framework test) --------
+    # =========================================================
+    # PROCESSED
+    # =========================================================
     def write_processed_json(self, feature: str, rows: List[Dict[str, Any]]) -> Path:
         name = self._processed_basename(feature)
         path = self.processed_dir / f"{name}.json"
 
+        rows = self._drop_non_processed_columns(rows)
         headers = self._get_headers(feature, rows)
         rows_norm = self._normalize_rows(rows, headers) if headers else rows
 
@@ -100,6 +174,7 @@ class DataWriter:
         name = self._processed_basename(feature)
         path = self.processed_dir / f"{name}.csv"
 
+        rows = self._drop_non_processed_columns(rows)
         if not rows:
             path.write_text("", encoding="utf-8")
             return path
@@ -108,9 +183,9 @@ class DataWriter:
         rows_norm = self._normalize_rows(rows, headers)
 
         with path.open("w", encoding="utf-8", newline="") as f:
-            w = csv.DictWriter(f, fieldnames=headers)
-            w.writeheader()
-            w.writerows(rows_norm)
+            writer = csv.DictWriter(f, fieldnames=headers)
+            writer.writeheader()
+            writer.writerows(rows_norm)
 
         return path
 
@@ -118,12 +193,13 @@ class DataWriter:
         name = self._processed_basename(feature)
         path = self.processed_dir / f"{name}.xlsx"
 
+        rows = self._drop_non_processed_columns(rows)
         headers = self._get_headers(feature, rows)
         rows_norm = self._normalize_rows(rows, headers)
 
         df = pd.DataFrame(rows_norm, columns=headers)
-        sheet = name[:31] if name else "Sheet1"
-        df.to_excel(path, index=False, sheet_name=sheet)
+        sheet_name = name[:31] if name else "Sheet1"
+        df.to_excel(path, index=False, sheet_name=sheet_name)
 
         return path
 
@@ -139,19 +215,20 @@ class DataWriter:
         name = self._processed_basename(feature)
         path = self.processed_dir / f"{name}.xls"
 
-        wb = xlwt.Workbook()
-        ws = wb.add_sheet(name[:31] if name else "Sheet1")
-
+        rows = self._drop_non_processed_columns(rows)
         headers = self._get_headers(feature, rows)
         rows_norm = self._normalize_rows(rows, headers)
 
-        for c, h in enumerate(headers):
-            ws.write(0, c, h)
+        wb = xlwt.Workbook()
+        ws = wb.add_sheet(name[:31] if name else "Sheet1")
 
-        for r_idx, row in enumerate(rows_norm, start=1):
-            for c, h in enumerate(headers):
-                v = row.get(h, "")
-                ws.write(r_idx, c, "" if v is None else str(v))
+        for col_idx, header in enumerate(headers):
+            ws.write(0, col_idx, header)
+
+        for row_idx, row in enumerate(rows_norm, start=1):
+            for col_idx, header in enumerate(headers):
+                value = row.get(header, "")
+                ws.write(row_idx, col_idx, "" if value is None else str(value))
 
         wb.save(str(path))
         return path
@@ -160,6 +237,7 @@ class DataWriter:
         name = self._processed_basename(feature)
         path = self.processed_dir / f"{name}.xml"
 
+        rows = self._drop_non_processed_columns(rows)
         headers = self._get_headers(feature, rows)
         rows_norm = self._normalize_rows(rows, headers) if headers else rows
 
@@ -175,9 +253,9 @@ class DataWriter:
         lines = ["<items>"]
         for row in rows_norm:
             lines.append("  <item>")
-            for k in headers:
-                v = row.get(k, "")
-                lines.append(f"    <{k}>{esc('' if v is None else str(v))}</{k}>")
+            for key in headers:
+                value = row.get(key, "")
+                lines.append(f"    <{key}>{esc('' if value is None else str(value))}</{key}>")
             lines.append("  </item>")
         lines.append("</items>")
 
@@ -188,11 +266,14 @@ class DataWriter:
         try:
             import yaml  # type: ignore
         except Exception as e:
-            raise RuntimeError(f"Cannot write YAML. Install: pip install pyyaml. Original error: {e}")
+            raise RuntimeError(
+                f"Cannot write YAML. Install: pip install pyyaml. Original error: {e}"
+            )
 
         name = self._processed_basename(feature)
         path = self.processed_dir / f"{name}.{ext}"
 
+        rows = self._drop_non_processed_columns(rows)
         headers = self._get_headers(feature, rows)
         rows_norm = self._normalize_rows(rows, headers) if headers else rows
 
@@ -205,6 +286,8 @@ class DataWriter:
         name = self._processed_basename(feature)
         path = self.processed_dir / f"{name}.db"
         table = self._normalize_feature(feature) or "testdata"
+
+        rows = self._drop_non_processed_columns(rows)
 
         conn = sqlite3.connect(path)
         try:
@@ -226,8 +309,8 @@ class DataWriter:
             sql = f'INSERT INTO "{table}" ({col_names}) VALUES ({placeholders})'
 
             values = []
-            for r in rows_norm:
-                values.append(["" if r.get(c) is None else str(r.get(c)) for c in cols])
+            for row in rows_norm:
+                values.append(["" if row.get(c) is None else str(row.get(c)) for c in cols])
 
             cur.executemany(sql, values)
             conn.commit()
@@ -246,6 +329,7 @@ class DataWriter:
             formats = sorted(self.SUPPORTED_FORMATS)
 
         out: Dict[str, Path] = {}
+
         for fmt in formats:
             f = (fmt or "").strip().lower()
             if f not in self.SUPPORTED_FORMATS:
@@ -269,3 +353,39 @@ class DataWriter:
                 out["db"] = self.write_processed_db(feature, rows)
 
         return out
+
+    # =========================================================
+    # Compatibility methods for new pipeline
+    # =========================================================
+    def export(
+        self,
+        feature: str,
+        rows: List[Dict[str, Any]],
+        formats: Optional[Iterable[str]] = None,
+    ) -> Dict[str, str]:
+        """
+        Method tương thích với generation_pipeline.py mới.
+        """
+        paths = self.write_formats(feature=feature, rows=rows, formats=formats)
+        return {k: str(v) for k, v in paths.items()}
+
+    def export_feature_items(
+        self,
+        feature: str,
+        items: List[Dict[str, Any]],
+        formats: Optional[Iterable[str]] = None,
+    ) -> List[str]:
+        """
+        Method tương thích với generation_pipeline.py mới.
+        """
+        paths = self.write_formats(feature=feature, rows=items, formats=formats)
+        return [str(v) for v in paths.values()]
+
+
+class DataWriter(DataExporter):
+    """
+    Alias tương thích ngược với code cũ.
+    Code cũ có thể vẫn import:
+        from ...data_exporter import DataWriter
+    """
+    pass

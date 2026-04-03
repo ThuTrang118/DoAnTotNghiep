@@ -1,152 +1,223 @@
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional, List, Tuple, Union
+import json
+from dataclasses import dataclass
+from typing import Any, Dict, Optional
+
 import requests
 
 
-TimeoutType = Union[int, float, Tuple[float, float]]  # (connect, read)
+@dataclass
+class LLMResponse:
+    """
+    Gói kết quả trả về từ LLM nếu sau này cần mở rộng.
+    Hiện tại pipeline chủ yếu dùng raw_text.
+    """
+    raw_text: str
+    status_code: int
+    endpoint_mode: str
 
 
-class BaseLLMClient(ABC):
-    @abstractmethod
-    def generate_text(self, prompt: str, system: Optional[str] = None, **kwargs) -> str:
-        raise NotImplementedError
+class OllamaLLMClient:
+    """
+    Client dùng chung cho Ollama, tương thích với pipeline mới.
 
-    @abstractmethod
-    def healthcheck(self) -> Dict[str, Any]:
-        raise NotImplementedError
+    Hỗ trợ:
+    - /api/generate
+    - /api/chat
+    - endpoint_mode = generate | chat | auto
 
+    API chính:
+    - generate(prompt, **kwargs) -> str
+    - generate_text(prompt, **kwargs) -> str
+    - __call__(prompt, **kwargs) -> str
+    """
 
-class OllamaClient(BaseLLMClient):
     def __init__(
         self,
-        base_url: Optional[str] = None,
-        model: Optional[str] = None,
-        timeout_sec: int = 900,
-        endpoint_mode: str = "auto",
-        temperature: float = 0.0,
+        base_url: str = "http://127.0.0.1:11434",
+        model: str = "qwen2.5:7b-instruct",
+        endpoint_mode: str = "generate",
+        timeout_sec: int = 180,
+        temperature: float = 0.1,
         top_p: float = 0.9,
-        num_predict: int = 2000,
-        seed: Optional[int] = 42,
-        connect_timeout_sec: int = 10,
-        json_mode: bool = True,
-    ):
-        self.base_url = (base_url or "http://localhost:11434").rstrip("/")
-        self.model = model or "qwen2.5:7b-instruct"
+        num_predict: int = 1200,
+        json_mode: bool = False,
+        seed: Optional[int] = None,
+    ) -> None:
+        self.base_url = base_url.rstrip("/")
+        self.model = model
+        self.endpoint_mode = (endpoint_mode or "generate").strip().lower()
         self.timeout_sec = int(timeout_sec)
-        self.connect_timeout_sec = int(connect_timeout_sec)
-        self.endpoint_mode = (endpoint_mode or "auto").lower()
         self.temperature = float(temperature)
         self.top_p = float(top_p)
         self.num_predict = int(num_predict)
-        self.seed = seed
         self.json_mode = bool(json_mode)
+        self.seed = seed
 
-    def _timeout(self) -> TimeoutType:
-        return (float(self.connect_timeout_sec), float(self.timeout_sec))
+        if self.endpoint_mode not in {"generate", "chat", "auto"}:
+            raise ValueError(
+                "endpoint_mode must be one of: generate, chat, auto"
+            )
 
-    def _clean_response_text(self, text: str) -> str:
+    # =========================================================
+    # Public API
+    # =========================================================
+    def __call__(self, prompt: str, **kwargs: Any) -> str:
+        return self.generate(prompt, **kwargs)
+
+    def generate_text(self, prompt: str, **kwargs: Any) -> str:
         """
-        Dọn các trường hợp model vẫn lỡ trả về code fence hoặc chữ 'json'
-        trước khi parser xử lý.
+        Alias tương thích code cũ.
         """
-        text = (text or "").strip()
+        return self.generate(prompt, **kwargs)
 
-        if text.startswith("```"):
-            lines = text.splitlines()
-            if lines and lines[0].startswith("```"):
-                lines = lines[1:]
-            if lines and lines[-1].strip() == "```":
-                lines = lines[:-1]
-            text = "\n".join(lines).strip()
+    def generate(self, prompt: str, **kwargs: Any) -> str:
+        """
+        API chính cho pipeline mới.
+        """
+        mode = str(kwargs.pop("endpoint_mode", self.endpoint_mode)).strip().lower()
 
-        if text.lower().startswith("json\n"):
-            text = text[5:].strip()
-
-        return text
-
-    def _use_json_mode(self, **kwargs) -> bool:
-        return bool(kwargs.get("json_mode", self.json_mode))
-
-    def healthcheck(self) -> Dict[str, Any]:
-        url = f"{self.base_url}/api/tags"
-        r = requests.get(url, timeout=self._timeout())
-        r.raise_for_status()
-        return {"ok": True, "provider": "ollama", "models": r.json().get("models", [])}
-
-    def generate_text(self, prompt: str, system: Optional[str] = None, **kwargs) -> str:
-        mode = (kwargs.get("endpoint_mode") or self.endpoint_mode or "auto").lower()
+        if mode == "auto":
+            try:
+                return self._generate_via_generate(prompt, **kwargs)
+            except Exception:
+                return self._generate_via_chat(prompt, **kwargs)
 
         if mode == "generate":
-            return self._generate(prompt=prompt, system=system, **kwargs)
+            return self._generate_via_generate(prompt, **kwargs)
+
         if mode == "chat":
-            return self._chat(prompt=prompt, system=system, **kwargs)
+            return self._generate_via_chat(prompt, **kwargs)
 
-        try:
-            return self._generate(prompt=prompt, system=system, **kwargs)
-        except Exception:
-            return self._chat(prompt=prompt, system=system, **kwargs)
+        raise ValueError(
+            f"Unsupported endpoint_mode='{mode}'. "
+            "Expected generate, chat, or auto."
+        )
 
-    def _generate(self, prompt: str, system: Optional[str], **kwargs) -> str:
+    def healthcheck(self) -> Dict[str, Any]:
+        """
+        Kiểm tra Ollama có sống không.
+        """
+        url = f"{self.base_url}/api/tags"
+        resp = requests.get(url, timeout=self.timeout_sec)
+        resp.raise_for_status()
+        return resp.json()
+
+    # =========================================================
+    # Internal helpers
+    # =========================================================
+    def _effective_options(self, **kwargs: Any) -> Dict[str, Any]:
+        temperature = kwargs.pop("temperature", self.temperature)
+        top_p = kwargs.pop("top_p", self.top_p)
+        num_predict = kwargs.pop("num_predict", self.num_predict)
+        seed = kwargs.pop("seed", self.seed)
+
+        options: Dict[str, Any] = {
+            "temperature": temperature,
+            "top_p": top_p,
+            "num_predict": num_predict,
+        }
+
+        if seed is not None:
+            options["seed"] = seed
+
+        # Cho phép truyền options bổ sung
+        extra_options = kwargs.pop("options", None)
+        if isinstance(extra_options, dict):
+            options.update(extra_options)
+
+        return options
+
+    def _effective_json_mode(self, **kwargs: Any) -> bool:
+        return bool(kwargs.pop("json_mode", self.json_mode))
+
+    def _effective_timeout(self, **kwargs: Any) -> int:
+        return int(kwargs.pop("timeout_sec", self.timeout_sec))
+
+    def _effective_model(self, **kwargs: Any) -> str:
+        return str(kwargs.pop("model", self.model)).strip()
+
+    def _generate_via_generate(self, prompt: str, **kwargs: Any) -> str:
         url = f"{self.base_url}/api/generate"
+        payload = self._build_generate_payload(prompt, **kwargs)
+        timeout_sec = self._effective_timeout()
+
+        resp = requests.post(url, json=payload, timeout=timeout_sec)
+        resp.raise_for_status()
+
+        data = resp.json()
+
+        # Ollama /api/generate thường trả response trong field "response"
+        text = data.get("response", "")
+        if text is None:
+            text = ""
+
+        return str(text)
+
+    def _generate_via_chat(self, prompt: str, **kwargs: Any) -> str:
+        url = f"{self.base_url}/api/chat"
+        payload = self._build_chat_payload(prompt, **kwargs)
+        timeout_sec = self._effective_timeout()
+
+        resp = requests.post(url, json=payload, timeout=timeout_sec)
+        resp.raise_for_status()
+
+        data = resp.json()
+
+        message = data.get("message", {}) or {}
+        text = message.get("content", "")
+        if text is None:
+            text = ""
+
+        return str(text)
+
+    def _build_generate_payload(self, prompt: str, **kwargs: Any) -> Dict[str, Any]:
+        model = self._effective_model(**kwargs)
+        json_mode = self._effective_json_mode(**kwargs)
+        options = self._effective_options(**kwargs)
 
         payload: Dict[str, Any] = {
-            "model": kwargs.get("model", self.model),
+            "model": model,
             "prompt": prompt,
             "stream": False,
-            "options": {
-                "temperature": kwargs.get("temperature", self.temperature),
-                "top_p": kwargs.get("top_p", self.top_p),
-                "num_predict": kwargs.get("num_predict", self.num_predict),
-            },
+            "options": options,
         }
 
-        seed = kwargs.get("seed", self.seed)
-        if seed is not None:
-            payload["options"]["seed"] = seed
-
-        if system:
-            payload["system"] = system
-
-        if self._use_json_mode(**kwargs):
+        # Chỉ bật nếu thật sự muốn
+        if json_mode:
             payload["format"] = "json"
 
-        r = requests.post(url, json=payload, timeout=self._timeout())
-        r.raise_for_status()
+        return payload
 
-        text = r.json().get("response", "")
-        return self._clean_response_text(text)
-
-    def _chat(self, prompt: str, system: Optional[str], **kwargs) -> str:
-        url = f"{self.base_url}/api/chat"
-
-        messages: List[Dict[str, str]] = []
-        if system:
-            messages.append({"role": "system", "content": system})
-        messages.append({"role": "user", "content": prompt})
+    def _build_chat_payload(self, prompt: str, **kwargs: Any) -> Dict[str, Any]:
+        model = self._effective_model(**kwargs)
+        json_mode = self._effective_json_mode(**kwargs)
+        options = self._effective_options(**kwargs)
 
         payload: Dict[str, Any] = {
-            "model": kwargs.get("model", self.model),
-            "messages": messages,
+            "model": model,
+            "messages": [
+                {
+                    "role": "user",
+                    "content": prompt,
+                }
+            ],
             "stream": False,
-            "options": {
-                "temperature": kwargs.get("temperature", self.temperature),
-                "top_p": kwargs.get("top_p", self.top_p),
-                "num_predict": kwargs.get("num_predict", self.num_predict),
-            },
+            "options": options,
         }
 
-        seed = kwargs.get("seed", self.seed)
-        if seed is not None:
-            payload["options"]["seed"] = seed
-
-        if self._use_json_mode(**kwargs):
+        if json_mode:
             payload["format"] = "json"
 
-        r = requests.post(url, json=payload, timeout=self._timeout())
-        r.raise_for_status()
+        return payload
 
-        data = r.json()
-        text = (data.get("message") or {}).get("content", "")
-        return self._clean_response_text(text)
+
+# =========================================================
+# Backward compatibility
+# =========================================================
+class OllamaClient(OllamaLLMClient):
+    """
+    Alias tương thích ngược với code cũ.
+    """
+    pass

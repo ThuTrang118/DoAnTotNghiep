@@ -1,204 +1,45 @@
-PHÂN TÍCH CHỨC NĂNG ĐĂNG KÝ
+Chức năng: Đăng ký
 
-Hãy sinh dữ liệu kiểm thử cho chức năng REGISTER của website MWC theo kỹ thuật kiểm thử hộp đen.
+Mô tả:
+Chức năng đăng ký cho phép người dùng tạo tài khoản mới bằng cách nhập Username, Số điện thoại, Mật khẩu và Nhắc lại mật khẩu.
+Sau khi người dùng nhấn nút Đăng ký, hệ thống kiểm tra dữ liệu đầu vào.
+Nếu tất cả dữ liệu hợp lệ, hệ thống tạo tài khoản thành công.
+Nếu dữ liệu không hợp lệ, hệ thống hiển thị thông báo lỗi tương ứng.
 
-Bạn phải tự suy luận từ đặc tả để tìm ra các nhóm hành vi kiểm thử cần thiết.
-Không được sinh dữ liệu ngẫu nhiên.
-Không được chỉ liệt kê vài trường hợp quá ít.
-Không được tự tạo rule không có trong đặc tả.
+Ràng buộc dữ liệu:
+1. Username là bắt buộc
+2. Số điện thoại là bắt buộc
+3. Mật khẩu là bắt buộc
+4. Nhắc lại mật khẩu là bắt buộc
+5. Số điện thoại:
+   - Phải gồm đúng 10 ký tự
+   - Chỉ được chứa ký tự số
+   - Phải bắt đầu bằng số 0
+   - Không được chứa ký tự chữ
+   - Không được chứa ký tự đặc biệt
+   - Không được chứa khoảng trắng
+6. Mật khẩu:
+   - Độ dài từ 8 đến 20 ký tự
+7. Nhắc lại mật khẩu:
+   - Phải trùng khớp hoàn toàn với Mật khẩu
 
-==================================================
-1. MÔ TẢ CHỨC NĂNG
-==================================================
+Kết quả mong đợi:
+1. Nếu bất kỳ trường bắt buộc nào rỗng
+   -> Vui lòng điền vào trường này
 
-Form đăng ký gồm 4 trường:
+2. Nếu Số điện thoại không đúng định dạng
+   -> Số điện thoại không hợp lệ
 
-- Username
-- Phone
-- Password
-- ConfirmPassword
+3. Nếu Mật khẩu không đúng độ dài (nhỏ hơn 8 hoặc lớn hơn 20)
+   -> Mật khẩu phải từ 8 đến 20 ký tự
 
-Người dùng nhập thông tin và gửi form để tạo tài khoản mới.
+4. Nếu Nhắc lại mật khẩu không trùng với Mật khẩu
+   -> Mật khẩu nhập lại không khớp
 
-==================================================
-2. RÀNG BUỘC NGHIỆP VỤ
-==================================================
+5. Nếu tất cả dữ liệu hợp lệ
+   -> Đăng ký thành công
 
-Username
-- bắt buộc nhập
-- tối đa 25 ký tự
-- nếu Username đã tồn tại thì không cho đăng ký
-
-Phone
-- bắt buộc nhập
-- phải bắt đầu bằng số 0
-- chỉ gồm chữ số
-- đúng 10 chữ số
-- không chứa khoảng trắng
-- không chứa ký tự đặc biệt
-
-Password
-- bắt buộc nhập
-- độ dài lớn hơn 8 ký tự và nhỏ hơn 20 ký tự
-
-ConfirmPassword
-- bắt buộc nhập
-- phải giống Password
-
-==================================================
-3. TÀI KHOẢN ĐÃ TỒN TẠI
-==================================================
-
-Hệ thống đã có sẵn tài khoản:
-
-Username: AnhDuong11
-Password: AnhDuong@123
-
-Nếu UsernamePattern = "AnhDuong11"
-thì Expected phải là:
-
-Tài khoản đã tồn tại trong hệ thống
-
-==================================================
-4. QUY TẮC HỆ THỐNG
-==================================================
-
-Nếu thiếu Username hoặc Phone hoặc Password hoặc ConfirmPassword
-=> Expected: Vui lòng điền vào trường này.
-
-Nếu Phone sai định dạng
-=> Expected: Số điện thoại không đúng định dạng!
-
-Nếu Password sai độ dài
-=> Expected: Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!
-
-Nếu ConfirmPassword khác Password
-=> Expected: Mật khẩu không giống nhau
-
-Nếu Username đã tồn tại
-=> Expected: Tài khoản đã tồn tại trong hệ thống
-
-Nếu toàn bộ dữ liệu hợp lệ
-=> Expected phải chính là UsernamePattern của test case đó
-
-==================================================
-5. YÊU CẦU SUY LUẬN KIỂM THỬ HỘP ĐEN
-==================================================
-
-Hãy tự suy luận theo các kỹ thuật sau:
-
-1. Equivalence Partitioning
-- Chia dữ liệu thành các lớp hợp lệ và không hợp lệ
-- Chọn giá trị đại diện cho từng lớp
-
-2. Boundary Value Analysis
-- Xét các ràng buộc có biên rõ ràng như:
-  + Username tối đa 25 ký tự
-  + Phone đúng 10 chữ số
-  + Password > 8 và < 20 ký tự
-- Chỉ giữ những giá trị biên thực sự giúp tạo ra hành vi khác biệt
-
-3. Cause – Effect / Decision Logic
-- Phân tích các tổ hợp điều kiện đầu vào và kết quả hệ thống
-- Chọn các tổ hợp tạo ra expected khác nhau hoặc làm lộ lỗi dễ xảy ra
-
-4. Error Guessing
-- Bổ sung các trường hợp thường dễ lỗi như:
-  + chuỗi rỗng
-  + phone chứa chữ cái
-  + phone chứa ký tự đặc biệt
-  + phone có khoảng trắng
-  + password ở vùng biên
-  + confirm password gần giống nhưng không đúng
-
-==================================================
-6. NGUYÊN TẮC CHỌN TESTCASE
-==================================================
-
-- Mục tiêu là tạo ra một tập testcase nhỏ nhưng mạnh
-- Mỗi testcase phải có ý nghĩa kiểm thử rõ ràng
-- Mỗi testcase nên bổ sung coverage mới
-- Không sinh nhiều testcase trùng ý nghĩa
-- Khi kiểm tra lỗi của một trường, ưu tiên giữ các trường còn lại hợp lệ để cô lập lỗi
-- Phải có cả trường hợp hợp lệ và không hợp lệ
-- Phải có expected rõ ràng, quan sát được, kiểm tra được
-
-Hãy tự quyết định số lượng testcase phù hợp.
-Tuy nhiên, số lượng phải đủ để bao phủ hợp lý:
-- các lớp dữ liệu chính
-- các giá trị biên quan trọng
-- các tổ hợp điều kiện quan trọng
-- các lỗi nhập liệu phổ biến
-
-==================================================
-7. GIỚI HẠN SUY LUẬN
-==================================================
-
-- Chỉ được suy luận từ các rule đã cho
-- Không được tạo thêm rule mới cho Username ngoài:
-  + bắt buộc nhập
-  + tối đa 25 ký tự
-  + không được trùng tài khoản đã tồn tại
-- Không được tạo thêm rule định dạng cho Password ngoài rule độ dài
-- Không được tạo thêm rule định dạng cho ConfirmPassword ngoài yêu cầu phải giống Password
-
-==================================================
-8. EXPECTED CHỈ ĐƯỢC DÙNG
-==================================================
-
-Chỉ được dùng đúng các Expected sau:
-
-- Vui lòng điền vào trường này.
-- Số điện thoại không đúng định dạng!
-- Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!
-- Mật khẩu không giống nhau
-- Tài khoản đã tồn tại trong hệ thống
-- hoặc chính UsernamePattern nếu đăng ký thành công
-
-Không được tự tạo Expected khác.
-
-==================================================
-9. ĐỊNH DẠNG OUTPUT
-==================================================
-
-Chỉ trả về DUY NHẤT một JSON object hợp lệ theo mẫu:
-
-{
-  "items": [
-    {
-      "GroupID": "RGG01",
-      "BehaviorGroup": "Đăng ký hợp lệ",
-      "UsernamePattern": "MinhTrang88",
-      "PhonePattern": "0912345678",
-      "PasswordPattern": "AnhDuong@123",
-      "ConfirmPasswordPattern": "AnhDuong@123",
-      "Expected": "MinhTrang88"
-    }
-  ]
-}
-
-Mỗi item chỉ có đúng 7 trường:
-- GroupID
-- BehaviorGroup
-- UsernamePattern
-- PhonePattern
-- PasswordPattern
-- ConfirmPasswordPattern
-- Expected
-
-==================================================
-10. QUY TẮC OUTPUT
-==================================================
-
-- Chỉ trả về JSON
-- Không markdown
-- Không code block
-- Không giải thích
-- Không in phân tích trung gian
-- Không in chuỗi suy luận nội bộ
-- Không viết gì trước JSON
-- Không viết gì sau JSON
-- Không để item thiếu field
-- Không để Expected rỗng
-- Không tạo item không phải object
-- Đảm bảo object cuối cùng không bị cắt dở
+Lưu ý:
+- Decision Table phải phản ánh đúng các tổ hợp điều kiện của register
+- Equivalence Partitioning phải phản ánh các lớp dữ liệu khác nhau, không lặp ý nghĩa
+- Boundary Value Analysis phải bám đúng ràng buộc độ dài của Password và định dạng Số điện thoại

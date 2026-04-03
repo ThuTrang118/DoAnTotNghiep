@@ -2,155 +2,85 @@ from __future__ import annotations
 
 import json
 import re
-from dataclasses import dataclass
-from typing import Any, Optional, List, Tuple
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional
 
 
 @dataclass
-class ParseResult:
+class ParserResult:
     ok: bool
-    data: Any = None
+    data: Optional[Any] = None
     cleaned_text: str = ""
-    error: Optional[str] = None
+    error: str = ""
+    warnings: List[str] = field(default_factory=list)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "ok": self.ok,
+            "data": self.data,
+            "cleaned_text": self.cleaned_text,
+            "error": self.error,
+            "warnings": self.warnings,
+        }
 
 
 class LLMOutputParser:
+    """
+    Parser chịu lỗi cho output từ LLM.
 
-    def parse_json(self, raw_text: str) -> ParseResult:
-        if not raw_text or not raw_text.strip():
-            return ParseResult(ok=False, error="Empty LLM output")
+    Mục tiêu:
+    - bỏ markdown fences
+    - lấy khối JSON đầu tiên
+    - bỏ text ngoài JSON
+    - sửa một số lỗi pseudo-code phổ biến
+    - chuẩn hoá dấu ngoặc kép kiểu smart quotes
+    - trả về context gần vị trí lỗi nếu parse thất bại
+    """
 
-        cleaned = self._strip_code_fences(raw_text.strip())
-        cleaned = self._remove_json_comments(cleaned)
+    def strip_code_fences(self, text: str) -> str:
+        text = (text or "").strip()
 
-        candidates: List[Tuple[str, str]] = []
+        if text.startswith("```"):
+            text = re.sub(r"^```[a-zA-Z0-9_-]*\s*", "", text)
+            text = re.sub(r"\s*```$", "", text)
 
-        def add_candidate(name: str, text: Optional[str]) -> None:
-            if text and text.strip():
-                t = self._remove_json_comments(text.strip())
-                candidates.append((name, t))
+        return text.strip()
 
-        add_candidate("direct", cleaned)
-        add_candidate("items_root", self._salvage_root_object_with_items(cleaned))
-        add_candidate("outer_braces", self._salvage_between_outer_braces(cleaned))
-        add_candidate("truncated", self._salvage_truncated_json(cleaned))
-        add_candidate("last_block", self._extract_last_json_block(cleaned))
-        add_candidate("first_block", self._extract_first_json_block(cleaned))
-
-        best_data: Any = None
-        best_text = ""
-        best_score = -1
-
-        for _, candidate in candidates:
-            data = self._try_load_with_repair(candidate)
-            if data is None:
-                continue
-
-            score = self._score_parsed_json(data)
-            if score > best_score:
-                best_score = score
-                best_data = data
-                best_text = candidate
-                if score >= 100:
-                    break
-
-        if best_score >= 0:
-            return ParseResult(ok=True, data=best_data, cleaned_text=best_text)
-
-        return ParseResult(
-            ok=False,
-            cleaned_text=cleaned,
-            error="Cannot parse JSON from LLM output (no valid JSON object/array found)",
+    def _normalize_quotes(self, text: str) -> tuple[str, List[str]]:
+        warnings: List[str] = []
+        fixed = (
+            text.replace("“", '"')
+            .replace("”", '"')
+            .replace("‘", "'")
+            .replace("’", "'")
         )
+        if fixed != text:
+            warnings.append("Normalized smart quotes.")
+        return fixed, warnings
 
-    def _score_parsed_json(self, data: Any) -> int:
-        if isinstance(data, dict):
-            score = 10
-            if isinstance(data.get("items"), list):
-                score += 100
-            if isinstance(data.get("plan"), dict):
-                score += 20
-            if any(k in data for k in ("items", "plan", "data", "result", "payload")):
-                score += 5
-            return score
-
-        if isinstance(data, list):
-            return 30
-
-        return 0
-
-    def _try_load_with_repair(self, text: str) -> Any:
-        if not text:
-            return None
-        try:
-            return json.loads(text)
-        except Exception:
-            pass
-
-        repaired = self._repair_llm_json(text)
-        try:
-            return json.loads(repaired)
-        except Exception:
-            return None
-
-    def _strip_code_fences(self, text: str) -> str:
-        lines = []
-        for ln in text.splitlines():
-            if ln.strip().startswith("```"):
-                continue
-            lines.append(ln)
-        t = "\n".join(lines).strip()
-
-        lines2 = t.splitlines()
-        while lines2 and not lines2[0].strip():
-            lines2.pop(0)
-        if lines2 and lines2[0].strip().lower() == "json":
-            lines2.pop(0)
-        return "\n".join(lines2).strip()
-
-    def _extract_first_json_block(self, text: str) -> Optional[str]:
-        if not text:
-            return None
-
-        i_obj = text.find("{")
-        i_arr = text.find("[")
-        if i_obj == -1 and i_arr == -1:
-            return None
-
-        if i_obj == -1:
-            start = i_arr
-            open_ch, close_ch = "[", "]"
-        elif i_arr == -1:
-            start = i_obj
-            open_ch, close_ch = "{", "}"
-        else:
-            if i_arr < i_obj:
-                start = i_arr
-                open_ch, close_ch = "[", "]"
-            else:
-                start = i_obj
-                open_ch, close_ch = "{", "}"
+    def _extract_balanced_block(self, text: str, open_ch: str, close_ch: str) -> str:
+        start = text.find(open_ch)
+        if start < 0:
+            return ""
 
         depth = 0
-        in_str = False
-        esc = False
+        in_string = False
+        escape = False
 
         for i in range(start, len(text)):
             ch = text[i]
 
-            if in_str:
-                if esc:
-                    esc = False
-                    continue
-                if ch == "\\":
-                    esc = True
-                    continue
-                if ch == '"':
-                    in_str = False
+            if in_string:
+                if escape:
+                    escape = False
+                elif ch == "\\":
+                    escape = True
+                elif ch == '"':
+                    in_string = False
                 continue
 
             if ch == '"':
-                in_str = True
+                in_string = True
                 continue
 
             if ch == open_ch:
@@ -158,304 +88,149 @@ class LLMOutputParser:
             elif ch == close_ch:
                 depth -= 1
                 if depth == 0:
-                    return text[start:i + 1].strip()
+                    return text[start:i + 1]
 
-        return None
+        return ""
 
-    def _extract_last_json_block(self, text: str) -> Optional[str]:
+    def extract_json_block(self, text: str) -> str:
+        text = (text or "").strip()
         if not text:
-            return None
+            return ""
 
-        end_obj = text.rfind("}")
-        end_arr = text.rfind("]")
-        if end_obj == -1 and end_arr == -1:
-            return None
+        obj = self._extract_balanced_block(text, "{", "}")
+        if obj:
+            return obj.strip()
 
-        if end_obj > end_arr:
-            end = end_obj
-            open_ch, close_ch = "{", "}"
-        else:
-            end = end_arr
-            open_ch, close_ch = "[", "]"
+        arr = self._extract_balanced_block(text, "[", "]")
+        if arr:
+            return arr.strip()
 
-        depth = 0
-        in_str = False
-        esc = False
+        return ""
 
-        for i in range(end, -1, -1):
-            ch = text[i]
+    def _expand_repeat_function(self, text: str, warnings: List[str]) -> str:
+        pattern = re.compile(r'"([^"\\]|\\.)*"\.repeat\(\d+\)')
 
-            if in_str:
-                if esc:
-                    esc = False
-                    continue
-                if ch == "\\":
-                    esc = True
-                    continue
-                if ch == '"':
-                    in_str = False
-                continue
+        def repl(match: re.Match) -> str:
+            full = match.group(0)
+            m = re.match(r'"((?:[^"\\]|\\.)*)"\.repeat\((\d+)\)', full)
+            if not m:
+                return full
 
-            if ch == '"':
-                in_str = True
-                continue
+            raw_str = m.group(1)
+            count = int(m.group(2))
 
-            if ch == close_ch:
-                depth += 1
-            elif ch == open_ch:
-                depth -= 1
-                if depth == 0:
-                    return text[i:end + 1].strip()
+            try:
+                decoded = bytes(raw_str, "utf-8").decode("unicode_escape")
+            except Exception:
+                decoded = raw_str
 
-        return None
+            expanded = decoded * count
+            warnings.append(f"Expanded pseudo-code expression: {full}")
+            return json.dumps(expanded, ensure_ascii=False)
 
-    def _salvage_between_outer_braces(self, text: str) -> Optional[str]:
-        if not text:
-            return None
+        return pattern.sub(repl, text)
 
-        first_obj = text.find("{")
-        last_obj = text.rfind("}")
-        if first_obj != -1 and last_obj != -1 and last_obj > first_obj:
-            return text[first_obj:last_obj + 1].strip()
+    def _expand_multiply_pattern(self, text: str, warnings: List[str]) -> str:
+        pattern = re.compile(r'"([^"\\]|\\.)*"\s*\*\s*\d+')
 
-        first_arr = text.find("[")
-        last_arr = text.rfind("]")
-        if first_arr != -1 and last_arr != -1 and last_arr > first_arr:
-            return text[first_arr:last_arr + 1].strip()
+        def repl(match: re.Match) -> str:
+            full = match.group(0)
+            m = re.match(r'"((?:[^"\\]|\\.)*)"\s*\*\s*(\d+)', full)
+            if not m:
+                return full
 
-        return None
+            raw_str = m.group(1)
+            count = int(m.group(2))
 
-    def _salvage_root_object_with_items(self, text: str) -> Optional[str]:
-        """
-        Trường hợp root JSON có dạng { ..., "items": [ {...}, {...}, ... ] }
-        nhưng bị cắt giữa chừng ở một item cuối.
+            try:
+                decoded = bytes(raw_str, "utf-8").decode("unicode_escape")
+            except Exception:
+                decoded = raw_str
 
-        Ý tưởng:
-        - giữ nguyên phần prefix trước dấu '[' của items
-        - chỉ nhặt các object hoàn chỉnh trong mảng items
-        - đóng lại ] và } để tạo root JSON hợp lệ
-        """
-        if not text or '"items"' not in text:
-            return None
+            expanded = decoded * count
+            warnings.append(f"Expanded pseudo-code expression: {full}")
+            return json.dumps(expanded, ensure_ascii=False)
 
-        items_key_pos = text.find('"items"')
-        array_start = text.find('[', items_key_pos)
-        if array_start == -1:
-            return None
+        return pattern.sub(repl, text)
 
-        prefix = text[: array_start + 1]
-        suffix = "]}"
+    def repair_common_json_issues(self, text: str) -> tuple[str, List[str]]:
+        warnings: List[str] = []
+        text = (text or "").strip()
 
-        objs: List[str] = []
-        in_str = False
-        esc = False
-        depth = 0
-        obj_start: Optional[int] = None
+        # bỏ BOM nếu có
+        text = text.lstrip("\ufeff")
 
-        for i in range(array_start + 1, len(text)):
-            ch = text[i]
+        # chuẩn hóa dấu ngoặc kép
+        text, quote_warnings = self._normalize_quotes(text)
+        warnings.extend(quote_warnings)
 
-            if in_str:
-                if esc:
-                    esc = False
-                    continue
-                if ch == "\\":
-                    esc = True
-                    continue
-                if ch == '"':
-                    in_str = False
-                continue
+        # sửa pseudo-code trước
+        text = self._expand_repeat_function(text, warnings)
+        text = self._expand_multiply_pattern(text, warnings)
 
-            if ch == '"':
-                in_str = True
-                continue
+        # bỏ comma thừa trước } hoặc ]
+        fixed = re.sub(r",\s*([}\]])", r"\1", text)
+        if fixed != text:
+            warnings.append("Removed trailing comma before closing bracket.")
+            text = fixed
 
-            if ch == "{":
-                if depth == 0:
-                    obj_start = i
-                depth += 1
-            elif ch == "}":
-                if depth > 0:
-                    depth -= 1
-                    if depth == 0 and obj_start is not None:
-                        objs.append(text[obj_start:i + 1].strip())
-                        obj_start = None
-            elif ch == "]":
-                break
+        return text.strip(), warnings
 
-        if not objs:
-            return None
+    def parse_json(self, raw_text: str) -> ParserResult:
+        if not isinstance(raw_text, str):
+            return ParserResult(
+                ok=False,
+                data=None,
+                cleaned_text="",
+                error=f"raw_text must be str, got {type(raw_text).__name__}",
+                warnings=[],
+            )
 
-        return prefix + ", ".join(objs) + suffix
+        text = self.strip_code_fences(raw_text)
+        block = self.extract_json_block(text)
 
-    def _salvage_truncated_json(self, text: str) -> Optional[str]:
-        if not text:
-            return None
+        if not block:
+            return ParserResult(
+                ok=False,
+                data=None,
+                cleaned_text=text,
+                error="Cannot find a valid JSON object/array in LLM output.",
+                warnings=[],
+            )
 
-        start_obj = text.find("{")
-        start_arr = text.find("[")
-        if start_obj == -1 and start_arr == -1:
-            return None
+        repaired, warnings = self.repair_common_json_issues(block)
 
-        start = start_obj if (start_obj != -1 and (start_arr == -1 or start_obj < start_arr)) else start_arr
-        candidate = text[start:].strip()
-        if not candidate:
-            return None
+        try:
+            parsed = json.loads(repaired)
+            return ParserResult(
+                ok=True,
+                data=parsed,
+                cleaned_text=repaired,
+                error="",
+                warnings=warnings,
+            )
+        except json.JSONDecodeError as exc:
+            start = max(0, exc.pos - 120)
+            end = min(len(repaired), exc.pos + 120)
+            snippet = repaired[start:end]
 
-        stack: List[str] = []
-        in_str = False
-        esc = False
-        last_safe_idx: Optional[int] = None
+            return ParserResult(
+                ok=False,
+                data=None,
+                cleaned_text=repaired,
+                error=(
+                    f"JSON decode error: {exc}. "
+                    f"Context near error: {snippet}"
+                ),
+                warnings=warnings,
+            )
 
-        for i, ch in enumerate(candidate):
-            if in_str:
-                if esc:
-                    esc = False
-                    continue
-                if ch == "\\":
-                    esc = True
-                    continue
-                if ch == '"':
-                    in_str = False
-                    last_safe_idx = i
-                continue
 
-            if ch == '"':
-                in_str = True
-                continue
+def parse_llm_json_output(raw_text: str) -> Any:
+    parser = LLMOutputParser()
+    result = parser.parse_json(raw_text)
 
-            if ch in "{[":
-                stack.append(ch)
-            elif ch in "}]":
-                if stack:
-                    top = stack[-1]
-                    if (top == "{" and ch == "}") or (top == "[" and ch == "]"):
-                        stack.pop()
-                last_safe_idx = i
-            elif ch == ",":
-                last_safe_idx = i
+    if not result.ok or result.data is None:
+        raise ValueError(result.error or "Cannot parse JSON from LLM output.")
 
-        if (in_str or stack) and last_safe_idx is not None:
-            candidate = candidate[: last_safe_idx + 1].rstrip()
-
-        candidate = re.sub(r",\s*$", "", candidate)
-
-        stack = []
-        in_str2 = False
-        esc2 = False
-        for ch in candidate:
-            if in_str2:
-                if esc2:
-                    esc2 = False
-                    continue
-                if ch == "\\":
-                    esc2 = True
-                    continue
-                if ch == '"':
-                    in_str2 = False
-                continue
-
-            if ch == '"':
-                in_str2 = True
-                continue
-
-            if ch in "{[":
-                stack.append(ch)
-            elif ch in "}]":
-                if stack:
-                    top = stack[-1]
-                    if (top == "{" and ch == "}") or (top == "[" and ch == "]"):
-                        stack.pop()
-
-        if in_str2:
-            return None
-
-        if stack:
-            closers = "".join("}" if op == "{" else "]" for op in reversed(stack))
-            candidate = candidate + closers
-
-        return candidate.strip()
-
-    def _repair_llm_json(self, s: str) -> str:
-        out = s
-
-        pattern_mul_plus = re.compile(
-            r'"(?P<char>[^"\\])"\s*\*\s*(?P<n>\d+)\s*\+\s*"(?P<suf>[^"\\]*)"'
-        )
-        pattern_mul = re.compile(r'"(?P<char>[^"\\])"\s*\*\s*(?P<n>\d+)')
-
-        changed = True
-        while changed:
-            changed = False
-
-            def repl_mul_plus(m: re.Match) -> str:
-                ch = m.group("char")
-                n = int(m.group("n"))
-                suf = m.group("suf")
-                return '"' + (ch * n) + suf + '"'
-
-            out2 = pattern_mul_plus.sub(repl_mul_plus, out)
-            if out2 != out:
-                out = out2
-                changed = True
-
-            def repl_mul(m: re.Match) -> str:
-                ch = m.group("char")
-                n = int(m.group("n"))
-                return '"' + (ch * n) + '"'
-
-            out3 = pattern_mul.sub(repl_mul, out)
-            if out3 != out:
-                out = out3
-                changed = True
-
-        out = re.sub(r",\s*([}\]])", r"\1", out)
-        return out
-
-    def _remove_json_comments(self, text: str) -> str:
-        if not text:
-            return text
-
-        out_chars = []
-        i = 0
-        n = len(text)
-        in_str = False
-        esc = False
-
-        while i < n:
-            ch = text[i]
-
-            if in_str:
-                out_chars.append(ch)
-                if esc:
-                    esc = False
-                elif ch == "\\":
-                    esc = True
-                elif ch == '"':
-                    in_str = False
-                i += 1
-                continue
-
-            if ch == '"':
-                in_str = True
-                out_chars.append(ch)
-                i += 1
-                continue
-
-            if ch == "/" and i + 1 < n and text[i + 1] == "/":
-                i += 2
-                while i < n and text[i] not in "\r\n":
-                    i += 1
-                continue
-
-            if ch == "/" and i + 1 < n and text[i + 1] == "*":
-                i += 2
-                while i + 1 < n and not (text[i] == "*" and text[i + 1] == "/"):
-                    i += 1
-                i += 2 if i + 1 < n else 0
-                continue
-
-            out_chars.append(ch)
-            i += 1
-
-        return "".join(out_chars)
+    return result.data

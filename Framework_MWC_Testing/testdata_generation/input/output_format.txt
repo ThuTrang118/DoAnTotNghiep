@@ -1,0 +1,62 @@
+==================================================
+OUTPUT FORMAT REQUIREMENTS
+==================================================
+
+Chỉ trả về DUY NHẤT 1 JSON object hợp lệ.
+Không giải thích. Không thêm markdown. 
+Không thêm văn bản trước và sau JSON.
+Không thêm ghi chú/comment.
+
+JSON phải bắt đầu bằng { và kết thúc bằng }
+
+==================================================
+JSON SCHEMA
+==================================================
+
+{
+  "feature": "",
+  "Reasoning": {
+    "EquivalencePartitioning": { "Count": 0, "Summary": [] },
+    "DecisionTable": { "Count": 0, "Summary": [] },
+    "BoundaryValueAnalysis": { "Count": 0, "Summary": [] }
+  },
+  "Plan": {
+    "EquivalencePartitioning": 0,
+    "DecisionTable": 0,
+    "BoundaryValueAnalysis": 0,
+    "FinalOptimized": 0
+  },
+  "items": [
+    {
+      "Testcase": "",
+      "SummaryRef": "",
+      "Objective": "",
+      "Username": "",
+      "Password": "",
+      "Expected": ""
+    }
+  ]
+}
+==================================================
+QUY TẮC CHI TIẾT CHO CÁC TRƯỜNG (FIELD RULES)
+==================================================
+
+1. feature: Tên chức năng (string).
+2. Reasoning: Phân tích kỹ thuật kiểm thử.
+   - Id của Summary: DT01, DT02..., EP01, EP02..., BVA01, BVA02...
+   - Description: Mô tả coverage item concept bằng Tiếng Việt.
+3. Plan: Tổng hợp số lượng (Count). 
+   - FinalOptimized = Tổng các test case thực tế trong mảng "items".
+4. items: Danh sách test case cụ thể hóa từ Summary.
+   - Testcase ID: LG01, LG02... (Dựa theo bảng mapping PREFIX).
+   - SummaryRef: Phải khớp chính xác với Id trong phần Reasoning.
+   - Objective: Viết bằng Tiếng Việt, mô tả kịch bản test cụ thể.
+
+==================================================
+JSON VALIDITY
+==================================================
+- Sử dụng dấu ngoặc kép chuẩn.
+- Không thiếu/thừa dấu phẩy.
+- Escape ký tự đặc biệt nếu cần.
+
+TRẢ VỀ DUY NHẤT JSON. KHÔNG NÓI THÊM.
