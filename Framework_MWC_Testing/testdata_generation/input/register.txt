@@ -1,40 +1,30 @@
 Chức năng: Đăng ký
 
 Mô tả:
-Chức năng đăng ký cho phép người dùng tạo tài khoản mới bằng cách nhập Username, Số điện thoại, Mật khẩu và Nhắc lại mật khẩu.
+Chức năng đăng ký cho phép người dùng tạo tài khoản mới bằng cách nhập Username, Phone, Password và ConfirmPassword.
 Sau khi người dùng nhấn nút Đăng ký, hệ thống kiểm tra dữ liệu đầu vào.
 Nếu tất cả dữ liệu hợp lệ, hệ thống tạo tài khoản thành công.
 Nếu dữ liệu không hợp lệ, hệ thống hiển thị thông báo lỗi tương ứng.
 
 Ràng buộc dữ liệu:
-1. Username là bắt buộc
-2. Số điện thoại là bắt buộc
-3. Mật khẩu là bắt buộc
-4. Nhắc lại mật khẩu là bắt buộc
-5. Số điện thoại:
-   - Phải gồm đúng 10 ký tự
-   - Chỉ được chứa ký tự số
-   - Phải bắt đầu bằng số 0
-   - Không được chứa ký tự chữ
-   - Không được chứa ký tự đặc biệt
-   - Không được chứa khoảng trắng
-6. Mật khẩu:
-   - Độ dài từ 8 đến 20 ký tự
-7. Nhắc lại mật khẩu:
-   - Phải trùng khớp hoàn toàn với Mật khẩu
+1. Username: [Bắt buộc].
+2. Phone: [Bắt buộc], [Kiểu: Numeric], [Độ dài = 10 ký tự số], [Bắt đầu bằng số 0].
+3. Password: [Bắt buộc], [Kiểu: String], [Độ dài: 8 - 25 ký tự].
+   - Độ dài chuỗi từ 8 đến 20 ký tự
+4. ConfirmPassword: [Bắt buộc], [trùng khớp hoàn toàn với Password]
 
 Kết quả mong đợi:
 1. Nếu bất kỳ trường bắt buộc nào rỗng
    -> Vui lòng điền vào trường này
 
-2. Nếu Số điện thoại không đúng định dạng
-   -> Số điện thoại không hợp lệ
+2. Nếu Phone không đúng định dạng
+   -> Phone không hợp lệ
 
-3. Nếu Mật khẩu không đúng độ dài (nhỏ hơn 8 hoặc lớn hơn 20)
-   -> Mật khẩu phải từ 8 đến 20 ký tự
+3. Nếu Password không đúng độ dài (nhỏ hơn 8 hoặc lớn hơn 20)
+   -> Password phải từ 8 đến 20 ký tự
 
-4. Nếu Nhắc lại mật khẩu không trùng với Mật khẩu
-   -> Mật khẩu nhập lại không khớp
+4. Nếu ConfirmPassword không trùng với Password
+   -> Password nhập lại không khớp
 
 5. Nếu tất cả dữ liệu hợp lệ
    -> Đăng ký thành công
@@ -42,4 +32,4 @@ Kết quả mong đợi:
 Lưu ý:
 - Decision Table phải phản ánh đúng các tổ hợp điều kiện của register
 - Equivalence Partitioning phải phản ánh các lớp dữ liệu khác nhau, không lặp ý nghĩa
-- Boundary Value Analysis phải bám đúng ràng buộc độ dài của Password và định dạng Số điện thoại
+- Boundary Value Analysis phải bám đúng ràng buộc độ dài của Password và định dạng Phone

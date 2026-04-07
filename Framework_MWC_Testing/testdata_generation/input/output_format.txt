@@ -14,12 +14,11 @@ JSON SCHEMA
 ==================================================
 
 {
-  "feature": "",
+  "feature": "[LẤY TỪ DÒNG 'Chức năng' TRONG FILE NGHIỆP VỤ]",
   "Reasoning": {
     "EquivalencePartitioning": { "Count": 0, "Summary": [] },
-    "DecisionTable": { "Count": 0, "Summary": [] },
-    "BoundaryValueAnalysis": { "Count": 0, "Summary": [] }
-  },
+    "BoundaryValueAnalysis": { "Count": 0, "Summary": [] },
+    "DecisionTable": { "Count": 0, "Summary": [] }
   "Plan": {
     "EquivalencePartitioning": 0,
     "DecisionTable": 0,
@@ -28,19 +27,21 @@ JSON SCHEMA
   },
   "items": [
     {
-      "Testcase": "",
-      "Objective": "",
-      "Username": "",
-      "Password": "",
-      "Expected": ""
+      "Testcase": "[PREFIX]01", 
+      "Objective": "Mô tả mục tiêu bằng Tiếng Việt",
+      "Inputs": {
+        "Key_Field": "Value_Dữ_Liệu"
+      },
+      "Expected": "Kết quả mong đợi từ đặc tả"
     }
   ]
 }
+
 ==================================================
 QUY TẮC CHI TIẾT CHO CÁC TRƯỜNG (FIELD RULES)
 ==================================================
 
-1. feature: Tên chức năng (string).
+1. feature: Tên chức năng (string). Phải khớp chính xác với nội dung sau chữ "Chức năng:" ở dòng đầu tiên của file nghiệp vụ.
 2. Reasoning: Phân tích kỹ thuật kiểm thử.
    - Id của Summary: DT01, DT02..., EP01, EP02..., BVA01, BVA02...
    - Description: Mô tả coverage item concept bằng Tiếng Việt.
@@ -48,7 +49,11 @@ QUY TẮC CHI TIẾT CHO CÁC TRƯỜNG (FIELD RULES)
    - FinalOptimized = Tổng các test case thực tế trong mảng "items".
 4. items: Danh sách test case cụ thể hóa từ Summary.
    - Testcase ID: LG01, LG02... (Dựa theo bảng mapping PREFIX).
-   - Objective: Viết bằng Tiếng Việt, mô tả kịch bản test cụ thể.
+   - Objective: mô tả kịch bản test cụ thể.
+   - Inputs Object: AI phải quét toàn bộ mục "Ràng buộc dữ liệu" trong file nghiệp vụ để liệt kê đầy đủ các trường cần thiết. KHÔNG ĐƯỢC để trống hoặc sai tên trường so với đặc tả.
+5. Quy tắc logic & ngôn ngữ
+- Ngôn ngữ sử dụng: Tiếng Việt.
+- Logic: Mỗi test case trong "items" phải là kết quả của việc áp dụng các kỹ thuật trong file blackbox_techniques.txt vào các ràng buộc của file nghiệp vụ.
 
 ==================================================
 JSON VALIDITY

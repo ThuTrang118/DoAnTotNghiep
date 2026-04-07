@@ -101,6 +101,72 @@ class DataExporter:
         f = self._normalize_feature(feature)
         return self.FEATURE_BASENAME.get(f, f"{f.capitalize()}Data" if f else "TestData")
 
+    def _get_feature_processed_dir(self, feature: str) -> Path:
+        feature_name = self._normalize_feature(feature)
+        feature_dir = self.processed_dir / feature_name
+        feature_dir.mkdir(parents=True, exist_ok=True)
+        return feature_dir
+
+    def _flatten_item_for_processed(self, row: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Chuẩn hoá 1 item AI về dạng phẳng để export.
+
+        Hỗ trợ cả 2 kiểu:
+        1. Flat:
+           {
+             "Testcase": "LG01",
+             "Username": "...",
+             "Password": "...",
+             "Expected": "..."
+           }
+
+        2. Nested Inputs:
+           {
+             "Testcase": "LG01",
+             "Objective": "...",
+             "Technique": "DT",
+             "Inputs": {
+               "Username": "...",
+               "Password": "..."
+             },
+             "Expected": "..."
+           }
+        """
+        flat: Dict[str, Any] = {}
+
+        # giữ lại các field cấp ngoài cần thiết
+        for key, value in row.items():
+            if key == "Inputs":
+                continue
+            flat[key] = value
+
+        inputs = row.get("Inputs")
+        if isinstance(inputs, dict):
+            for k, v in inputs.items():
+                flat[k] = v
+
+        return flat
+
+    def _prepare_rows_for_processed(
+        self,
+        rows: List[Dict[str, Any]],
+    ) -> List[Dict[str, Any]]:
+        """
+        Chuẩn hoá danh sách item trước khi export:
+        - flatten Inputs
+        - bỏ các cột không cần cho framework test
+        """
+        cleaned: List[Dict[str, Any]] = []
+
+        for row in rows:
+            flat_row = self._flatten_item_for_processed(dict(row))
+            flat_row.pop("Technique", None)
+            flat_row.pop("Objective", None)
+            flat_row.pop("Inputs", None)
+            cleaned.append(flat_row)
+
+        return cleaned
+
     def _get_headers(self, feature: str, rows: List[Dict[str, Any]]) -> List[str]:
         f = self._normalize_feature(feature)
         if f in self.FEATURE_COLUMN_ORDER:
@@ -125,21 +191,6 @@ class DataExporter:
             normalized.append(normalized_row)
         return normalized
 
-    def _drop_non_processed_columns(
-        self,
-        rows: List[Dict[str, Any]],
-    ) -> List[Dict[str, Any]]:
-        """
-        Dữ liệu processed cho framework test hiện không cần Technique.
-        Vì vậy nếu item có Technique thì loại bỏ khi export processed.
-        """
-        cleaned: List[Dict[str, Any]] = []
-        for row in rows:
-            row_copy = dict(row)
-            row_copy.pop("Technique", None)
-            cleaned.append(row_copy)
-        return cleaned
-
     # =========================================================
     # RAW (Evidence)
     # =========================================================
@@ -159,9 +210,10 @@ class DataExporter:
     # =========================================================
     def write_processed_json(self, feature: str, rows: List[Dict[str, Any]]) -> Path:
         name = self._processed_basename(feature)
-        path = self.processed_dir / f"{name}.json"
+        feature_dir = self._get_feature_processed_dir(feature)
+        path = feature_dir / f"{name}.json"
 
-        rows = self._drop_non_processed_columns(rows)
+        rows = self._prepare_rows_for_processed(rows)
         headers = self._get_headers(feature, rows)
         rows_norm = self._normalize_rows(rows, headers) if headers else rows
 
@@ -172,9 +224,10 @@ class DataExporter:
 
     def write_processed_csv(self, feature: str, rows: List[Dict[str, Any]]) -> Path:
         name = self._processed_basename(feature)
-        path = self.processed_dir / f"{name}.csv"
+        feature_dir = self._get_feature_processed_dir(feature)
+        path = feature_dir / f"{name}.csv"
 
-        rows = self._drop_non_processed_columns(rows)
+        rows = self._prepare_rows_for_processed(rows)
         if not rows:
             path.write_text("", encoding="utf-8")
             return path
@@ -182,7 +235,7 @@ class DataExporter:
         headers = self._get_headers(feature, rows)
         rows_norm = self._normalize_rows(rows, headers)
 
-        with path.open("w", encoding="utf-8", newline="") as f:
+        with path.open("w", encoding="utf-8-sig", newline="") as f:
             writer = csv.DictWriter(f, fieldnames=headers)
             writer.writeheader()
             writer.writerows(rows_norm)
@@ -191,9 +244,10 @@ class DataExporter:
 
     def write_processed_xlsx(self, feature: str, rows: List[Dict[str, Any]]) -> Path:
         name = self._processed_basename(feature)
-        path = self.processed_dir / f"{name}.xlsx"
+        feature_dir = self._get_feature_processed_dir(feature)
+        path = feature_dir / f"{name}.xlsx"
 
-        rows = self._drop_non_processed_columns(rows)
+        rows = self._prepare_rows_for_processed(rows)
         headers = self._get_headers(feature, rows)
         rows_norm = self._normalize_rows(rows, headers)
 
@@ -213,9 +267,10 @@ class DataExporter:
             )
 
         name = self._processed_basename(feature)
-        path = self.processed_dir / f"{name}.xls"
+        feature_dir = self._get_feature_processed_dir(feature)
+        path = feature_dir / f"{name}.xls"
 
-        rows = self._drop_non_processed_columns(rows)
+        rows = self._prepare_rows_for_processed(rows)
         headers = self._get_headers(feature, rows)
         rows_norm = self._normalize_rows(rows, headers)
 
@@ -235,9 +290,10 @@ class DataExporter:
 
     def write_processed_xml(self, feature: str, rows: List[Dict[str, Any]]) -> Path:
         name = self._processed_basename(feature)
-        path = self.processed_dir / f"{name}.xml"
+        feature_dir = self._get_feature_processed_dir(feature)
+        path = feature_dir / f"{name}.xml"
 
-        rows = self._drop_non_processed_columns(rows)
+        rows = self._prepare_rows_for_processed(rows)
         headers = self._get_headers(feature, rows)
         rows_norm = self._normalize_rows(rows, headers) if headers else rows
 
@@ -271,9 +327,10 @@ class DataExporter:
             )
 
         name = self._processed_basename(feature)
-        path = self.processed_dir / f"{name}.{ext}"
+        feature_dir = self._get_feature_processed_dir(feature)
+        path = feature_dir / f"{name}.{ext}"
 
-        rows = self._drop_non_processed_columns(rows)
+        rows = self._prepare_rows_for_processed(rows)
         headers = self._get_headers(feature, rows)
         rows_norm = self._normalize_rows(rows, headers) if headers else rows
 
@@ -284,10 +341,11 @@ class DataExporter:
 
     def write_processed_db(self, feature: str, rows: List[Dict[str, Any]]) -> Path:
         name = self._processed_basename(feature)
-        path = self.processed_dir / f"{name}.db"
+        feature_dir = self._get_feature_processed_dir(feature)
+        path = feature_dir / f"{name}.db"
         table = self._normalize_feature(feature) or "testdata"
 
-        rows = self._drop_non_processed_columns(rows)
+        rows = self._prepare_rows_for_processed(rows)
 
         conn = sqlite3.connect(path)
         try:
@@ -363,9 +421,6 @@ class DataExporter:
         rows: List[Dict[str, Any]],
         formats: Optional[Iterable[str]] = None,
     ) -> Dict[str, str]:
-        """
-        Method tương thích với generation_pipeline.py mới.
-        """
         paths = self.write_formats(feature=feature, rows=rows, formats=formats)
         return {k: str(v) for k, v in paths.items()}
 
@@ -375,9 +430,6 @@ class DataExporter:
         items: List[Dict[str, Any]],
         formats: Optional[Iterable[str]] = None,
     ) -> List[str]:
-        """
-        Method tương thích với generation_pipeline.py mới.
-        """
         paths = self.write_formats(feature=feature, rows=items, formats=formats)
         return [str(v) for v in paths.values()]
 

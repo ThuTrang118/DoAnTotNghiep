@@ -1,0 +1,62 @@
+<items>
+  <item>
+    <Testcase>LG01</Testcase>
+    <Username></Username>
+    <Password>AnhDuong@123</Password>
+    <Expected>Vui lòng điền vào trường này</Expected>
+  </item>
+  <item>
+    <Testcase>LG02</Testcase>
+    <Username>AnhDuong11</Username>
+    <Password></Password>
+    <Expected>Vui lòng điền vào trường này</Expected>
+  </item>
+  <item>
+    <Testcase>LG03</Testcase>
+    <Username>AnhDuong11</Username>
+    <Password>SaiMat@123</Password>
+    <Expected>Username hoặc Password không đúng!</Expected>
+  </item>
+  <item>
+    <Testcase>LG04</Testcase>
+    <Username>Duong11Anh</Username>
+    <Password></Password>
+    <Expected>Vui lòng điền vào trường này</Expected>
+  </item>
+  <item>
+    <Testcase>LG05</Testcase>
+    <Username>AnhDuong11</Username>
+    <Password></Password>
+    <Expected>Vui lòng điền vào trường này</Expected>
+  </item>
+  <item>
+    <Testcase>LG06</Testcase>
+    <Username></Username>
+    <Password>AnhDuong@123</Password>
+    <Expected>Vui lòng điền vào trường này</Expected>
+  </item>
+  <item>
+    <Testcase>LG07</Testcase>
+    <Username>AnhDuong11</Username>
+    <Password>AnhDuong@123</Password>
+    <Expected>AnhDuong11</Expected>
+  </item>
+  <item>
+    <Testcase>LG08</Testcase>
+    <Username>Duong11Anh</Username>
+    <Password>AnhDuong@123</Password>
+    <Expected>Username hoặc Password không đúng!</Expected>
+  </item>
+  <item>
+    <Testcase>LG09</Testcase>
+    <Username></Username>
+    <Password>SaiMat@123</Password>
+    <Expected>Vui lòng điền vào trường này</Expected>
+  </item>
+  <item>
+    <Testcase>LG10</Testcase>
+    <Username>Duong11Anh</Username>
+    <Password>SaiMat@123</Password>
+    <Expected>Username hoặc Password không đúng!</Expected>
+  </item>
+</items>

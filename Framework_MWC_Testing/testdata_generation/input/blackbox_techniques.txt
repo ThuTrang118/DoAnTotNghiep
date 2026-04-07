@@ -1,47 +1,69 @@
-# ROLE: Senior Quality Assurance Engineer & Automated Test Data Generator
-# GOAL: Phân tích nghiệp vụ và sinh dữ liệu kiểm thử ĐẦY ĐỦ, TÁCH BIỆT nhưng TỐI ƯU.
+================================================================================
+HƯỚNG DẪN KỸ THUẬT SINH DỮ LIỆU KIỂM THỬ ĐEN (BLACK-BOX TESTING TECHNIQUES)
+================================================================================
 
-==================================================================================
-1. MỤC ĐÍCH (OBJECTIVE)
-==================================================================================
-- Hướng dẫn AI thực hiện kiểm thử Đen (Black-box) với tư duy tối ưu hóa cao độ.
-- Đảm bảo mọi Input và tổ hợp logic đều được kiểm tra mà không sinh ra các Test Case trùng lặp về mặt dữ liệu.
-- Ép AI đối soát chặt chẽ giữa mục tiêu kiểm thử (Objective), dữ liệu nhập và kết quả mong đợi (Expected).
+1. MỤC TIÊU CỐT LÕI
+- Đạt độ bao phủ (Coverage) 100% các ràng buộc (Constraints) trong đặc tả.
+- Đảm bảo tính nhất quán tuyệt đối giữa Reasoning (Lý thuyết) và Items (Dữ liệu thực tế).
+- Tối ưu hóa số lượng Test Case thông qua quy trình khử trùng dữ liệu (De-duplication).
 
-==================================================================================
-2. CHIẾN LƯỢC PHÂN TÍCH VÀ TỐI ƯU (CORE STRATEGY)
-==================================================================================
+2. CÁC KỸ THUẬT VÀ QUY TRÌNH THỰC THI
 
-AI phải thực hiện phân tích theo trình tự ưu tiên để loại bỏ trùng lặp:
+A. PHÂN VÙNG TƯƠNG ĐƯƠNG (EQUIVALENCE PARTITIONING - EP)
+-------------------------------------------------------
+* Mục tiêu: Kiểm tra các quy tắc về định dạng (Format/Type).
+* Quy tắc chọn mẫu:
+  - 01 Giá trị Hợp lệ (Positive): Thỏa mãn tất cả định dạng của đặc tả.
+  - 01 Giá trị cho mỗi loại lỗi định dạng (Negative): Ví dụ: chứa chữ, chứa ký tự đặc biệt, chứa khoảng trắng, sai tiền tố (không bắt đầu bằng số 0)...
+* QUY TẮC THỰC THI: Mỗi Test Case chỉ được chứa DUY NHẤT một loại lỗi định dạng để đảm bảo tính cô lập lỗi.
 
-A. Phân vùng tương đương (EP) & Giá trị biên (BVA):
-   - Phải xét cho TẤT CẢ các trường dữ liệu. Mỗi trường phải đủ 3 trạng thái: Valid, Invalid, Empty.
-   - Nếu tài liệu có con số giới hạn cụ thể -> Kích hoạt BVA {Min-1, Min, Max, Max+1}. Nếu không -> Count BVA = 0.
+B. PHÂN TÍCH GIÁ TRỊ BIÊN (BOUNDARY VALUE ANALYSIS - BVA)
+---------------------------------------------------------
+1. ĐIỀU KIỆN ÁP DỤNG (BẮT BUỘC):
+- CHỈ ÁP DỤNG BVA khi đặc tả (SRS) có con số định lượng cụ thể.
+- TUYỆT ĐỐI KHÔNG áp dụng BVA nếu đặc tả chỉ ghi kiểu dữ liệu (String, Numeric) mà không có giới hạn con số đi kèm.
+- BVA chỉ được áp dụng cho đúng field có ràng buộc số lượng/độ dài được nêu trực tiếp trong đặc tả.
+- Không được suy diễn biên của field này sang field khác.
+- Mốc biên chỉ được xem là đã bao phủ khi giá trị thực tế trong item khớp chính xác với con số biên; mô tả đúng nhưng dữ liệu sai độ dài thì xem như không bao phủ.
 
-B. Bảng quyết định (DT) - Tổ hợp logic:
-   - Kích hoạt khi có từ 2 điều kiện kết hợp (ví dụ: Login, Register).
-   - Bao phủ các kịch bản: (1) All Valid; (2) Từng điều kiện sai đơn lẻ (Single-Fault); (3) Các tổ hợp sai đặc thù nếu nghiệp vụ yêu cầu.
+2. PHÂN LOẠI BIÊN VÀ CÔNG THỨC TÍNH TOÁN:
 
-C. Quy tắc Tối ưu hóa (Merge Rule):
-   - NẾU một Test Case sinh ra từ kỹ thuật DT đã bao phủ hoàn toàn một lớp dữ liệu của EP hoặc một điểm biên của BVA -> CHỈ giữ lại 1 Test Case duy nhất.
-   - SummaryRef phải ghi nhận tất cả các mã kỹ thuật được bao phủ (Ví dụ: "DT01, EP01, EP04").
+--- LOẠI 1: BIÊN ĐỘ ĐÀI KÝ TỰ (LENGTH-BASED BVA) ---
+- Áp dụng cho: Kiểu String có quy định cụ thể về số lượng ký tự.
+- QUY TẮC SINH CHUỖI: Chuỗi trong "Inputs" PHẢI có tổng số ký tự CHÍNH XÁC bằng con số biên. KHÔNG dùng chuỗi tượng trưng (như "A") nếu biên yêu cầu độ dài lớn.
+  Với mỗi giá trị biên thì thực hiện kiểm tra:
+  + kiểm tra độ dài chuỗi bằng biên
+  + kiểm tra độ dài chuỗi bằng biên + 1
+  + kiểm tra độ dài chuỗi bằng biên - 1
 
-==================================================================================
-3. QUY TRÌNH THỰC HIỆN NGHIÊM NGẶT (STRICT STEPS)
-==================================================================================
-Bước 1: Quét Input & Constraints: Liệt kê đầy đủ mọi Field và ràng buộc từ tài liệu.
-Bước 2: Xác định Expected Output: Copy NGUYÊN VĂN từ đặc tả. Không tự ý thêm chữ "Lỗi:" nếu tài liệu không có.
-Bước 3: Lập danh sách các trường hợp kiểm thử đơn lẻ (Single-Fault):
-   - Lần lượt bỏ trống từng trường (các trường khác Valid).
-   - Lần lượt nhập sai định dạng/logic cho từng trường (các trường khác Valid).
-Bước 4: Lập danh sách các tổ hợp (DT): Ghép nối các trường để tạo kịch bản Thành công và kịch bản sai logic chéo.
-Bước 5: Đối soát và Loại bỏ trùng lặp: Kiểm tra bảng "items", nếu 2 dòng có dữ liệu nhập giống nhau -> Gộp thành 1 và cộng dồn SummaryRef.
+--- LOẠI 2: BIÊN GIÁ TRỊ SỐ (VALUE-BASED BVA) ---
+- Áp dụng cho: Kiểu Numeric có quy định ngưỡng giá trị (Số lượng, Giá tiền...).
+- QUY TẮC SINH SỐ: Thực hiện phép toán cộng/trừ (+1, -1) trực tiếp trên giá trị số.
+  + Thử các mốc giá trị: (Min-1), (Min), (Max), (Max+1).
 
-==================================================================================
-4. CHỈ THỊ VỀ TÍNH NHẤT QUÁN
-==================================================================================
-- Ngôn ngữ & Độ chi tiết: Mọi mô tả trong Reasoning -> Summary và Objective phải sử dụng TIẾNG VIỆT và mô tả CHI TIẾT trạng thái dữ liệu của các trường.
-- Tính tách biệt: Case kiểm tra "Để trống trường A" phải nhập liệu "Hợp lệ" cho trường B để cô lập hành vi hệ thống.
-- Reasoning: Giải thích ngắn gọn lý do chọn hoặc BỎ QUA kỹ thuật (Ví dụ: "Bỏ qua BVA vì đặc tả không có giới hạn định lượng").
-- Mapping: Sử dụng Prefix mã Test Case chuẩn (LG, RE, SE...) và SummaryRef tham chiếu chính xác đến ID trong phần Reasoning.
-- JSON Standard: Trả về DUY NHẤT 1 JSON object hợp lệ theo Schema, không có văn bản giải thích ngoài lề.
+-- Dạng kết hợp giữa nhiều loại: 
+
+3. QUY TẮC CÔ LẬP BIÊN (STRICT ISOLATION):
+- Khi thử biên cho trường A, tất cả các trường còn lại (B, C...) PHẢI giữ giá trị HỢP LỆ (lấy từ dữ liệu mẫu thành công trong đặc tả). 
+- Tuyệt đối không thay đổi tài khoản mẫu hợp lệ để làm biên cho trường khác.
+
+C. BẢNG QUYẾT ĐỊNH (DECISION TABLE - DT)
+----------------------------------------
+- Mục tiêu: Kiểm tra các trường "Bắt buộc" (Mandatory) và logic phụ thuộc.
+- Quy tắc thực thi:
+  - Thử để rỗng (Empty/Null) lần lượt từng trường bắt buộc một.
+  - Thử các logic kết hợp sai (Ví dụ: Password đúng nhưng ConfirmPassword không khớp).
+
+3. QUY TRÌNH TỔNG QUÁT VÀ TỐI ƯU HÓA (PIPELINE)
+----------------------------------------------
+Bước 1: Quét đặc tả xác định các trường: Bắt buộc (DT), Định dạng (EP), Độ dài/Số lượng (BVA).
+Bước 2: Lập Plan (Reasoning). Liệt kê chi tiết từng mốc biên.
+Bước 3: KHỬ TRÙNG (De-duplication):
+  - Nếu một kịch bản "Thành công" đã tồn tại ở kỹ thuật này, KHÔNG lặp lại ở kỹ thuật khác.
+  - FinalOptimized = Tổng số ca kiểm thử thực tế duy nhất sau khi gộp trùng.
+Bước 4: Sinh Items. ĐỐI SOÁT CHẶT CHẼ: Độ dài chuỗi/Giá trị số trong "Inputs" phải khớp tuyệt đối với mô tả trong "Objective".
+
+4. NGUYÊN TẮC VÀNG
+- "Một Test Case - Một mục tiêu": Tuyệt đối không gộp 2 loại lỗi vào 1 dòng dữ liệu.
+- Expected Result: Trích dẫn NGUYÊN VĂN từ mục "Kết quả mong đợi" của đặc tả nghiệp vụ.
+- Nếu không có con số giới hạn trong đặc tả -> KHÔNG tự ý sinh test case BVA.

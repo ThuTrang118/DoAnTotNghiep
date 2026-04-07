@@ -7,7 +7,7 @@ Mô tả:
 - Nếu không có sản phẩm phù hợp, hệ thống sẽ hiển thị trang kết quả rỗng.
 - Định nghĩa từ khóa tìm kiếm hợp lệ
 
-Từ khóa tìm kiếm được xem là hợp lệ khi từ khóa thuộc một trong các loại thông tin sản phẩm sau:
+Key được xem là hợp lệ khi từ khóa thuộc một trong các loại thông tin sản phẩm sau:
 - Tên sản phẩm
     Ví dụ: giày, sandal, cao gót, sneaker, boot...
 - Một phần tên sản phẩm
@@ -21,7 +21,7 @@ Từ khóa tìm kiếm được xem là hợp lệ khi từ khóa thuộc một 
 Ràng buộc dữ liệu:
 1. Ô tìm kiếm là bắt buộc
 2. Không phân biệt chữ hoa và chữ thường
-3. Từ khóa tìm kiếm có thể là:
+3. Key có thể là:
     Tên sản phẩm
     Một phần tên sản phẩm
     Mã sản phẩm

@@ -1,0 +1,50 @@
+Chức năng: Đặt hàng
+
+Mô tả:
+- Chức năng đặt hàng cho phép khách hàng mua các sản phẩm đã thêm vào giỏ hàng trên website MWC.
+- Trang đặt hàng gồm hai phần chính:
+    1. Danh sách sản phẩm đặt hàng
+    2. Thông tin vận chuyển
+- Người dùng phải nhập thông tin nhận hàng gồm:
+    + Họ và tên
+    + Số điện thoại
+    + Địa chỉ nhận hàng
+- Địa chỉ chi tiết được chọn thông qua 3 combobox theo thứ tự bắt buộc:
+    1. Chọn Tỉnh
+    2. Chọn Quận/Huyện
+    3. Chọn Phường/Xã
+- Người dùng phải chọn Tỉnh trước thì mới chọn được Quận/Huyện.
+- Người dùng phải chọn Quận/Huyện trước thì mới chọn được Phường/Xã.
+- Quận/Huyện phải thuộc Tỉnh đã chọn.
+- Phường/Xã phải thuộc Quận/Huyện đã chọn.
+- Nếu người dùng thay đổi Tỉnh thì Quận/Huyện và Phường/Xã phải chọn lại từ đầu.
+- Nếu người dùng thay đổi Quận/Huyện thì Phường/Xã phải chọn lại.
+- Sau khi người dùng nhập đầy đủ thông tin và nhấn nút Đặt hàng, hệ thống sẽ kiểm tra dữ liệu đầu vào.
+- Nếu thông tin hợp lệ, hệ thống đặt hàng thành công.
+- Nếu thông tin không hợp lệ hoặc thiếu thông tin, hệ thống hiển thị thông báo lỗi tương ứng.
+- Giao diện trang đặt hàng tại địa chỉ: https://mwc.com.vn/cart
+
+Ràng buộc dữ liệu:
+1. Họ và tên là bắt buộc
+2. Số điện thoại là bắt buộc
+   - Phải gồm đúng 10 chữ số
+   - Phải bắt đầu bằng số 0
+   - Chỉ được chứa ký tự số
+   - Không được chứa ký tự chữ
+   - Không được chứa ký tự đặc biệt
+   - Không được chứa khoảng trắng
+3. Địa chỉ nhận hàng là bắt buộc
+4. Phải chọn đầy đủ Tỉnh, Quận/Huyện, Phường/Xã
+5. Quan hệ địa chỉ:
+   - Quận/Huyện phải thuộc Tỉnh đã chọn
+   - Phường/Xã phải thuộc Quận/Huyện đã chọn
+
+Kết quả mong đợi:
+1. Nếu thiếu bất kỳ thông tin nhận hàng nào (Họ tên, SĐT, Địa chỉ, Tỉnh, Quận/Huyện, Phường/Xã)
+   -> Bạn chưa nhập thông tin nhận hàng!
+
+2. Nếu Số điện thoại không đúng định dạng
+   -> SĐT không đúng định dạng
+
+3. Nếu tất cả thông tin hợp lệ
+   -> Đặt hàng thành công!
