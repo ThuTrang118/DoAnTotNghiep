@@ -1,0 +1,49 @@
+items:
+- Testcase: RG01
+  Username: ''
+  Phone: 0987654321
+  Password: password123
+  ConfirmPassword: password123
+  Expected: Vui lòng điền vào trường này
+- Testcase: RG02
+  Username: testuser123
+  Phone: ''
+  Password: password123
+  ConfirmPassword: password123
+  Expected: Vui lòng điền vào trường này
+- Testcase: RG03
+  Username: testuser123
+  Phone: '987654321'
+  Password: password123
+  ConfirmPassword: password123
+  Expected: Số điện thoại không đúng định dạng!
+- Testcase: RG04
+  Username: testuser123
+  Phone: 0987654321
+  Password: passwrd
+  ConfirmPassword: passwrd
+  Expected: Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!
+- Testcase: RG05
+  Username: testuser123
+  Phone: 0987654321
+  Password: password12345678901234567890
+  ConfirmPassword: password12345678901234567890
+  Expected: Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!
+- Testcase: RG06
+  Username: testuser123
+  Phone: 0987654321
+  Password: password123
+  ConfirmPassword: password1234
+  Expected: mật khẩu không giống nhau
+- Testcase: RG07
+  Username: AnhDuong11
+  Phone: 0987654321
+  Password: password123
+  ConfirmPassword: password123
+  Expected: tài khoản đã tồn tại trong hệ thống
+- Testcase: RG08
+  Username: testuser123456789
+  Phone: 0987654321
+  Password: password12345678
+  ConfirmPassword: password12345678
+  Expected: testuser123456789

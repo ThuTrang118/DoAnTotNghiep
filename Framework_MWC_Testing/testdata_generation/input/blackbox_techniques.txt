@@ -1,69 +1,413 @@
-================================================================================
-HƯỚNG DẪN KỸ THUẬT SINH DỮ LIỆU KIỂM THỬ ĐEN (BLACK-BOX TESTING TECHNIQUES)
-================================================================================
+==================================================
+VAI TRÒ
+==================================================
 
-1. MỤC TIÊU CỐT LÕI
-- Đạt độ bao phủ (Coverage) 100% các ràng buộc (Constraints) trong đặc tả.
-- Đảm bảo tính nhất quán tuyệt đối giữa Reasoning (Lý thuyết) và Items (Dữ liệu thực tế).
-- Tối ưu hóa số lượng Test Case thông qua quy trình khử trùng dữ liệu (De-duplication).
+Đây là tài liệu truyền tri thức kiểm thử hộp đen (Black-box Testing).
 
-2. CÁC KỸ THUẬT VÀ QUY TRÌNH THỰC THI
+AI phải sử dụng tài liệu này để:
+- Hiểu bản chất dữ liệu đầu vào
+- Phân loại đúng ràng buộc
+- Áp dụng đúng kỹ thuật kiểm thử
+- Sinh coverage đầy đủ, không thiếu, không dư
+- Mỗi coverage ánh xạ đúng 1 testcase
 
-A. PHÂN VÙNG TƯƠNG ĐƯƠNG (EQUIVALENCE PARTITIONING - EP)
--------------------------------------------------------
-* Mục tiêu: Kiểm tra các quy tắc về định dạng (Format/Type).
-* Quy tắc chọn mẫu:
-  - 01 Giá trị Hợp lệ (Positive): Thỏa mãn tất cả định dạng của đặc tả.
-  - 01 Giá trị cho mỗi loại lỗi định dạng (Negative): Ví dụ: chứa chữ, chứa ký tự đặc biệt, chứa khoảng trắng, sai tiền tố (không bắt đầu bằng số 0)...
-* QUY TẮC THỰC THI: Mỗi Test Case chỉ được chứa DUY NHẤT một loại lỗi định dạng để đảm bảo tính cô lập lỗi.
+==================================================
+I. PHÂN LOẠI TRẠNG THÁI DỮ LIỆU
+==================================================
 
-B. PHÂN TÍCH GIÁ TRỊ BIÊN (BOUNDARY VALUE ANALYSIS - BVA)
----------------------------------------------------------
-1. ĐIỀU KIỆN ÁP DỤNG (BẮT BUỘC):
-- CHỈ ÁP DỤNG BVA khi đặc tả (SRS) có con số định lượng cụ thể.
-- TUYỆT ĐỐI KHÔNG áp dụng BVA nếu đặc tả chỉ ghi kiểu dữ liệu (String, Numeric) mà không có giới hạn con số đi kèm.
-- BVA chỉ được áp dụng cho đúng field có ràng buộc số lượng/độ dài được nêu trực tiếp trong đặc tả.
-- Không được suy diễn biên của field này sang field khác.
-- Mốc biên chỉ được xem là đã bao phủ khi giá trị thực tế trong item khớp chính xác với con số biên; mô tả đúng nhưng dữ liệu sai độ dài thì xem như không bao phủ.
+Mọi field phải được phân loại thành 3 trạng thái:
 
-2. PHÂN LOẠI BIÊN VÀ CÔNG THỨC TÍNH TOÁN:
+1. Valid (Hợp lệ)
+- Thỏa mãn toàn bộ ràng buộc
+- Dẫn đến kết quả thành công
 
---- LOẠI 1: BIÊN ĐỘ ĐÀI KÝ TỰ (LENGTH-BASED BVA) ---
-- Áp dụng cho: Kiểu String có quy định cụ thể về số lượng ký tự.
-- QUY TẮC SINH CHUỖI: Chuỗi trong "Inputs" PHẢI có tổng số ký tự CHÍNH XÁC bằng con số biên. KHÔNG dùng chuỗi tượng trưng (như "A") nếu biên yêu cầu độ dài lớn.
-  Với mỗi giá trị biên thì thực hiện kiểm tra:
-  + kiểm tra độ dài chuỗi bằng biên
-  + kiểm tra độ dài chuỗi bằng biên + 1
-  + kiểm tra độ dài chuỗi bằng biên - 1
+2. Empty (Rỗng)
+- Không có dữ liệu ("")
+- Vi phạm ràng buộc bắt buộc
 
---- LOẠI 2: BIÊN GIÁ TRỊ SỐ (VALUE-BASED BVA) ---
-- Áp dụng cho: Kiểu Numeric có quy định ngưỡng giá trị (Số lượng, Giá tiền...).
-- QUY TẮC SINH SỐ: Thực hiện phép toán cộng/trừ (+1, -1) trực tiếp trên giá trị số.
-  + Thử các mốc giá trị: (Min-1), (Min), (Max), (Max+1).
+3. Invalid (Sai giá trị)
+- Có dữ liệu nhưng:
+  + Sai định dạng
+  + Sai độ dài
+  + Sai logic
+  + Sai quan hệ
 
--- Dạng kết hợp giữa nhiều loại: 
+NGUYÊN TẮC:
+- Không gộp Empty và Invalid
+- Mỗi testcase chỉ chứa 1 lỗi chính
+- Các field không test phải ở trạng thái Valid
 
-3. QUY TẮC CÔ LẬP BIÊN (STRICT ISOLATION):
-- Khi thử biên cho trường A, tất cả các trường còn lại (B, C...) PHẢI giữ giá trị HỢP LỆ (lấy từ dữ liệu mẫu thành công trong đặc tả). 
-- Tuyệt đối không thay đổi tài khoản mẫu hợp lệ để làm biên cho trường khác.
+==================================================
+II. NGUYÊN TẮC ÁP DỤNG KỸ THUẬT
+==================================================
 
-C. BẢNG QUYẾT ĐỊNH (DECISION TABLE - DT)
-----------------------------------------
-- Mục tiêu: Kiểm tra các trường "Bắt buộc" (Mandatory) và logic phụ thuộc.
-- Quy tắc thực thi:
-  - Thử để rỗng (Empty/Null) lần lượt từng trường bắt buộc một.
-  - Thử các logic kết hợp sai (Ví dụ: Password đúng nhưng ConfirmPassword không khớp).
+Không tồn tại thứ tự giữa các kỹ thuật.
 
-3. QUY TRÌNH TỔNG QUÁT VÀ TỐI ƯU HÓA (PIPELINE)
-----------------------------------------------
-Bước 1: Quét đặc tả xác định các trường: Bắt buộc (DT), Định dạng (EP), Độ dài/Số lượng (BVA).
-Bước 2: Lập Plan (Reasoning). Liệt kê chi tiết từng mốc biên.
-Bước 3: KHỬ TRÙNG (De-duplication):
-  - Nếu một kịch bản "Thành công" đã tồn tại ở kỹ thuật này, KHÔNG lặp lại ở kỹ thuật khác.
-  - FinalOptimized = Tổng số ca kiểm thử thực tế duy nhất sau khi gộp trùng.
-Bước 4: Sinh Items. ĐỐI SOÁT CHẶT CHẼ: Độ dài chuỗi/Giá trị số trong "Inputs" phải khớp tuyệt đối với mô tả trong "Objective".
+Phải thực hiện theo nguyên tắc:
 
-4. NGUYÊN TẮC VÀNG
-- "Một Test Case - Một mục tiêu": Tuyệt đối không gộp 2 loại lỗi vào 1 dòng dữ liệu.
-- Expected Result: Trích dẫn NGUYÊN VĂN từ mục "Kết quả mong đợi" của đặc tả nghiệp vụ.
-- Nếu không có con số giới hạn trong đặc tả -> KHÔNG tự ý sinh test case BVA.
+1. Phân tích toàn bộ ràng buộc
+2. Phân loại từng ràng buộc theo bản chất
+3. Áp dụng kỹ thuật phù hợp cho từng loại ràng buộc
+4. Sinh coverage độc lập cho từng kỹ thuật
+5. Sau đó mới tối ưu và hợp nhất
+
+Không được:
+- áp dụng tuần tự EP → BVA → DT
+- dùng kết quả kỹ thuật này để thay thế kỹ thuật khác
+
+==================================================
+III. QUY TẮC CHỌN KỸ THUẬT
+==================================================
+
+Dựa vào bản chất ràng buộc:
+
+- Bắt buộc / logic / quan hệ → DT
+- Định dạng / ký tự / cấu trúc → EP
+- Giới hạn / min / max / độ dài → BVA
+- Lỗi thực tế / bất thường → EG
+
+Không được chọn sai kỹ thuật.
+
+Không được tự tạo thêm ràng buộc mới cho bất kỳ field nào nếu đặc tả không nêu.
+Nếu một field không có ràng buộc về độ dài, min/max hoặc khoảng giá trị thì không được áp dụng BVA cho field đó.
+Nếu một field không có ràng buộc về định dạng, cấu trúc hoặc kiểu dữ liệu thì không được áp dụng EP cho lỗi định dạng của field đó.
+
+==================================================
+IV. DECISION TABLE (DT)
+==================================================
+
+Mục tiêu:
+- Kiểm tra field bắt buộc
+- Kiểm tra logic nghiệp vụ
+- Kiểm tra quan hệ giữa các field
+
+QUY TẮC:
+
+1. Coverage phải mô tả trạng thái của tất cả field liên quan
+
+2. Với field bắt buộc:
+- Mỗi field phải có 1 coverage riêng ở trạng thái Empty
+- Các field còn lại phải Valid
+
+3. Với nhiều field bắt buộc:
+- Không được bỏ sót bất kỳ field nào
+- Không được gộp nhiều field rỗng trong 1 coverage
+
+4. Với quan hệ giữa các field:
+- Phải tách riêng trạng thái đúng và sai
+
+5. Không dùng DT cho:
+- định dạng
+- độ dài
+- boundary
+
+==================================================
+V. EQUIVALENCE PARTITIONING (EP)
+==================================================
+
+Mục tiêu:
+- Chia dữ liệu thành các lớp tương đương
+
+QUY TẮC:
+
+1. Mỗi lớp dữ liệu = 1 coverage
+
+2. Các lớp phải khác nhau về bản chất:
+- Khác loại lỗi
+- Khác cấu trúc dữ liệu
+- Khác thành phần
+- Khác điều kiện vi phạm
+
+3. Không được:
+- gộp nhiều loại lỗi
+- mô tả chung chung
+- dùng mô tả tổng quát không chỉ ra bản chất sai
+
+4. Phải mô tả rõ bản chất lớp dữ liệu
+
+5. Nếu một field có nhiều quy tắc định dạng hoặc cấu trúc khác nhau:
+- Phải tách riêng từng lớp sai tương ứng với từng quy tắc
+- Không được gom tất cả vào 1 lớp "không đúng định dạng"
+
+6. Không dùng EP cho:
+- dữ liệu rỗng
+- boundary
+
+==================================================
+VI. BOUNDARY VALUE ANALYSIS (BVA)
+==================================================
+
+Áp dụng khi có:
+- giới hạn giá trị
+- độ dài
+- khoảng giá trị
+
+Chỉ được áp dụng BVA cho field có ràng buộc biên xuất hiện trực tiếp trong đặc tả.
+Không được suy diễn thêm biên cho field không có ràng buộc biên.
+
+--------------------------------------------------
+PHÂN LOẠI BIÊN
+--------------------------------------------------
+
+1. Biên đơn (Single boundary)
+- Chỉ có một giới hạn
+
+Coverage phải gồm:
+- giá trị ngay dưới biên (b-1)
+- giá trị tại biên (b)
+- giá trị ngay trên biên (b+1), nếu loại ràng buộc cho phép
+
+Ràng buộc dạng:
+- = N
+- tối thiểu N
+- tối đa N
+
+phải được xem là biên đơn.
+Không được tự diễn giải ràng buộc dạng = N thành khoảng giá trị.
+
+2. Biên kép (Range boundary)
+- Có cả giới hạn dưới và trên
+
+Coverage bắt buộc gồm:
+- giá trị dưới giới hạn dưới (b1-1)
+- giá trị tại giới hạn dưới (b1)
+- giá trị tại giới hạn trên (b2)
+- giá trị vượt giới hạn trên (b2+1)
+
+Trong đó:
+- b là giá trị biên duy nhất
+- b1 là biên dưới
+- b2 là biên trên
+
+--------------------------------------------------
+QUY TẮC
+--------------------------------------------------
+
+1. Mỗi coverage:
+- chỉ test 1 field
+- chỉ dùng 1 giá trị biên
+
+2. Mỗi testcase BVA chỉ được đại diện cho đúng 1 điểm biên duy nhất:
+- b-1
+- b
+- b+1
+- b1-1
+- b1
+- b2
+- b2+1
+
+3. Các field khác phải Valid
+
+4. Không được:
+- gộp nhiều biên
+- dùng sai vị trí biên
+- dùng giá trị đại diện chung chung thay cho giá trị biên chính xác
+
+5. Không dùng:
+- dữ liệu rỗng làm boundary
+
+--------------------------------------------------
+QUY TẮC BẮT BUỘC VỀ GIÁ TRỊ LITERAL
+--------------------------------------------------
+
+1. Nếu field mục tiêu là kiểu chuỗi:
+- Literal phải có độ dài đúng bằng giá trị biên đã chọn
+- Không được dùng chuỗi "rất ngắn", "rất dài", hay "độ dài bất kỳ" để thay cho biên
+
+2. Nếu field mục tiêu là kiểu số:
+- Literal phải đúng bằng giá trị biên đã chọn
+- Không được dùng giá trị chỉ gần đúng hoặc cùng bản chất sai để thay thế
+
+3. Nếu coverage là b-1:
+- Literal phải đúng bằng b-1
+
+4. Nếu coverage là b:
+- Literal phải đúng bằng b
+
+5. Nếu coverage là b+1:
+- Literal phải đúng bằng b+1
+
+6. Nếu coverage là b1-1:
+- Literal phải đúng bằng b1-1
+
+7. Nếu coverage là b1:
+- Literal phải đúng bằng b1
+
+8. Nếu coverage là b2:
+- Literal phải đúng bằng b2
+
+9. Nếu coverage là b2+1:
+- Literal phải đúng bằng b2+1
+
+10. Nếu literal không đúng chính xác vị trí biên đã chọn:
+- Coverage đó bị xem là sai
+- Phải sửa lại literal trước khi xuất kết quả
+
+--------------------------------------------------
+QUY TẮC CẤM ĐỐI VỚI BVA
+--------------------------------------------------
+
+1. Không được dùng giá trị ở giữa khoảng làm BVA nếu coverage đang là điểm biên
+
+2. Không được dùng một giá trị vượt xa biên để thay cho b+1 hoặc b2+1
+
+3. Không được dùng một giá trị nhỏ hơn rất nhiều để thay cho b-1 hoặc b1-1
+
+4. Không được gán testcase là BVA nếu literal không nằm đúng trên một điểm biên hợp lệ
+
+5. Không được mô tả Objective là "quá ngắn", "quá dài", "hợp lệ" mà không xác định rõ đó là điểm biên nào
+
+6. Không được mô tả nhiều điểm biên trong cùng một coverage hoặc cùng một testcase BVA
+
+--------------------------------------------------
+BƯỚC TỰ KIỂM TRA BẮT BUỘC CHO BVA
+--------------------------------------------------
+
+Trước khi xuất kết quả, phải tự kiểm tra lại testcase BVA theo đúng trình tự sau:
+
+Bước 1:
+- Xác định rõ field mục tiêu của BVA
+
+Bước 2:
+- Xác định rõ loại biên:
+  - biên đơn
+  - biên kép
+
+Bước 3:
+- Xác định rõ điểm biên đang dùng:
+  - b-1 / b / b+1
+  hoặc
+  - b1-1 / b1 / b2 / b2+1
+
+Bước 4:
+- Kiểm tra literal của field mục tiêu:
+  - nếu là chuỗi → đếm đúng số ký tự
+  - nếu là số → đối chiếu đúng giá trị
+
+Bước 5:
+- Nếu literal không khớp chính xác với điểm biên đã chọn → bắt buộc sửa lại trước khi xuất
+
+Bước 6:
+- Chỉ khi literal khớp đúng điểm biên thì mới được gán Technique = BVA
+
+==================================================
+VII. ERROR GUESSING (EG)
+==================================================
+
+Mục tiêu:
+- Tìm lỗi không được mô tả rõ trong đặc tả
+
+Áp dụng:
+- dữ liệu bất thường
+- dữ liệu không phổ biến
+- lỗi thường gặp thực tế
+
+QUY TẮC:
+- Không thay thế DT/EP/BVA
+- Chỉ bổ sung coverage
+- Không dùng EG cho lỗi đã có thể phân loại rõ bằng DT, EP hoặc BVA
+
+==================================================
+VIII. NGUYÊN TẮC TÁCH COVERAGE
+==================================================
+
+1. Mỗi coverage = 1 ý nghĩa duy nhất
+
+2. Không dùng mô tả mơ hồ:
+- "hoặc"
+- "bất kỳ"
+- "không đúng nói chung"
+- "sai định dạng"
+- "không hợp lệ"
+
+3. Nếu có thể tách → phải tách
+
+4. Coverage phải đủ cụ thể để:
+- chuyển thành testcase ngay lập tức
+- không cần suy luận thêm
+
+5. Mapping:
+- 1 coverage = 1 testcase
+
+==================================================
+IX. QUY TRÌNH THỰC HIỆN
+==================================================
+
+Bước 1: Phân tích ràng buộc
+
+Bước 2: Phân loại ràng buộc:
+- Required / logic → DT
+- Format / cấu trúc → EP
+- Boundary / giới hạn / độ dài → BVA
+- Lỗi bất thường → EG
+
+Bước 3: Sinh coverage độc lập theo từng kỹ thuật
+
+Bước 4: Tối ưu:
+- loại trùng
+- không bỏ sót
+- không thay thế sai giữa các kỹ thuật
+
+Bước 5: Tạo testcase literal từ từng coverage
+
+Bước 6: Tự kiểm tra lại từng testcase:
+- đúng kỹ thuật chưa
+- đúng literal chưa
+- đúng Expected chưa
+
+Bước 7: Mapping:
+- coverage → testcase (1-1)
+
+==================================================
+X. CHECKLIST BẮT BUỘC
+==================================================
+
+1. Có coverage nào mơ hồ không
+
+2. DT:
+- đủ tất cả field chưa
+- có thiếu field không
+- có gộp nhiều field rỗng không
+- có dùng DT cho format hoặc boundary không
+
+3. EP:
+- có gộp nhiều loại lỗi không
+- các lớp đã khác bản chất chưa
+- có mô tả quá chung không
+- có dùng EP cho boundary không
+- có tự tạo lỗi định dạng cho field không có ràng buộc định dạng không
+
+4. BVA:
+- field đó có thật sự có ràng buộc biên trong đặc tả không
+- đúng loại biên chưa
+- đúng vị trí biên chưa
+- có thiếu điểm biên không
+- literal có đúng chính xác điểm biên không
+- có dùng giá trị ở giữa khoảng không
+- có dùng giá trị quá xa biên để thay cho biên không
+- mỗi testcase có đúng 1 điểm biên không
+- có tự biến biên đơn thành biên kép không
+
+5. EG:
+- có đang thay thế DT/EP/BVA không
+
+6. Có testcase nào chứa nhiều lỗi không
+
+7. Tổng coverage:
+- có thiếu không
+- có trùng không
+
+8. Mỗi coverage đã ánh xạ đúng 1 testcase chưa
+
+==================================================
+XI. NGUYÊN TẮC BẮT BUỘC
+==================================================
+
+1. Không suy diễn ngoài đặc tả
+2. Không tạo testcase dư
+3. Không gộp nhiều lỗi
+4. Mỗi testcase = 1 mục tiêu
+5. Kỹ thuật phải đúng bản chất
+6. Coverage phải đầy đủ và chính xác
+7. Literal phải đúng tuyệt đối với coverage đã chọn
+8. Nếu literal sai thì testcase đó bị xem là sai

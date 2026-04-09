@@ -1,0 +1,9 @@
+﻿Testcase,Username,Phone,Password,ConfirmPassword,Expected
+RG01,,0987654321,password123,password123,Vui lòng điền vào trường này
+RG02,testuser123,,password123,password123,Vui lòng điền vào trường này
+RG03,testuser123,987654321,password123,password123,Số điện thoại không đúng định dạng!
+RG04,testuser123,0987654321,passwrd,passwrd,Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!
+RG05,testuser123,0987654321,password12345678901234567890,password12345678901234567890,Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!
+RG06,testuser123,0987654321,password123,password1234,mật khẩu không giống nhau
+RG07,AnhDuong11,0987654321,password123,password123,tài khoản đã tồn tại trong hệ thống
+RG08,testuser123456789,0987654321,password12345678,password12345678,testuser123456789

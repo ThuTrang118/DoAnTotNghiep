@@ -7,29 +7,41 @@ Nếu tất cả dữ liệu hợp lệ, hệ thống tạo tài khoản thành 
 Nếu dữ liệu không hợp lệ, hệ thống hiển thị thông báo lỗi tương ứng.
 
 Ràng buộc dữ liệu:
-1. Username: [Bắt buộc].
-2. Phone: [Bắt buộc], [Kiểu: Numeric], [Độ dài = 10 ký tự số], [Bắt đầu bằng số 0].
-3. Password: [Bắt buộc], [Kiểu: String], [Độ dài: 8 - 25 ký tự].
-   - Độ dài chuỗi từ 8 đến 20 ký tự
-4. ConfirmPassword: [Bắt buộc], [trùng khớp hoàn toàn với Password]
+1. Username:
+   - Không được bỏ trống.
+   - Không được trùng với bất cứ Username nào đã được đăng ký (Tài khoản Username đã được đăng ký trong hệ thống là: AnhDuong11)
+
+2. Phone:
+   - Không được bỏ trống.
+   - Độ dài = 10 ký tự số.
+   - Bắt đầu bằng số 0.
+   - Không được chứa ký tự chữ.
+   - Không được chứa ký tự đặc biệt.
+   - Không được chứa khoảng trắng.
+
+3. Password:
+   - Không được bỏ trống.
+   - Độ dài: từ 8 đến 20 ký tự.
+
+4. ConfirmPassword:
+   - Không được bỏ trống.
+   - Trùng khớp hoàn toàn với Password.
 
 Kết quả mong đợi:
 1. Nếu bất kỳ trường bắt buộc nào rỗng
-   -> Vui lòng điền vào trường này
+   -> Expected = "Vui lòng điền vào trường này"
 
 2. Nếu Phone không đúng định dạng
-   -> Phone không hợp lệ
+   -> Expected = "Số điện thoại không đúng định dạng!"
 
-3. Nếu Password không đúng độ dài (nhỏ hơn 8 hoặc lớn hơn 20)
-   -> Password phải từ 8 đến 20 ký tự
+3. Nếu Password không đúng độ dài nhỏ hơn 8 hoặc lớn hơn 20
+   -> Expected = "Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!"
 
 4. Nếu ConfirmPassword không trùng với Password
-   -> Password nhập lại không khớp
+   -> Expected = "mật khẩu không giống nhau"
 
-5. Nếu tất cả dữ liệu hợp lệ
-   -> Đăng ký thành công
+5. Nếu Username trùng với tài khoản đã tồn tại
+   -> Expected = "tài khoản đã tồn tại trong hệ thống"
 
-Lưu ý:
-- Decision Table phải phản ánh đúng các tổ hợp điều kiện của register
-- Equivalence Partitioning phải phản ánh các lớp dữ liệu khác nhau, không lặp ý nghĩa
-- Boundary Value Analysis phải bám đúng ràng buộc độ dài của Password và định dạng Phone
+6. Nếu tất cả dữ liệu hợp lệ
+   -> Expected = Username

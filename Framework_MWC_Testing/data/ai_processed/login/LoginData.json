@@ -15,49 +15,19 @@
     {
       "Testcase": "LG03",
       "Username": "AnhDuong11",
-      "Password": "SaiMat@123",
-      "Expected": "Username hoặc Password không đúng!"
-    },
-    {
-      "Testcase": "LG04",
-      "Username": "Duong11Anh",
-      "Password": "",
-      "Expected": "Vui lòng điền vào trường này"
-    },
-    {
-      "Testcase": "LG05",
-      "Username": "AnhDuong11",
-      "Password": "",
-      "Expected": "Vui lòng điền vào trường này"
-    },
-    {
-      "Testcase": "LG06",
-      "Username": "",
-      "Password": "AnhDuong@123",
-      "Expected": "Vui lòng điền vào trường này"
-    },
-    {
-      "Testcase": "LG07",
-      "Username": "AnhDuong11",
       "Password": "AnhDuong@123",
       "Expected": "AnhDuong11"
     },
     {
-      "Testcase": "LG08",
-      "Username": "Duong11Anh",
+      "Testcase": "LG04",
+      "Username": "KhongDung",
       "Password": "AnhDuong@123",
       "Expected": "Username hoặc Password không đúng!"
     },
     {
-      "Testcase": "LG09",
-      "Username": "",
-      "Password": "SaiMat@123",
-      "Expected": "Vui lòng điền vào trường này"
-    },
-    {
-      "Testcase": "LG10",
-      "Username": "Duong11Anh",
-      "Password": "SaiMat@123",
+      "Testcase": "LG05",
+      "Username": "AnhDuong11",
+      "Password": "KhongDung",
       "Expected": "Username hoặc Password không đúng!"
     }
   ]

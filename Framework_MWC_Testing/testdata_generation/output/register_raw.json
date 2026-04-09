@@ -1,0 +1,101 @@
+{
+  "feature": "Đăng ký",
+  "items": [
+    {
+      "Testcase": "RG01",
+      "Technique": "DT",
+      "Objective": "Kiểm tra Username không được bỏ trống",
+      "Inputs": {
+        "Username": "",
+        "Phone": "0987654321",
+        "Password": "password123",
+        "ConfirmPassword": "password123"
+      },
+      "Expected": "Vui lòng điền vào trường này"
+    },
+    {
+      "Testcase": "RG02",
+      "Technique": "DT",
+      "Objective": "Kiểm tra Phone không được bỏ trống",
+      "Inputs": {
+        "Username": "testuser123",
+        "Phone": "",
+        "Password": "password123",
+        "ConfirmPassword": "password123"
+      },
+      "Expected": "Vui lòng điền vào trường này"
+    },
+    {
+      "Testcase": "RG03",
+      "Technique": "DT",
+      "Objective": "Kiểm tra Phone không đúng định dạng",
+      "Inputs": {
+        "Username": "testuser123",
+        "Phone": "987654321",
+        "Password": "password123",
+        "ConfirmPassword": "password123"
+      },
+      "Expected": "Số điện thoại không đúng định dạng!"
+    },
+    {
+      "Testcase": "RG04",
+      "Technique": "BVA",
+      "Objective": "Kiểm tra độ dài Password nhỏ hơn 8 ký tự (b-1)",
+      "Inputs": {
+        "Username": "testuser123",
+        "Phone": "0987654321",
+        "Password": "passwrd",
+        "ConfirmPassword": "passwrd"
+      },
+      "Expected": "Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!"
+    },
+    {
+      "Testcase": "RG05",
+      "Technique": "BVA",
+      "Objective": "Kiểm tra độ dài Password lớn hơn 20 ký tự (b+1)",
+      "Inputs": {
+        "Username": "testuser123",
+        "Phone": "0987654321",
+        "Password": "password12345678901234567890",
+        "ConfirmPassword": "password12345678901234567890"
+      },
+      "Expected": "Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!"
+    },
+    {
+      "Testcase": "RG06",
+      "Technique": "DT",
+      "Objective": "Kiểm tra ConfirmPassword không trùng với Password",
+      "Inputs": {
+        "Username": "testuser123",
+        "Phone": "0987654321",
+        "Password": "password123",
+        "ConfirmPassword": "password1234"
+      },
+      "Expected": "mật khẩu không giống nhau"
+    },
+    {
+      "Testcase": "RG07",
+      "Technique": "DT",
+      "Objective": "Kiểm tra Username trùng với tài khoản đã tồn tại",
+      "Inputs": {
+        "Username": "AnhDuong11",
+        "Phone": "0987654321",
+        "Password": "password123",
+        "ConfirmPassword": "password123"
+      },
+      "Expected": "tài khoản đã tồn tại trong hệ thống"
+    },
+    {
+      "Testcase": "RG08",
+      "Technique": "DT",
+      "Objective": "Kiểm tra tất cả dữ liệu hợp lệ",
+      "Inputs": {
+        "Username": "testuser123456789",
+        "Phone": "0987654321",
+        "Password": "password12345678",
+        "ConfirmPassword": "password12345678"
+      },
+      "Expected": "testuser123456789"
+    }
+  ]
+}

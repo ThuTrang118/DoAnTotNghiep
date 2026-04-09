@@ -7,8 +7,10 @@ Mô tả:
 - Nếu thông tin không hợp lệ hoặc không đúng, hệ thống hiển thị thông báo lỗi tương ứng.
 
 Ràng buộc dữ liệu:
-1. Username: bắt buộc nhập.
-2. Password: bắt buộc nhập, Độ dài: 8-20 ký tự.
+1. Username: 
+   - Không được bỏ trống
+2. Password: 
+   - Không được bỏ trống
 3. Chỉ có một tài khoản hợp lệ duy nhất trong hệ thống:
    - Username: AnhDuong11
    - Password: AnhDuong@123

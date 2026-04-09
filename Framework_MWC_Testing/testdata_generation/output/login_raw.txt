@@ -1,19 +1,10 @@
+```json
 {
-  "feature": "Chức năng đăng nhập",
-  "Reasoning": {
-    "EquivalencePartitioning": { "Count": 2, "Summary": ["EP01: Username hợp lệ", "EP02: Password hợp lệ"] },
-    "BoundaryValueAnalysis": { "Count": 3, "Summary": ["BVA01: Độ dài chuỗi Username (8-20 ký tự)", "BVA02: Giá trị số Password (8-20 ký tự)"] },
-    "DecisionTable": { "Count": 4, "Summary": ["DT01: Username rỗng", "DT02: Password rỗng", "DT03: Thông tin tài khoản hợp lệ", "DT04: Thông tin không đúng"] }
-  },
-  "Plan": {
-    "EquivalencePartitioning": 2,
-    "DecisionTable": 4,
-    "BoundaryValueAnalysis": 3,
-    "FinalOptimized": 10
-  },
+  "feature": "Đăng nhập",
   "items": [
     {
       "Testcase": "LG01",
+      "Technique": "DT",
       "Objective": "Kiểm tra trường hợp Username rỗng",
       "Inputs": {
         "Username": "",
@@ -23,6 +14,7 @@
     },
     {
       "Testcase": "LG02",
+      "Technique": "DT",
       "Objective": "Kiểm tra trường hợp Password rỗng",
       "Inputs": {
         "Username": "AnhDuong11",
@@ -32,43 +24,8 @@
     },
     {
       "Testcase": "LG03",
-      "Objective": "Kiểm tra trường hợp Username hợp lệ, Password không đúng",
-      "Inputs": {
-        "Username": "AnhDuong11",
-        "Password": "SaiMat@123"
-      },
-      "Expected": "Username hoặc Password không đúng!"
-    },
-    {
-      "Testcase": "LG04",
-      "Objective": "Kiểm tra trường hợp Username không hợp lệ, Password rỗng",
-      "Inputs": {
-        "Username": "Duong11Anh",
-        "Password": ""
-      },
-      "Expected": "Vui lòng điền vào trường này"
-    },
-    {
-      "Testcase": "LG05",
-      "Objective": "Kiểm tra trường hợp Username hợp lệ, Password rỗng",
-      "Inputs": {
-        "Username": "AnhDuong11",
-        "Password": ""
-      },
-      "Expected": "Vui lòng điền vào trường này"
-    },
-    {
-      "Testcase": "LG06",
-      "Objective": "Kiểm tra trường hợp Username rỗng, Password hợp lệ",
-      "Inputs": {
-        "Username": "",
-        "Password": "AnhDuong@123"
-      },
-      "Expected": "Vui lòng điền vào trường này"
-    },
-    {
-      "Testcase": "LG07",
-      "Objective": "Kiểm tra trường hợp Username hợp lệ, Password đúng",
+      "Technique": "DT",
+      "Objective": "Kiểm tra trường hợp Username và Password đều hợp lệ",
       "Inputs": {
         "Username": "AnhDuong11",
         "Password": "AnhDuong@123"
@@ -76,31 +33,25 @@
       "Expected": "AnhDuong11"
     },
     {
-      "Testcase": "LG08",
-      "Objective": "Kiểm tra trường hợp Username không hợp lệ, Password đúng",
+      "Testcase": "LG04",
+      "Technique": "DT",
+      "Objective": "Kiểm tra trường hợp Username không đúng",
       "Inputs": {
-        "Username": "Duong11Anh",
+        "Username": "KhongDung",
         "Password": "AnhDuong@123"
       },
       "Expected": "Username hoặc Password không đúng!"
     },
     {
-      "Testcase": "LG09",
-      "Objective": "Kiểm tra trường hợp Username rỗng, Password không đúng",
+      "Testcase": "LG05",
+      "Technique": "DT",
+      "Objective": "Kiểm tra trường hợp Password không đúng",
       "Inputs": {
-        "Username": "",
-        "Password": "SaiMat@123"
-      },
-      "Expected": "Vui lòng điền vào trường này"
-    },
-    {
-      "Testcase": "LG10",
-      "Objective": "Kiểm tra trường hợp Username không hợp lệ, Password không đúng",
-      "Inputs": {
-        "Username": "Duong11Anh",
-        "Password": "SaiMat@123"
+        "Username": "AnhDuong11",
+        "Password": "KhongDung"
       },
       "Expected": "Username hoặc Password không đúng!"
     }
   ]
 }
+```

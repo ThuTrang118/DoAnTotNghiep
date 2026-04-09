@@ -3,9 +3,9 @@ OUTPUT FORMAT REQUIREMENTS
 ==================================================
 
 Chỉ trả về DUY NHẤT 1 JSON object hợp lệ.
-Không giải thích. Không thêm markdown. 
-Không thêm văn bản trước và sau JSON.
-Không thêm ghi chú/comment.
+Không giải thích.
+Không markdown.
+Không thêm text trước hoặc sau JSON.
 
 JSON phải bắt đầu bằng { và kết thúc bằng }
 
@@ -14,23 +14,14 @@ JSON SCHEMA
 ==================================================
 
 {
-  "feature": "[LẤY TỪ DÒNG 'Chức năng' TRONG FILE NGHIỆP VỤ]",
-  "Reasoning": {
-    "EquivalencePartitioning": { "Count": 0, "Summary": [] },
-    "BoundaryValueAnalysis": { "Count": 0, "Summary": [] },
-    "DecisionTable": { "Count": 0, "Summary": [] }
-  "Plan": {
-    "EquivalencePartitioning": 0,
-    "DecisionTable": 0,
-    "BoundaryValueAnalysis": 0,
-    "FinalOptimized": 0
-  },
+  "feature": "[Tên chức năng]",
   "items": [
     {
-      "Testcase": "[PREFIX]01", 
-      "Objective": "Mô tả mục tiêu bằng Tiếng Việt",
+      "Testcase": "[PREFIX]01",
+      "Technique": "DT | EP | BVA",
+      "Objective": "Mô tả rõ ràng mục tiêu kiểm thử",
       "Inputs": {
-        "Key_Field": "Value_Dữ_Liệu"
+        "FieldName": "Literal Value"
       },
       "Expected": "Kết quả mong đợi từ đặc tả"
     }
@@ -38,28 +29,172 @@ JSON SCHEMA
 }
 
 ==================================================
-QUY TẮC CHI TIẾT CHO CÁC TRƯỜNG (FIELD RULES)
+FIELD RULES
 ==================================================
 
-1. feature: Tên chức năng (string). Phải khớp chính xác với nội dung sau chữ "Chức năng:" ở dòng đầu tiên của file nghiệp vụ.
-2. Reasoning: Phân tích kỹ thuật kiểm thử.
-   - Id của Summary: DT01, DT02..., EP01, EP02..., BVA01, BVA02...
-   - Description: Mô tả coverage item concept bằng Tiếng Việt.
-3. Plan: Tổng hợp số lượng (Count). 
-   - FinalOptimized = Tổng các test case thực tế trong mảng "items".
-4. items: Danh sách test case cụ thể hóa từ Summary.
-   - Testcase ID: LG01, LG02... (Dựa theo bảng mapping PREFIX).
-   - Objective: mô tả kịch bản test cụ thể.
-   - Inputs Object: AI phải quét toàn bộ mục "Ràng buộc dữ liệu" trong file nghiệp vụ để liệt kê đầy đủ các trường cần thiết. KHÔNG ĐƯỢC để trống hoặc sai tên trường so với đặc tả.
-5. Quy tắc logic & ngôn ngữ
-- Ngôn ngữ sử dụng: Tiếng Việt.
-- Logic: Mỗi test case trong "items" phải là kết quả của việc áp dụng các kỹ thuật trong file blackbox_techniques.txt vào các ràng buộc của file nghiệp vụ.
+1. feature
+- Lấy đúng từ dòng "Chức năng"
+- Không tự sửa
+
+2. Testcase
+- Format: PREFIX + số tăng dần (LG01, LG02...)
+
+3. Technique
+- Bắt buộc thuộc 1 trong:
+  - DT
+  - EP
+  - BVA
+
+4. Objective
+- Phải mô tả đúng testcase
+- Phải khớp với dữ liệu trong Inputs
+- Không được viết chung chung:
+  - "dữ liệu không hợp lệ"
+  - "test lỗi"
+- Không được mô tả sai số field
+- Không được mô tả một testcase theo nhiều điểm biên cùng lúc
+
+5. Inputs
+- Phải chứa đầy đủ các field trong đặc tả
+- Tên field phải đúng tuyệt đối
+- Giá trị phải là literal thật
+- Không dùng:
+  - "valid"
+  - "invalid"
+  - "boundary"
+
+6. Expected
+- Phải copy NGUYÊN VĂN từ đặc tả
+- Không được sửa câu
+- Không thêm "Lỗi:"
+- Không được để rỗng nếu đặc tả có Expected tương ứng
+
+==================================================
+LOGIC RULES
+==================================================
+
+1. Mỗi item phải tương ứng đúng 1 coverage
+
+2. Mỗi item chỉ thuộc 1 kỹ thuật
+
+3. Không được:
+- gộp nhiều lỗi vào 1 item
+- sinh item ngoài coverage
+
+4. Các item phải:
+- không trùng ý nghĩa
+- không thiếu coverage
+
+5. Nếu field không có ràng buộc tương ứng trong đặc tả
+→ không được tự tạo testcase theo ràng buộc đó
+
+==================================================
+BVA STRICT RULES (ADDED)
+==================================================
+
+Áp dụng khi Technique = BVA:
+
+1. Chỉ được dùng BVA nếu field đó CÓ ràng buộc biên trong đặc tả:
+- độ dài
+- min/max
+- khoảng giá trị
+
+Nếu field KHÔNG có ràng buộc biên
+→ KHÔNG được dùng BVA
+
+--------------------------------------------------
+
+2. Bắt buộc xác định đúng loại biên:
+
+- Biên đơn:
+  b-1, b, b+1
+
+- Biên kép:
+  b1-1, b1, b2, b2+1
+
+Ràng buộc dạng = N phải được xem là biên đơn.
+Không được tự diễn giải = N thành khoảng giá trị.
+
+--------------------------------------------------
+
+3. Mỗi item BVA chỉ được đại diện cho đúng 1 điểm biên duy nhất:
+- b-1
+- b
+- b+1
+- b1-1
+- b1
+- b2
+- b2+1
+
+Không được mô tả hoặc kiểm tra nhiều điểm biên trong cùng một item.
+
+--------------------------------------------------
+
+4. Literal phải đúng TUYỆT ĐỐI điểm biên:
+
+- Nếu là chuỗi:
+  → độ dài phải đúng chính xác
+
+- Nếu là số:
+  → giá trị phải đúng chính xác
+
+--------------------------------------------------
+
+5. Không được phép:
+
+- dùng giá trị quá nhỏ thay cho b1-1
+- dùng giá trị quá lớn thay cho b2+1
+- dùng giá trị ở giữa khoảng
+- dùng giá trị đại diện (ví dụ: rất ngắn, rất dài)
+
+--------------------------------------------------
+
+6. Objective của BVA phải thể hiện rõ đúng 1 điểm biên:
+
+Phải ghi rõ:
+- b-1
+- b
+- b+1
+hoặc
+- b1-1
+- b1
+- b2
+- b2+1
+
+Không được viết:
+- "quá ngắn"
+- "quá dài"
+- "hợp lệ"
+- nhiều điểm biên trong cùng một Objective
+
+--------------------------------------------------
+
+7. Kiểm tra bắt buộc trước khi xuất:
+
+- Xác định boundary từ đặc tả
+- Xác định đúng BoundaryPoint
+- Kiểm tra literal:
+  - nếu là chuỗi → đếm đúng số ký tự
+  - nếu là số → đối chiếu đúng giá trị
+
+Nếu literal KHÔNG khớp boundary
+→ testcase bị xem là SAI và phải sửa lại
+
+--------------------------------------------------
+
+8. Không được:
+
+- tự tạo boundary không tồn tại trong đặc tả
+- áp dụng BVA cho field không có ràng buộc biên
+- tự đổi biên đơn thành biên kép
+- tự đổi biên kép thành biên đơn
 
 ==================================================
 JSON VALIDITY
 ==================================================
-- Sử dụng dấu ngoặc kép chuẩn.
-- Không thiếu/thừa dấu phẩy.
-- Escape ký tự đặc biệt nếu cần.
 
-TRẢ VỀ DUY NHẤT JSON. KHÔNG NÓI THÊM.
+- Dùng dấu ngoặc kép "
+- Không thiếu dấu phẩy
+- Không comment
+
+TRẢ VỀ DUY NHẤT JSON

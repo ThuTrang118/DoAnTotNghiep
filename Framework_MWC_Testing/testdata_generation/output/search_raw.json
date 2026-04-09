@@ -1,0 +1,131 @@
+{
+  "feature": "Tìm kiếm sản phẩm",
+  "items": [
+    {
+      "Testcase": "SR01",
+      "Technique": "DT",
+      "Objective": "Kiểm tra trường hợp ô tìm kiếm rỗng",
+      "Inputs": {
+        "searchKeyword": ""
+      },
+      "Expected": "Vui lòng điền vào trường này"
+    },
+    {
+      "Testcase": "SR02",
+      "Technique": "DT",
+      "Objective": "Kiểm tra trường hợp từ khóa hợp lệ và tồn tại sản phẩm",
+      "Inputs": {
+        "searchKeyword": "giày nữ"
+      },
+      "Expected": "Hiển thị danh sách sản phẩm theo từ khóa tìm kiếm"
+    },
+    {
+      "Testcase": "SR03",
+      "Technique": "DT",
+      "Objective": "Kiểm tra trường hợp từ khóa không tồn tại",
+      "Inputs": {
+        "searchKeyword": "áo khoác thời trang"
+      },
+      "Expected": "Trang kết quả rỗng"
+    },
+    {
+      "Testcase": "SR04",
+      "Technique": "DT",
+      "Objective": "Kiểm tra trường hợp nhập ký tự đặc biệt",
+      "Inputs": {
+        "searchKeyword": "@#$$%"
+      },
+      "Expected": "Trang kết quả rỗng"
+    },
+    {
+      "Testcase": "SR05",
+      "Technique": "EP",
+      "Objective": "Kiểm tra định dạng tên sản phẩm hợp lệ",
+      "Inputs": {
+        "searchKeyword": "giày"
+      },
+      "Expected": "Hiển thị danh sách sản phẩm theo từ khóa tìm kiếm"
+    },
+    {
+      "Testcase": "SR06",
+      "Technique": "EP",
+      "Objective": "Kiểm tra định dạng tên sản phẩm không hợp lệ",
+      "Inputs": {
+        "searchKeyword": "12345"
+      },
+      "Expected": "Trang kết quả rỗng"
+    },
+    {
+      "Testcase": "SR07",
+      "Technique": "EP",
+      "Objective": "Kiểm tra định dạng mã sản phẩm hợp lệ",
+      "Inputs": {
+        "searchKeyword": "MWC A403"
+      },
+      "Expected": "Hiển thị danh sách sản phẩm theo từ khóa tìm kiếm"
+    },
+    {
+      "Testcase": "SR08",
+      "Technique": "EP",
+      "Objective": "Kiểm tra định dạng mã sản phẩm không hợp lệ",
+      "Inputs": {
+        "searchKeyword": "A403 MWC"
+      },
+      "Expected": "Trang kết quả rỗng"
+    },
+    {
+      "Testcase": "SR09",
+      "Technique": "EP",
+      "Objective": "Kiểm tra định dạng thuộc tính sản phẩm hợp lệ",
+      "Inputs": {
+        "searchKeyword": "đen"
+      },
+      "Expected": "Hiển thị danh sách sản phẩm theo từ khóa tìm kiếm"
+    },
+    {
+      "Testcase": "SR10",
+      "Technique": "EP",
+      "Objective": "Kiểm tra định dạng thuộc tính sản phẩm không hợp lệ",
+      "Inputs": {
+        "searchKeyword": "xanh dương"
+      },
+      "Expected": "Trang kết quả rỗng"
+    },
+    {
+      "Testcase": "SR11",
+      "Technique": "BVA",
+      "Objective": "Kiểm tra độ dài tên sản phẩm tối thiểu - 1 ký tự",
+      "Inputs": {
+        "searchKeyword": ""
+      },
+      "Expected": "Trang kết quả rỗng"
+    },
+    {
+      "Testcase": "SR12",
+      "Technique": "BVA",
+      "Objective": "Kiểm tra độ dài tên sản phẩm tối thiểu - 1 ký tự hợp lệ",
+      "Inputs": {
+        "searchKeyword": "a"
+      },
+      "Expected": "Trang kết quả rỗng"
+    },
+    {
+      "Testcase": "SR13",
+      "Technique": "BVA",
+      "Objective": "Kiểm tra độ dài tên sản phẩm tối đa - 20 ký tự hợp lệ",
+      "Inputs": {
+        "searchKeyword": "giày nữ thể thao"
+      },
+      "Expected": "Hiển thị danh sách sản phẩm theo từ khóa tìm kiếm"
+    },
+    {
+      "Testcase": "SR14",
+      "Technique": "BVA",
+      "Objective": "Kiểm tra độ dài tên sản phẩm tối đa - 20 ký tự không hợp lệ",
+      "Inputs": {
+        "searchKeyword": "giày nữ thể thao giày nữ thể thao"
+      },
+      "Expected": "Trang kết quả rỗng"
+    }
+  ]
+}
