@@ -4,65 +4,81 @@
       "Testcase": "RG01",
       "Username": "",
       "Phone": "0987654321",
-      "Password": "password123",
-      "ConfirmPassword": "password123",
+      "Password": "Abcdefg1!",
+      "ConfirmPassword": "Abcdefg1!",
       "Expected": "Vui lòng điền vào trường này"
     },
     {
       "Testcase": "RG02",
-      "Username": "testuser123",
+      "Username": "AnhDuong11",
       "Phone": "",
-      "Password": "password123",
-      "ConfirmPassword": "password123",
+      "Password": "Abcdefg1!",
+      "ConfirmPassword": "Abcdefg1!",
       "Expected": "Vui lòng điền vào trường này"
     },
     {
       "Testcase": "RG03",
-      "Username": "testuser123",
-      "Phone": "987654321",
-      "Password": "password123",
-      "ConfirmPassword": "password123",
-      "Expected": "Số điện thoại không đúng định dạng!"
+      "Username": "AnhDuong11",
+      "Phone": "0987654321",
+      "Password": "",
+      "ConfirmPassword": "Abcdefg1!",
+      "Expected": "Vui lòng điền vào trường này"
     },
     {
       "Testcase": "RG04",
-      "Username": "testuser123",
+      "Username": "AnhDuong11",
       "Phone": "0987654321",
-      "Password": "passwrd",
-      "ConfirmPassword": "passwrd",
-      "Expected": "Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!"
+      "Password": "Abcdefg1!",
+      "ConfirmPassword": "",
+      "Expected": "Vui lòng điền vào trường này"
     },
     {
       "Testcase": "RG05",
-      "Username": "testuser123",
-      "Phone": "0987654321",
-      "Password": "password12345678901234567890",
-      "ConfirmPassword": "password12345678901234567890",
-      "Expected": "Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!"
-    },
-    {
-      "Testcase": "RG06",
-      "Username": "testuser123",
-      "Phone": "0987654321",
-      "Password": "password123",
-      "ConfirmPassword": "password1234",
-      "Expected": "mật khẩu không giống nhau"
-    },
-    {
-      "Testcase": "RG07",
       "Username": "AnhDuong11",
       "Phone": "0987654321",
-      "Password": "password123",
-      "ConfirmPassword": "password123",
+      "Password": "Abcdefg1!",
+      "ConfirmPassword": "Abcdefg1!",
       "Expected": "tài khoản đã tồn tại trong hệ thống"
     },
     {
-      "Testcase": "RG08",
-      "Username": "testuser123456789",
+      "Testcase": "RG06",
+      "Username": "AnhDuong12",
+      "Phone": "9876543210",
+      "Password": "Abcdefg1!",
+      "ConfirmPassword": "Abcdefg1!",
+      "Expected": "Số điện thoại không đúng định dạng!"
+    },
+    {
+      "Testcase": "RG07",
+      "Username": "AnhDuong13",
       "Phone": "0987654321",
-      "Password": "password12345678",
-      "ConfirmPassword": "password12345678",
-      "Expected": "testuser123456789"
+      "Password": "Abcdefg",
+      "ConfirmPassword": "Abcdefg",
+      "Expected": "Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!"
+    },
+    {
+      "Testcase": "RG08",
+      "Username": "AnhDuong14",
+      "Phone": "0987654321",
+      "Password": "Abcdefg1!Abcdefg1!",
+      "ConfirmPassword": "Abcdefg1!Abcdefg1!",
+      "Expected": "Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!"
+    },
+    {
+      "Testcase": "RG09",
+      "Username": "AnhDuong15",
+      "Phone": "0987654321",
+      "Password": "Abcdefg1!",
+      "ConfirmPassword": "Abcdefg",
+      "Expected": "mật khẩu không giống nhau"
+    },
+    {
+      "Testcase": "RG10",
+      "Username": "AnhDuong16",
+      "Phone": "0987654321",
+      "Password": "Abcdefg1!",
+      "ConfirmPassword": "Abcdefg1!",
+      "Expected": "AnhDuong16"
     }
   ]
 }

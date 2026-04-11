@@ -19,14 +19,14 @@
   </item>
   <item>
     <Testcase>LG04</Testcase>
-    <Username>KhongDung</Username>
+    <Username>NguyenVanA</Username>
     <Password>AnhDuong@123</Password>
     <Expected>Username hoặc Password không đúng!</Expected>
   </item>
   <item>
     <Testcase>LG05</Testcase>
     <Username>AnhDuong11</Username>
-    <Password>KhongDung</Password>
+    <Password>NguyenVanA@123</Password>
     <Expected>Username hoặc Password không đúng!</Expected>
   </item>
 </items>

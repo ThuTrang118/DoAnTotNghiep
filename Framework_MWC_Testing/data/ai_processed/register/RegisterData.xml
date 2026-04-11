@@ -3,64 +3,80 @@
     <Testcase>RG01</Testcase>
     <Username></Username>
     <Phone>0987654321</Phone>
-    <Password>password123</Password>
-    <ConfirmPassword>password123</ConfirmPassword>
+    <Password>Abcdefg1!</Password>
+    <ConfirmPassword>Abcdefg1!</ConfirmPassword>
     <Expected>Vui lòng điền vào trường này</Expected>
   </item>
   <item>
     <Testcase>RG02</Testcase>
-    <Username>testuser123</Username>
+    <Username>AnhDuong11</Username>
     <Phone></Phone>
-    <Password>password123</Password>
-    <ConfirmPassword>password123</ConfirmPassword>
+    <Password>Abcdefg1!</Password>
+    <ConfirmPassword>Abcdefg1!</ConfirmPassword>
     <Expected>Vui lòng điền vào trường này</Expected>
   </item>
   <item>
     <Testcase>RG03</Testcase>
-    <Username>testuser123</Username>
-    <Phone>987654321</Phone>
-    <Password>password123</Password>
-    <ConfirmPassword>password123</ConfirmPassword>
-    <Expected>Số điện thoại không đúng định dạng!</Expected>
+    <Username>AnhDuong11</Username>
+    <Phone>0987654321</Phone>
+    <Password></Password>
+    <ConfirmPassword>Abcdefg1!</ConfirmPassword>
+    <Expected>Vui lòng điền vào trường này</Expected>
   </item>
   <item>
     <Testcase>RG04</Testcase>
-    <Username>testuser123</Username>
+    <Username>AnhDuong11</Username>
     <Phone>0987654321</Phone>
-    <Password>passwrd</Password>
-    <ConfirmPassword>passwrd</ConfirmPassword>
-    <Expected>Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!</Expected>
+    <Password>Abcdefg1!</Password>
+    <ConfirmPassword></ConfirmPassword>
+    <Expected>Vui lòng điền vào trường này</Expected>
   </item>
   <item>
     <Testcase>RG05</Testcase>
-    <Username>testuser123</Username>
-    <Phone>0987654321</Phone>
-    <Password>password12345678901234567890</Password>
-    <ConfirmPassword>password12345678901234567890</ConfirmPassword>
-    <Expected>Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!</Expected>
-  </item>
-  <item>
-    <Testcase>RG06</Testcase>
-    <Username>testuser123</Username>
-    <Phone>0987654321</Phone>
-    <Password>password123</Password>
-    <ConfirmPassword>password1234</ConfirmPassword>
-    <Expected>mật khẩu không giống nhau</Expected>
-  </item>
-  <item>
-    <Testcase>RG07</Testcase>
     <Username>AnhDuong11</Username>
     <Phone>0987654321</Phone>
-    <Password>password123</Password>
-    <ConfirmPassword>password123</ConfirmPassword>
+    <Password>Abcdefg1!</Password>
+    <ConfirmPassword>Abcdefg1!</ConfirmPassword>
     <Expected>tài khoản đã tồn tại trong hệ thống</Expected>
   </item>
   <item>
-    <Testcase>RG08</Testcase>
-    <Username>testuser123456789</Username>
+    <Testcase>RG06</Testcase>
+    <Username>AnhDuong12</Username>
+    <Phone>9876543210</Phone>
+    <Password>Abcdefg1!</Password>
+    <ConfirmPassword>Abcdefg1!</ConfirmPassword>
+    <Expected>Số điện thoại không đúng định dạng!</Expected>
+  </item>
+  <item>
+    <Testcase>RG07</Testcase>
+    <Username>AnhDuong13</Username>
     <Phone>0987654321</Phone>
-    <Password>password12345678</Password>
-    <ConfirmPassword>password12345678</ConfirmPassword>
-    <Expected>testuser123456789</Expected>
+    <Password>Abcdefg</Password>
+    <ConfirmPassword>Abcdefg</ConfirmPassword>
+    <Expected>Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!</Expected>
+  </item>
+  <item>
+    <Testcase>RG08</Testcase>
+    <Username>AnhDuong14</Username>
+    <Phone>0987654321</Phone>
+    <Password>Abcdefg1!Abcdefg1!</Password>
+    <ConfirmPassword>Abcdefg1!Abcdefg1!</ConfirmPassword>
+    <Expected>Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!</Expected>
+  </item>
+  <item>
+    <Testcase>RG09</Testcase>
+    <Username>AnhDuong15</Username>
+    <Phone>0987654321</Phone>
+    <Password>Abcdefg1!</Password>
+    <ConfirmPassword>Abcdefg</ConfirmPassword>
+    <Expected>mật khẩu không giống nhau</Expected>
+  </item>
+  <item>
+    <Testcase>RG10</Testcase>
+    <Username>AnhDuong16</Username>
+    <Phone>0987654321</Phone>
+    <Password>Abcdefg1!</Password>
+    <ConfirmPassword>Abcdefg1!</ConfirmPassword>
+    <Expected>AnhDuong16</Expected>
   </item>
 </items>

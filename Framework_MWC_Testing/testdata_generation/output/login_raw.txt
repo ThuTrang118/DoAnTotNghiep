@@ -1,4 +1,3 @@
-```json
 {
   "feature": "Đăng nhập",
   "items": [
@@ -25,7 +24,7 @@
     {
       "Testcase": "LG03",
       "Technique": "DT",
-      "Objective": "Kiểm tra trường hợp Username và Password đều hợp lệ",
+      "Objective": "Kiểm tra trường hợp đăng nhập thành công",
       "Inputs": {
         "Username": "AnhDuong11",
         "Password": "AnhDuong@123"
@@ -37,7 +36,7 @@
       "Technique": "DT",
       "Objective": "Kiểm tra trường hợp Username không đúng",
       "Inputs": {
-        "Username": "KhongDung",
+        "Username": "NguyenVanA",
         "Password": "AnhDuong@123"
       },
       "Expected": "Username hoặc Password không đúng!"
@@ -48,10 +47,9 @@
       "Objective": "Kiểm tra trường hợp Password không đúng",
       "Inputs": {
         "Username": "AnhDuong11",
-        "Password": "KhongDung"
+        "Password": "NguyenVanA@123"
       },
       "Expected": "Username hoặc Password không đúng!"
     }
   ]
 }
-```

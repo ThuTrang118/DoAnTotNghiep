@@ -1,47 +1,56 @@
 Chức năng: Đăng ký
 
 Mô tả:
-Chức năng đăng ký cho phép người dùng tạo tài khoản mới bằng cách nhập Username, Phone, Password và ConfirmPassword.
-Sau khi người dùng nhấn nút Đăng ký, hệ thống kiểm tra dữ liệu đầu vào.
-Nếu tất cả dữ liệu hợp lệ, hệ thống tạo tài khoản thành công.
-Nếu dữ liệu không hợp lệ, hệ thống hiển thị thông báo lỗi tương ứng.
+Người dùng tạo tài khoản bằng Username, Phone, Password, ConfirmPassword.
+Sau khi nhấn Đăng ký:
+- Nếu hợp lệ → tạo tài khoản thành công
+- Nếu không hợp lệ → hiển thị lỗi tương ứng
 
-Ràng buộc dữ liệu:
-1. Username:
-   - Không được bỏ trống.
-   - Không được trùng với bất cứ Username nào đã được đăng ký (Tài khoản Username đã được đăng ký trong hệ thống là: AnhDuong11)
+==================================================
+RÀNG BUỘC DỮ LIỆU
+==================================================
 
-2. Phone:
-   - Không được bỏ trống.
-   - Độ dài = 10 ký tự số.
-   - Bắt đầu bằng số 0.
-   - Không được chứa ký tự chữ.
-   - Không được chứa ký tự đặc biệt.
-   - Không được chứa khoảng trắng.
+1. Username
+- Bắt buộc
+- Không được trùng
+- Username đã tồn tại: AnhDuong11
 
-3. Password:
-   - Không được bỏ trống.
-   - Độ dài: từ 8 đến 20 ký tự.
+2. Phone
+- Bắt buộc
+- Phải gồm đúng 10 ký tự
+- Chỉ chứa số
+- Bắt đầu bằng 0
+- Không chứa chữ
+- Không chứa ký tự đặc biệt
+- Không chứa khoảng trắng
 
-4. ConfirmPassword:
-   - Không được bỏ trống.
-   - Trùng khớp hoàn toàn với Password.
+3. Password
+- Bắt buộc
+- Độ dài từ 8 đến 20 ký tự
+- Chứa ký tự chữ thường, chữ hoa, số, ký hiệu đặc biệt
 
-Kết quả mong đợi:
-1. Nếu bất kỳ trường bắt buộc nào rỗng
-   -> Expected = "Vui lòng điền vào trường này"
+4. ConfirmPassword
+- Bắt buộc
+- Phải trùng Password
 
-2. Nếu Phone không đúng định dạng
-   -> Expected = "Số điện thoại không đúng định dạng!"
+==================================================
+KẾT QUẢ MONG ĐỢI
+==================================================
 
-3. Nếu Password không đúng độ dài nhỏ hơn 8 hoặc lớn hơn 20
-   -> Expected = "Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!"
+1. Nếu bất kỳ field rỗng
+→ "Vui lòng điền vào trường này"
 
-4. Nếu ConfirmPassword không trùng với Password
-   -> Expected = "mật khẩu không giống nhau"
+2. Nếu Phone sai định dạng
+→ "Số điện thoại không đúng định dạng!"
 
-5. Nếu Username trùng với tài khoản đã tồn tại
-   -> Expected = "tài khoản đã tồn tại trong hệ thống"
+3. Nếu Password < 8 hoặc > 20
+→ "Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!"
 
-6. Nếu tất cả dữ liệu hợp lệ
-   -> Expected = Username
+4. Nếu ConfirmPassword không trùng
+→ "mật khẩu không giống nhau"
+
+5. Nếu Username đã tồn tại
+→ "tài khoản đã tồn tại trong hệ thống"
+
+6. Nếu hợp lệ
+→ Username

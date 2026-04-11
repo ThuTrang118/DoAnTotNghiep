@@ -1,13 +1,11 @@
 ==================================================
-OUTPUT FORMAT REQUIREMENTS
+OUTPUT
 ==================================================
 
 Chỉ trả về DUY NHẤT 1 JSON object hợp lệ.
 Không giải thích.
 Không markdown.
-Không thêm text trước hoặc sau JSON.
-
-JSON phải bắt đầu bằng { và kết thúc bằng }
+Không thêm text ngoài JSON.
 
 ==================================================
 JSON SCHEMA
@@ -19,182 +17,269 @@ JSON SCHEMA
     {
       "Testcase": "[PREFIX]01",
       "Technique": "DT | EP | BVA",
-      "Objective": "Mô tả rõ ràng mục tiêu kiểm thử",
+      "Objective": "Mô tả rõ mục tiêu kiểm thử",
+      "BoundaryMeta": null,
       "Inputs": {
         "FieldName": "Literal Value"
       },
-      "Expected": "Kết quả mong đợi từ đặc tả"
+      "Expected": "Kết quả mong đợi"
     }
   ]
 }
 
 ==================================================
-FIELD RULES
+BOUNDARYMETA SCHEMA
+==================================================
+
+BoundaryMeta chỉ dùng khi Technique = "BVA".
+
+Nếu Technique là DT hoặc EP:
+- BoundaryMeta phải là null
+
+Nếu Technique là BVA:
+- BoundaryMeta là object theo schema sau:
+
+{
+  "TargetField": "Tên field đang được kiểm tra biên",
+  "BoundaryType": "range | exact",
+  "Point": "min-1 | min | max | max+1 | N-1 | N | N+1",
+  "TargetLength": 0,
+  "Pattern": "a"
+}
+
+Ý nghĩa:
+1. TargetField
+- Field mục tiêu của testcase BVA
+- Chỉ được là 1 field duy nhất
+
+2. BoundaryType
+- "range" khi đặc tả có dạng [min, max]
+- "exact" khi đặc tả có dạng = N
+
+3. Point
+- Nếu BoundaryType = "range" thì chỉ được:
+  - min-1
+  - min
+  - max
+  - max+1
+- Nếu BoundaryType = "exact" thì chỉ được:
+  - N-1
+  - N
+  - N+1
+
+4. TargetLength
+- Là giá trị số cụ thể của điểm biên
+
+5. Pattern
+- Là mẫu ký tự dùng để sinh literal cho field mục tiêu
+- Chỉ dùng đúng 1 ký tự lặp
+- Ví dụ:
+  - "a"
+  - "x"
+  - "0"
+- Không dùng pattern dài hơn 1 ký tự
+
+==================================================
+RULES
 ==================================================
 
 1. feature
-- Lấy đúng từ dòng "Chức năng"
-- Không tự sửa
+- Lấy đúng tên trong đặc tả
 
 2. Testcase
-- Format: PREFIX + số tăng dần (LG01, LG02...)
+- PREFIX + số tăng dần
 
 3. Technique
-- Bắt buộc thuộc 1 trong:
+- Chỉ được là:
   - DT
   - EP
   - BVA
 
 4. Objective
-- Phải mô tả đúng testcase
-- Phải khớp với dữ liệu trong Inputs
-- Không được viết chung chung:
-  - "dữ liệu không hợp lệ"
-  - "test lỗi"
-- Không được mô tả sai số field
-- Không được mô tả một testcase theo nhiều điểm biên cùng lúc
+- Mô tả đúng 1 mục tiêu kiểm thử
+- Khớp với Inputs
+- Không viết chung chung
+- Nếu là BVA phải ghi rõ:
+  - field mục tiêu
+  - điểm biên
+  - giá trị biên cụ thể
 
 5. Inputs
-- Phải chứa đầy đủ các field trong đặc tả
+- Phải chứa đầy đủ tất cả field của chức năng
 - Tên field phải đúng tuyệt đối
 - Giá trị phải là literal thật
 - Không dùng:
-  - "valid"
-  - "invalid"
-  - "boundary"
+  - valid
+  - invalid
+  - boundary
 
 6. Expected
-- Phải copy NGUYÊN VĂN từ đặc tả
-- Không được sửa câu
-- Không thêm "Lỗi:"
-- Không được để rỗng nếu đặc tả có Expected tương ứng
+- Giữ đúng nội dung từ đặc tả
+- Không thêm chữ
+- Không để rỗng nếu đặc tả có expected tương ứng
 
 ==================================================
-LOGIC RULES
+TECHNIQUE RULES
 ==================================================
 
-1. Mỗi item phải tương ứng đúng 1 coverage
+1. DT
+- Dùng cho field bắt buộc
+- Dùng cho logic / quan hệ / success
+- Không dùng DT cho boundary
+- Không dùng DT cho lỗi định dạng
 
-2. Mỗi item chỉ thuộc 1 kỹ thuật
+2. EP
+- Dùng cho lỗi định dạng, cấu trúc, loại ký tự
+- Không dùng EP cho empty
+- Không dùng EP cho boundary
+- Không dùng EP cho các trường hợp chỉ sai vì ít hơn hoặc nhiều hơn giới hạn biên
+
+3. BVA
+- Chỉ dùng khi đặc tả có biên trực tiếp:
+  - min
+  - max
+  - khoảng
+  - độ dài
+  - = N
+- Mỗi testcase BVA chỉ được đại diện cho đúng 1 điểm biên
+- Với BVA, BoundaryMeta là bắt buộc và phải hợp lệ
+
+==================================================
+BVA EXECUTION RULES
+==================================================
+
+Khi Technique = BVA, bắt buộc làm theo đúng thứ tự:
+
+1. Xác định TargetField
+
+2. Xác định BoundaryType:
+- range
+- exact
+
+3. Xác định Point hợp lệ:
+- range -> min-1, min, max, max+1
+- exact -> N-1, N, N+1
+
+4. Point KHÔNG ĐƯỢC để trống
+
+5. Tính TargetLength cụ thể
+- phải đúng với Point
+- không được dùng giá trị bất kỳ
+
+6. Chọn Pattern:
+- chỉ 1 ký tự duy nhất
+- nếu không có ràng buộc ký tự → dùng "a" hoặc "x"
+
+7. Sinh literal:
+- literal = Pattern lặp đúng TargetLength lần
+- không được tự viết chuỗi
+
+8. CẤM:
+- password123
+- abc12345
+- 12345678
+(nếu đặc tả không yêu cầu)
+
+9. Kiểm tra:
+- literal phải đúng TargetLength
+- nếu sai → testcase sai → phải sửa
+
+==================================================
+CONSISTENCY RULES
+==================================================
+
+1. Nếu Technique != BVA thì BoundaryMeta phải là null
+
+2. Nếu Technique = BVA thì:
+- BoundaryMeta không được null
+- Objective phải khớp với BoundaryMeta
+- Inputs của TargetField phải khớp với:
+  - Pattern
+  - TargetLength
+
+3. Với field chỉ có ràng buộc độ dài:
+- Không được tự thêm yêu cầu:
+  - chỉ chữ
+  - chỉ số
+  - chữ và số
+  - ký tự đặc biệt
+  - chữ hoa / chữ thường
+
+4. Với field có ràng buộc loại ký tự:
+- literal phải tuân thủ đúng loại ký tự mà đặc tả yêu cầu
+
+==================================================
+ITEM GENERATION CONSTRAINTS (THÊM MỚI)
+==================================================
+
+1. Phải xác định đầy đủ coverage unit trước khi sinh items
+
+2. Mỗi item = 1 coverage unit
 
 3. Không được:
-- gộp nhiều lỗi vào 1 item
-- sinh item ngoài coverage
+- gộp nhiều coverage unit vào 1 item
+- bỏ sót coverage unit
+- sinh item ngoài coverage unit
 
-4. Các item phải:
-- không trùng ý nghĩa
-- không thiếu coverage
-
-5. Nếu field không có ràng buộc tương ứng trong đặc tả
-→ không được tự tạo testcase theo ràng buộc đó
+4. Tổng số item phải đúng bằng tổng coverage unit
 
 ==================================================
-BVA STRICT RULES (ADDED)
+COVERAGE CHECK (BẮT BUỘC)
 ==================================================
 
-Áp dụng khi Technique = BVA:
+1. DT
+- đủ tất cả field bắt buộc, mỗi field rỗng là 1 testcase riêng
+- đủ rule logic
+- có testcase success nếu có
 
-1. Chỉ được dùng BVA nếu field đó CÓ ràng buộc biên trong đặc tả:
-- độ dài
-- min/max
-- khoảng giá trị
+2. EP
+- đủ tất cả lớp sai định dạng khác bản chất
+- không gộp lỗi
 
-Nếu field KHÔNG có ràng buộc biên
-→ KHÔNG được dùng BVA
-
---------------------------------------------------
-
-2. Bắt buộc xác định đúng loại biên:
-
-- Biên đơn:
-  b-1, b, b+1
-
-- Biên kép:
-  b1-1, b1, b2, b2+1
-
-Ràng buộc dạng = N phải được xem là biên đơn.
-Không được tự diễn giải = N thành khoảng giá trị.
-
---------------------------------------------------
-
-3. Mỗi item BVA chỉ được đại diện cho đúng 1 điểm biên duy nhất:
-- b-1
-- b
-- b+1
-- b1-1
-- b1
-- b2
-- b2+1
-
-Không được mô tả hoặc kiểm tra nhiều điểm biên trong cùng một item.
-
---------------------------------------------------
-
-4. Literal phải đúng TUYỆT ĐỐI điểm biên:
-
-- Nếu là chuỗi:
-  → độ dài phải đúng chính xác
-
-- Nếu là số:
-  → giá trị phải đúng chính xác
-
---------------------------------------------------
-
-5. Không được phép:
-
-- dùng giá trị quá nhỏ thay cho b1-1
-- dùng giá trị quá lớn thay cho b2+1
-- dùng giá trị ở giữa khoảng
-- dùng giá trị đại diện (ví dụ: rất ngắn, rất dài)
-
---------------------------------------------------
-
-6. Objective của BVA phải thể hiện rõ đúng 1 điểm biên:
-
-Phải ghi rõ:
-- b-1
-- b
-- b+1
-hoặc
-- b1-1
-- b1
-- b2
-- b2+1
-
-Không được viết:
-- "quá ngắn"
-- "quá dài"
-- "hợp lệ"
-- nhiều điểm biên trong cùng một Objective
-
---------------------------------------------------
-
-7. Kiểm tra bắt buộc trước khi xuất:
-
-- Xác định boundary từ đặc tả
-- Xác định đúng BoundaryPoint
-- Kiểm tra literal:
-  - nếu là chuỗi → đếm đúng số ký tự
-  - nếu là số → đối chiếu đúng giá trị
-
-Nếu literal KHÔNG khớp boundary
-→ testcase bị xem là SAI và phải sửa lại
-
---------------------------------------------------
-
-8. Không được:
-
-- tự tạo boundary không tồn tại trong đặc tả
-- áp dụng BVA cho field không có ràng buộc biên
-- tự đổi biên đơn thành biên kép
-- tự đổi biên kép thành biên đơn
+3. BVA
+- Nếu field có [min, max] -> đủ:
+  - min-1
+  - min
+  - max
+  - max+1
+- Nếu field có = N -> đủ:
+  - N-1
+  - N
+  - N+1
 
 ==================================================
-JSON VALIDITY
+PRE-OUTPUT SELF CHECK (THÊM MỚI)
 ==================================================
 
-- Dùng dấu ngoặc kép "
-- Không thiếu dấu phẩy
-- Không comment
+Trước khi xuất JSON:
+
+1. DT:
+- đủ tất cả field bắt buộc chưa
+- có tách riêng từng field chưa
+
+2. EP:
+- đã tách đủ các lớp lỗi chưa
+- có gộp lỗi không
+
+3. BVA:
+- đã đủ tất cả điểm biên chưa
+- có thiếu min-1 / min / max / max+1 không
+- có thiếu N-1 / N / N+1 không
+- có testcase nào Point bị trống không
+- literal có đúng TargetLength không
+
+4. Tổng thể:
+- mỗi coverage unit có đúng 1 item chưa
+- tổng item có đúng số coverage unit không
+
+==================================================
+FINAL CHECK
+==================================================
+
+- Không trùng testcase
+- Không thiếu coverage
+- Không sinh ngoài đặc tả
+- Không tự thêm yêu cầu không có trong đặc tả
+- JSON hợp lệ tuyệt đối
 
 TRẢ VỀ DUY NHẤT JSON

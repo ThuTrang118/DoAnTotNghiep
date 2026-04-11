@@ -12,10 +12,10 @@ items:
   Password: AnhDuong@123
   Expected: AnhDuong11
 - Testcase: LG04
-  Username: KhongDung
+  Username: NguyenVanA
   Password: AnhDuong@123
   Expected: Username hoặc Password không đúng!
 - Testcase: LG05
   Username: AnhDuong11
-  Password: KhongDung
+  Password: NguyenVanA@123
   Expected: Username hoặc Password không đúng!
