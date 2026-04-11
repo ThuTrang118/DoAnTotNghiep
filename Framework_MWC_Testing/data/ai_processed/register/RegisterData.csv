@@ -1,11 +1,13 @@
 ﻿Testcase,Username,Phone,Password,ConfirmPassword,Expected
 RG01,,0987654321,Abcdefg1!,Abcdefg1!,Vui lòng điền vào trường này
-RG02,AnhDuong11,,Abcdefg1!,Abcdefg1!,Vui lòng điền vào trường này
-RG03,AnhDuong11,0987654321,,Abcdefg1!,Vui lòng điền vào trường này
-RG04,AnhDuong11,0987654321,Abcdefg1!,,Vui lòng điền vào trường này
-RG05,AnhDuong11,0987654321,Abcdefg1!,Abcdefg1!,tài khoản đã tồn tại trong hệ thống
-RG06,AnhDuong12,9876543210,Abcdefg1!,Abcdefg1!,Số điện thoại không đúng định dạng!
-RG07,AnhDuong13,0987654321,Abcdefg,Abcdefg,Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!
-RG08,AnhDuong14,0987654321,Abcdefg1!Abcdefg1!,Abcdefg1!Abcdefg1!,Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!
-RG09,AnhDuong15,0987654321,Abcdefg1!,Abcdefg,mật khẩu không giống nhau
-RG10,AnhDuong16,0987654321,Abcdefg1!,Abcdefg1!,AnhDuong16
+RG02,testuser123,,Abcdefg1!,Abcdefg1!,Vui lòng điền vào trường này
+RG03,testuser123,0987654321,,Abcdefg1!,Vui lòng điền vào trường này
+RG04,testuser123,0987654321,Abcdefg1!,,Vui lòng điền vào trường này
+RG05,testuser123,987654321,Abcdefg1!,Abcdefg1!,Số điện thoại không đúng định dạng!
+RG06,testuser123,0987654321,Abcdefg,Abcdefg,Mật khẩu phải có ít nhất 8 ký tự!
+RG07,testuser123,0987654321,Abcdefg1!Abcdefg1!Abcdefg1!,Abcdefg1!Abcdefg1!Abcdefg1!,Mật khẩu phải có không quá 20 ký tự!
+RG08,testuser123,0987654321,Abcdefg1!,Abcdefg,Xác nhận mật khẩu không khớp!
+RG09,tstusr,0987654321,Abcdefg1!,Abcdefg1!,Tên người dùng phải có ít nhất 8 ký tự!
+RG10,testuser12345678901234567890,0987654321,Abcdefg1!,Abcdefg1!,Tên người dùng phải có không quá 20 ký tự!
+RG11,testuser123,0987654321,Abcdefg,Abcdefg,Mật khẩu phải có ít nhất 8 ký tự!
+RG12,testuser123,0987654321,Abcdefg1!Abc,Abcdefg1!Abc,Mật khẩu phải có không quá 20 ký tự!

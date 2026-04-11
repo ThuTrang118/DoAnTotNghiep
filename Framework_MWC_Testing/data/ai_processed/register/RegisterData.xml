@@ -9,7 +9,7 @@
   </item>
   <item>
     <Testcase>RG02</Testcase>
-    <Username>AnhDuong11</Username>
+    <Username>testuser123</Username>
     <Phone></Phone>
     <Password>Abcdefg1!</Password>
     <ConfirmPassword>Abcdefg1!</ConfirmPassword>
@@ -17,7 +17,7 @@
   </item>
   <item>
     <Testcase>RG03</Testcase>
-    <Username>AnhDuong11</Username>
+    <Username>testuser123</Username>
     <Phone>0987654321</Phone>
     <Password></Password>
     <ConfirmPassword>Abcdefg1!</ConfirmPassword>
@@ -25,7 +25,7 @@
   </item>
   <item>
     <Testcase>RG04</Testcase>
-    <Username>AnhDuong11</Username>
+    <Username>testuser123</Username>
     <Phone>0987654321</Phone>
     <Password>Abcdefg1!</Password>
     <ConfirmPassword></ConfirmPassword>
@@ -33,50 +33,66 @@
   </item>
   <item>
     <Testcase>RG05</Testcase>
-    <Username>AnhDuong11</Username>
-    <Phone>0987654321</Phone>
-    <Password>Abcdefg1!</Password>
-    <ConfirmPassword>Abcdefg1!</ConfirmPassword>
-    <Expected>tài khoản đã tồn tại trong hệ thống</Expected>
-  </item>
-  <item>
-    <Testcase>RG06</Testcase>
-    <Username>AnhDuong12</Username>
-    <Phone>9876543210</Phone>
+    <Username>testuser123</Username>
+    <Phone>987654321</Phone>
     <Password>Abcdefg1!</Password>
     <ConfirmPassword>Abcdefg1!</ConfirmPassword>
     <Expected>Số điện thoại không đúng định dạng!</Expected>
   </item>
   <item>
-    <Testcase>RG07</Testcase>
-    <Username>AnhDuong13</Username>
+    <Testcase>RG06</Testcase>
+    <Username>testuser123</Username>
     <Phone>0987654321</Phone>
     <Password>Abcdefg</Password>
     <ConfirmPassword>Abcdefg</ConfirmPassword>
-    <Expected>Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!</Expected>
+    <Expected>Mật khẩu phải có ít nhất 8 ký tự!</Expected>
+  </item>
+  <item>
+    <Testcase>RG07</Testcase>
+    <Username>testuser123</Username>
+    <Phone>0987654321</Phone>
+    <Password>Abcdefg1!Abcdefg1!Abcdefg1!</Password>
+    <ConfirmPassword>Abcdefg1!Abcdefg1!Abcdefg1!</ConfirmPassword>
+    <Expected>Mật khẩu phải có không quá 20 ký tự!</Expected>
   </item>
   <item>
     <Testcase>RG08</Testcase>
-    <Username>AnhDuong14</Username>
-    <Phone>0987654321</Phone>
-    <Password>Abcdefg1!Abcdefg1!</Password>
-    <ConfirmPassword>Abcdefg1!Abcdefg1!</ConfirmPassword>
-    <Expected>Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!</Expected>
-  </item>
-  <item>
-    <Testcase>RG09</Testcase>
-    <Username>AnhDuong15</Username>
+    <Username>testuser123</Username>
     <Phone>0987654321</Phone>
     <Password>Abcdefg1!</Password>
     <ConfirmPassword>Abcdefg</ConfirmPassword>
-    <Expected>mật khẩu không giống nhau</Expected>
+    <Expected>Xác nhận mật khẩu không khớp!</Expected>
   </item>
   <item>
-    <Testcase>RG10</Testcase>
-    <Username>AnhDuong16</Username>
+    <Testcase>RG09</Testcase>
+    <Username>tstusr</Username>
     <Phone>0987654321</Phone>
     <Password>Abcdefg1!</Password>
     <ConfirmPassword>Abcdefg1!</ConfirmPassword>
-    <Expected>AnhDuong16</Expected>
+    <Expected>Tên người dùng phải có ít nhất 8 ký tự!</Expected>
+  </item>
+  <item>
+    <Testcase>RG10</Testcase>
+    <Username>testuser12345678901234567890</Username>
+    <Phone>0987654321</Phone>
+    <Password>Abcdefg1!</Password>
+    <ConfirmPassword>Abcdefg1!</ConfirmPassword>
+    <Expected>Tên người dùng phải có không quá 20 ký tự!</Expected>
+  </item>
+  <item>
+    <Testcase>RG11</Testcase>
+    <Username>testuser123</Username>
+    <Phone>0987654321</Phone>
+    <Password>Abcdefg</Password>
+    <ConfirmPassword>Abcdefg</ConfirmPassword>
+    <Expected>Mật khẩu phải có ít nhất 8 ký tự!</Expected>
+  </item>
+  <item>
+    <Testcase>RG12</Testcase>
+    <Username>testuser123</Username>
+    <Phone>0987654321</Phone>
+    <Password>Abcdefg1!Abc</Password>
+    <ConfirmPassword>Abcdefg1!Abc</ConfirmPassword>
+    <Expected>Mật khẩu phải có không quá 20 ký tự!</Expected>
   </item>
 </items>

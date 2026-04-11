@@ -1,11 +1,16 @@
-```json
 {
   "feature": "Đăng ký",
+  "coverage_summary": {
+    "DT_count": 4,
+    "EP_count": 5,
+    "BVA_count": 3,
+    "TOTAL": 12
+  },
   "items": [
     {
       "Testcase": "PREFIX01",
       "Technique": "DT",
-      "Objective": "Kiểm tra trường hợp Username rỗng.",
+      "Objective": "Kiểm tra Username rỗng",
       "BoundaryMeta": null,
       "Inputs": {
         "Username": "",
@@ -18,10 +23,10 @@
     {
       "Testcase": "PREFIX02",
       "Technique": "DT",
-      "Objective": "Kiểm tra trường hợp Phone rỗng.",
+      "Objective": "Kiểm tra Phone rỗng",
       "BoundaryMeta": null,
       "Inputs": {
-        "Username": "AnhDuong11",
+        "Username": "testuser123",
         "Phone": "",
         "Password": "Abcdefg1!",
         "ConfirmPassword": "Abcdefg1!"
@@ -31,10 +36,10 @@
     {
       "Testcase": "PREFIX03",
       "Technique": "DT",
-      "Objective": "Kiểm tra trường hợp Password rỗng.",
+      "Objective": "Kiểm tra Password rỗng",
       "BoundaryMeta": null,
       "Inputs": {
-        "Username": "AnhDuong11",
+        "Username": "testuser123",
         "Phone": "0987654321",
         "Password": "",
         "ConfirmPassword": "Abcdefg1!"
@@ -44,10 +49,10 @@
     {
       "Testcase": "PREFIX04",
       "Technique": "DT",
-      "Objective": "Kiểm tra trường hợp ConfirmPassword rỗng.",
+      "Objective": "Kiểm tra ConfirmPassword rỗng",
       "BoundaryMeta": null,
       "Inputs": {
-        "Username": "AnhDuong11",
+        "Username": "testuser123",
         "Phone": "0987654321",
         "Password": "Abcdefg1!",
         "ConfirmPassword": ""
@@ -56,82 +61,127 @@
     },
     {
       "Testcase": "PREFIX05",
-      "Technique": "DT",
-      "Objective": "Kiểm tra trường hợp Username đã tồn tại.",
+      "Technique": "EP",
+      "Objective": "Kiểm tra Phone không đúng định dạng",
       "BoundaryMeta": null,
       "Inputs": {
-        "Username": "AnhDuong11",
-        "Phone": "0987654321",
-        "Password": "Abcdefg1!",
-        "ConfirmPassword": "Abcdefg1!"
-      },
-      "Expected": "tài khoản đã tồn tại trong hệ thống"
-    },
-    {
-      "Testcase": "PREFIX06",
-      "Technique": "DT",
-      "Objective": "Kiểm tra trường hợp Phone không đúng định dạng.",
-      "BoundaryMeta": null,
-      "Inputs": {
-        "Username": "AnhDuong12",
-        "Phone": "9876543210",
+        "Username": "testuser123",
+        "Phone": "987654321",
         "Password": "Abcdefg1!",
         "ConfirmPassword": "Abcdefg1!"
       },
       "Expected": "Số điện thoại không đúng định dạng!"
     },
     {
-      "Testcase": "PREFIX07",
-      "Technique": "DT",
-      "Objective": "Kiểm tra trường hợp Password < 8 ký tự.",
+      "Testcase": "PREFIX06",
+      "Technique": "EP",
+      "Objective": "Kiểm tra Password ít hơn 8 ký tự",
       "BoundaryMeta": null,
       "Inputs": {
-        "Username": "AnhDuong13",
+        "Username": "testuser123",
         "Phone": "0987654321",
         "Password": "Abcdefg",
         "ConfirmPassword": "Abcdefg"
       },
-      "Expected": "Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!"
+      "Expected": "Mật khẩu phải có ít nhất 8 ký tự!"
+    },
+    {
+      "Testcase": "PREFIX07",
+      "Technique": "EP",
+      "Objective": "Kiểm tra Password nhiều hơn 20 ký tự",
+      "BoundaryMeta": null,
+      "Inputs": {
+        "Username": "testuser123",
+        "Phone": "0987654321",
+        "Password": "Abcdefg1!Abcdefg1!Abcdefg1!",
+        "ConfirmPassword": "Abcdefg1!Abcdefg1!Abcdefg1!"
+      },
+      "Expected": "Mật khẩu phải có không quá 20 ký tự!"
     },
     {
       "Testcase": "PREFIX08",
-      "Technique": "DT",
-      "Objective": "Kiểm tra trường hợp Password > 20 ký tự.",
+      "Technique": "EP",
+      "Objective": "Kiểm tra ConfirmPassword không khớp với Password",
       "BoundaryMeta": null,
       "Inputs": {
-        "Username": "AnhDuong14",
-        "Phone": "0987654321",
-        "Password": "Abcdefg1!Abcdefg1!",
-        "ConfirmPassword": "Abcdefg1!Abcdefg1!"
-      },
-      "Expected": "Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!"
-    },
-    {
-      "Testcase": "PREFIX09",
-      "Technique": "DT",
-      "Objective": "Kiểm tra trường hợp ConfirmPassword không trùng.",
-      "BoundaryMeta": null,
-      "Inputs": {
-        "Username": "AnhDuong15",
+        "Username": "testuser123",
         "Phone": "0987654321",
         "Password": "Abcdefg1!",
         "ConfirmPassword": "Abcdefg"
       },
-      "Expected": "mật khẩu không giống nhau"
+      "Expected": "Xác nhận mật khẩu không khớp!"
     },
     {
-      "Testcase": "PREFIX10",
-      "Technique": "DT",
-      "Objective": "Kiểm tra trường hợp hợp lệ.",
-      "BoundaryMeta": null,
+      "Testcase": "PREFIX09",
+      "Technique": "BVA",
+      "Objective": "Kiểm tra Username với min-1 ký tự",
+      "BoundaryMeta": {
+        "TargetField": "Username",
+        "BoundaryType": "range",
+        "Point": "min-1",
+        "TargetLength": 7
+      },
       "Inputs": {
-        "Username": "AnhDuong16",
+        "Username": "tstusr",
         "Phone": "0987654321",
         "Password": "Abcdefg1!",
         "ConfirmPassword": "Abcdefg1!"
       },
-      "Expected": "AnhDuong16"
+      "Expected": "Tên người dùng phải có ít nhất 8 ký tự!"
+    },
+    {
+      "Testcase": "PREFIX10",
+      "Technique": "BVA",
+      "Objective": "Kiểm tra Username với max+1 ký tự",
+      "BoundaryMeta": {
+        "TargetField": "Username",
+        "BoundaryType": "range",
+        "Point": "max+1",
+        "TargetLength": 20
+      },
+      "Inputs": {
+        "Username": "testuser12345678901234567890",
+        "Phone": "0987654321",
+        "Password": "Abcdefg1!",
+        "ConfirmPassword": "Abcdefg1!"
+      },
+      "Expected": "Tên người dùng phải có không quá 20 ký tự!"
+    },
+    {
+      "Testcase": "PREFIX11",
+      "Technique": "BVA",
+      "Objective": "Kiểm tra Password với = N - 1 ký tự",
+      "BoundaryMeta": {
+        "TargetField": "Password",
+        "BoundaryType": "exact",
+        "Point": "N-1",
+        "TargetLength": 7
+      },
+      "Inputs": {
+        "Username": "testuser123",
+        "Phone": "0987654321",
+        "Password": "Abcdefg",
+        "ConfirmPassword": "Abcdefg"
+      },
+      "Expected": "Mật khẩu phải có ít nhất 8 ký tự!"
+    },
+    {
+      "Testcase": "PREFIX12",
+      "Technique": "BVA",
+      "Objective": "Kiểm tra Password với = N + 1 ký tự",
+      "BoundaryMeta": {
+        "TargetField": "Password",
+        "BoundaryType": "exact",
+        "Point": "N+1",
+        "TargetLength": 9
+      },
+      "Inputs": {
+        "Username": "testuser123",
+        "Phone": "0987654321",
+        "Password": "Abcdefg1!Abc",
+        "ConfirmPassword": "Abcdefg1!Abc"
+      },
+      "Expected": "Mật khẩu phải có không quá 20 ký tự!"
     }
   ]
 }
-```

@@ -5,346 +5,168 @@ VAI TRÒ
 Đây là tài liệu hướng dẫn AI áp dụng kiểm thử hộp đen để sinh dữ liệu kiểm thử.
 
 Mục tiêu:
-- Chọn đúng kỹ thuật kiểm thử
-- Sinh đủ coverage tối thiểu từ đặc tả
-- Mỗi coverage ánh xạ đúng 1 testcase
-- Không thiếu, không dư, không gộp sai
-- Không suy diễn thêm yêu cầu không có trong đặc tả
-- Nếu là BVA thì phải xuất rõ metadata biên dưới dạng BoundaryMeta
+- AI tự phân tích đặc tả
+- Sinh đủ coverage tối thiểu
+- Không gộp rule
+- Không bỏ sót rule
+- Không sai BVA
+- Mỗi coverage = 1 testcase
 
 ==================================================
 I. NGUYÊN TẮC CHUNG
 ==================================================
 
-1. Chỉ dùng ràng buộc xuất hiện trực tiếp trong đặc tả
-
-2. Không tự tạo rule mới cho bất kỳ field nào
-
-3. Mỗi testcase chỉ có 1 mục tiêu kiểm thử chính
-
-4. Field không phải mục tiêu kiểm thử phải dùng dữ liệu hợp lệ
-
-5. Empty khác Invalid:
-- Empty = không có dữ liệu
-- Invalid = có dữ liệu nhưng vi phạm ràng buộc
-
-6. Không được suy diễn thêm tính chất của dữ liệu nếu đặc tả không nêu
-Ví dụ:
-- không tự thêm rule chữ và số
-- không tự thêm rule chữ hoa/chữ thường
-- không tự thêm rule ký tự đặc biệt
-- không tự thêm rule cấu trúc
+1. Chỉ dùng rule trong đặc tả
+2. Không tự tạo rule
+3. Mỗi testcase chỉ có 1 mục tiêu
+4. Field không test phải hợp lệ
+5. Empty ≠ Invalid
+6. Không suy diễn thêm (chữ, số, ký tự...) nếu đặc tả không có
 
 ==================================================
 II. CHỌN KỸ THUẬT
 ==================================================
 
-1. DT dùng cho:
+DT:
 - field bắt buộc
-- logic nghiệp vụ
-- quan hệ giữa các field
-- trạng thái thành công
+- logic
+- quan hệ
+- success
 
-2. EP dùng cho:
-- lỗi định dạng
-- lỗi cấu trúc
-- lỗi loại ký tự
-- lỗi thành phần dữ liệu
-
-3. BVA dùng cho:
-- min
-- max
-- khoảng giá trị
-- độ dài
-- ràng buộc = N
-
-4. Không được:
-- dùng DT cho boundary
-- dùng DT cho lỗi định dạng
-- dùng EP cho empty
-- dùng EP cho boundary
-- dùng BVA nếu đặc tả không có biên
-
-==================================================
-III. DECISION TABLE (DT)
-==================================================
-
-1. Với mỗi field bắt buộc:
-- phải có 1 testcase riêng khi field đó rỗng
-- các field còn lại phải hợp lệ
-
-2. Không được gộp nhiều field rỗng trong 1 testcase
-
-3. Với rule logic hoặc quan hệ:
-- phải có testcase riêng cho trạng thái sai
-
-4. Nếu có trạng thái thành công:
-- phải có 1 testcase success riêng
-
-5. DT không được dùng để đại diện cho:
-- lỗi định dạng
-- lỗi độ dài
-- lỗi min/max
-- lỗi = N
-
-==================================================
-IV. EQUIVALENCE PARTITIONING (EP)
-==================================================
-
-1. Mỗi lớp sai khác bản chất = 1 testcase
-
-2. Chỉ dùng EP khi đặc tả có rule về:
+EP:
 - định dạng
-- cấu trúc
 - loại ký tự
-- thành phần dữ liệu
+- cấu trúc
 
-3. Nếu đặc tả có nhiều rule định dạng khác bản chất, phải tách riêng từng lớp sai.
-Ví dụ các bản chất sai khác nhau:
-- sai ký tự đầu
-- chứa chữ
-- chứa số
-- chứa ký tự đặc biệt
-- chứa khoảng trắng
-- sai cấu trúc
+BVA:
+- min / max
+- khoảng
+- độ dài
+- = N
 
-4. Không được gộp nhiều loại lỗi định dạng vào 1 testcase
-
-5. Không dùng EP cho:
-- dữ liệu rỗng
-- boundary
-- trường hợp chỉ sai vì ít hơn hoặc nhiều hơn giá trị biên
+CẤM:
+- DT cho boundary
+- EP cho boundary
+- EP cho empty
+- BVA khi không có biên
 
 ==================================================
-V. BOUNDARY VALUE ANALYSIS (BVA)
+III. NGUYÊN TẮC COVERAGE (QUAN TRỌNG NHẤT)
 ==================================================
 
-Chỉ áp dụng khi đặc tả có biên trực tiếp.
+1. Mỗi rule độc lập = 1 coverage unit
 
-1. Nếu đặc tả có [min, max], các điểm biên bắt buộc là:
+2. Không được gộp rule:
+- nếu 1 testcase có thể tách thành 2 testcase → testcase sai
+
+3. Mỗi coverage unit → đúng 1 testcase
+
+4. Coverage unit gồm:
+- Required
+- Logic
+- Format
+- Boundary
+
+==================================================
+IV. BVA
+==================================================
+
+1. Nếu [min, max]:
 - min-1
 - min
 - max
 - max+1
 
-2. Nếu đặc tả có = N, các điểm biên bắt buộc là:
+2. Nếu = N:
 - N-1
 - N
 - N+1
 
-3. Mỗi testcase BVA chỉ được đại diện cho đúng 1 điểm biên
-
-4. Mỗi testcase BVA chỉ được có đúng 1 field mục tiêu
+3. Mỗi điểm biên = 1 testcase
 
 --------------------------------------------------
-QUY TẮC QUAN TRỌNG CHO FIELD KIỂU CHUỖI
+QUY TẮC CHUỖI
 --------------------------------------------------
 
-5. Nếu field chỉ có ràng buộc về độ dài:
-- BVA chỉ kiểm tra số lượng ký tự
-- không được tự thêm yêu cầu về loại ký tự
+- Nếu chỉ có độ dài → chỉ kiểm tra độ dài
+- Không tự thêm rule ký tự
 
-6. Khi đặc tả KHÔNG yêu cầu:
-- chỉ chữ
-- chỉ số
-- chữ và số
-- ký tự đặc biệt
-- chữ hoa/chữ thường
-thì không được tự suy diễn các tính chất đó
+Literal:
+- phải dùng pattern 1 ký tự
+- ví dụ: "a", "x", "0"
 
-7. Với field chỉ có rule độ dài:
-- min-1, min, max, max+1 chỉ là độ dài
-- N-1, N, N+1 chỉ là độ dài
-- không phải lớp định dạng
-- không phải lớp loại ký tự
-
-8. Với field chỉ có rule độ dài, phải dùng literal trung tính, không mang ý nghĩa định dạng
-
-9. Không dùng các literal có ngữ nghĩa hoặc cấu trúc ngầm như:
-- password123
-- abc123
-- 12345678
-- Aa123456
-nếu đặc tả không yêu cầu loại ký tự tương ứng
-
-10. Literal phải đúng tuyệt đối:
-- chuỗi -> đúng số ký tự
-- số -> đúng giá trị
-
-11. Không được:
-- dùng giá trị gần đúng
-- dùng giá trị ở giữa
-- dùng giá trị quá xa biên
+literal = pattern * TargetLength
 
 ==================================================
-VI. BVA PHẢI XUẤT BOUNDARYMETA
+V. BOUNDARYMETA (BẮT BUỘC)
 ==================================================
 
-Nếu Technique = BVA thì ngoài Objective và Inputs, bắt buộc phải xuất BoundaryMeta.
+Nếu Technique = BVA:
 
-BoundaryMeta có vai trò:
-- biểu diễn có cấu trúc field mục tiêu
-- biểu diễn loại biên
-- biểu diễn điểm biên
-- biểu diễn giá trị biên cụ thể
-- biểu diễn mẫu ký tự dùng để tạo literal
+Phải có:
 
-BoundaryMeta chỉ dùng cho BVA.
+- TargetField
+- BoundaryType
+- Point
+- TargetLength
+- Pattern
 
-Nếu Technique là DT hoặc EP:
-- BoundaryMeta phải là null
-
-Nếu Technique là BVA:
-- BoundaryMeta phải là object hợp lệ
+CẤM:
+- Point rỗng
+- TargetLength sai
+- Pattern dài > 1
 
 ==================================================
-VII. CÁCH SUY RA BOUNDARYMETA
+VI. CONSISTENCY CHECK (BẮT BUỘC)
 ==================================================
 
-Khi Technique = BVA, bắt buộc làm theo đúng thứ tự:
+3 thành phần phải KHỚP:
 
-Bước 1. Xác định TargetField
-- Chỉ chọn đúng 1 field mục tiêu
+1. Objective
+2. BoundaryMeta.TargetLength
+3. Inputs[TargetField]
 
-Bước 2. Xác định BoundaryType từ đặc tả
-- Nếu ràng buộc dạng [min, max] -> BoundaryType = "range"
-- Nếu ràng buộc dạng = N -> BoundaryType = "exact"
-
-Bước 3. Xác định Point
-- Nếu BoundaryType = "range" -> Point chỉ được là:
-  - min-1
-  - min
-  - max
-  - max+1
-- Nếu BoundaryType = "exact" -> Point chỉ được là:
-  - N-1
-  - N
-  - N+1
-
-Bước 4. Tính TargetLength
-- Đây là giá trị số cụ thể của điểm biên
-
-Bước 5. Chọn Pattern
-- Pattern chỉ được là đúng 1 ký tự
-- Nếu đặc tả KHÔNG yêu cầu loại ký tự:
-  - dùng pattern trung tính như:
-    - "a"
-    - "x"
-- Nếu đặc tả CÓ yêu cầu loại ký tự:
-  - phải chọn pattern phù hợp với đặc tả
-  - ví dụ field chỉ chứa số -> dùng:
-    - "0"
-    - "1"
-
-Bước 6. Sinh literal cho TargetField
-- literal phải được tạo bằng cách lặp Pattern đúng TargetLength lần
-
-Bước 7. Kiểm tra lại
-- độ dài literal của TargetField phải đúng bằng TargetLength
-- nếu không đúng thì testcase đó sai và phải sửa lại
+Nếu không khớp → testcase sai
 
 ==================================================
-VIII. QUY TẮC NHẤT QUÁN GIỮA BOUNDARYMETA, OBJECTIVE VÀ INPUTS
+VII. QUY TRÌNH BẮT BUỘC
 ==================================================
 
-1. Nếu Technique != BVA:
-- BoundaryMeta phải là null
+Bước 1: Liệt kê rule
 
-2. Nếu Technique = BVA:
-- BoundaryMeta không được null
-- Objective phải khớp với BoundaryMeta
-- Inputs của TargetField phải khớp với:
-  - TargetLength
-  - Pattern
+Bước 2: Tách coverage unit
+- mỗi rule = 1 unit
 
-3. Objective của BVA phải nêu rõ:
-- field mục tiêu
-- điểm biên
-- giá trị cụ thể của biên
+Bước 3: Phân loại
+- DT / EP / BVA
 
-4. Nếu Objective nói 5 ký tự mà literal không dài 5 ký tự:
-- testcase đó sai
+Bước 4: ĐẾM:
 
-5. Nếu BoundaryMeta nói TargetLength = 30 mà literal không dài 30 ký tự:
-- testcase đó sai
+- DT_count
+- EP_count
+- BVA_count
+- TOTAL = DT + EP + BVA
 
-==================================================
-IX. QUY TRÌNH SINH DỮ LIỆU
-==================================================
+Bước 5: Sinh testcase:
+- mỗi unit → 1 testcase
 
-Bắt buộc thực hiện theo đúng thứ tự:
+Bước 6: Với BVA:
+- phải có BoundaryMeta
+- phải sinh literal đúng công thức
 
-Bước 1: Liệt kê tất cả field và tất cả ràng buộc từ đặc tả
+Bước 7: KIỂM TRA TRƯỚC KHI XUẤT:
 
-Bước 2: TÁCH COVERAGE UNIT
-- Mỗi rule độc lập phải trở thành 1 coverage unit
-- Không được gộp nhiều rule vào 1 coverage unit
-- Không được gộp nhiều field vào 1 coverage unit
-- Không được gộp nhiều lỗi khác bản chất vào 1 coverage unit
-
-Bước 3: PHÂN LOẠI COVERAGE UNIT
-- Required / logic / relation -> DT
-- Format / structure / character -> EP
-- Boundary / length / min / max / = N -> BVA
-
-Bước 4: ĐẾM COVERAGE UNIT
-- DT_count = số coverage unit DT
-- EP_count = số coverage unit EP
-- BVA_count = số coverage unit BVA
-- Total_count = DT_count + EP_count + BVA_count
-
-Bước 5: SINH TESTCASE
-- Mỗi coverage unit tạo đúng 1 testcase
-- Không được bỏ sót coverage unit
-- Không được sinh testcase ngoài coverage unit
-
-Bước 6: XỬ LÝ BVA
-- Nếu testcase là BVA:
-  - bắt buộc có BoundaryMeta
-  - Point không được để trống
-  - TargetLength phải đúng điểm biên
-  - literal phải = Pattern lặp đúng TargetLength lần
-
-Bước 7: TỰ KIỂM TRA TRƯỚC KHI XUẤT
-- số testcase DT có đúng DT_count không
-- số testcase EP có đúng EP_count không
-- số testcase BVA có đúng BVA_count không
-- tổng testcase có đúng Total_count không
-- có coverage unit nào chưa có testcase không
-- có testcase nào không thuộc coverage unit không
+- số testcase DT = DT_count
+- số testcase EP = EP_count
+- số testcase BVA = BVA_count
+- tổng testcase = TOTAL
 
 ==================================================
-X. NGUYÊN TẮC CUỐI
+VIII. NGUYÊN TẮC CUỐI
 ==================================================
 
-- 1 coverage = 1 testcase
 - 1 testcase = 1 mục tiêu
-- Không mô tả mơ hồ như:
-  - sai
-  - không hợp lệ
-  - bất kỳ
-  - hoặc
-- Không bỏ sót nếu đặc tả đủ thông tin
-- Không tự thêm yêu cầu không tồn tại trong đặc tả
-- Nếu là BVA thì phải xuất BoundaryMeta đúng và nhất quán
-
-==================================================
-XI. QUY TẮC CẤM GỘP COVERAGE (THÊM MỚI)
-==================================================
-
-1. Không được gộp 2 rule khác nhau vào cùng 1 testcase
-
-2. Nếu 1 field có nhiều rule:
-- mỗi rule phải là 1 testcase riêng
-
-3. Nếu 1 field có nhiều lỗi định dạng:
-- mỗi lỗi định dạng khác bản chất phải là 1 testcase riêng
-
-4. Nếu là BVA:
-- mỗi điểm biên là 1 testcase riêng
-
-5. Nếu Objective chứa:
-- "và"
-- "hoặc"
-- "đồng thời"
-=> phải kiểm tra lại vì có khả năng đang gộp coverage
+- không mơ hồ
+- không gộp
+- không thiếu
+- không sai BVA

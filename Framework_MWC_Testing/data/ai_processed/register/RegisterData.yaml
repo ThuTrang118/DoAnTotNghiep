@@ -6,56 +6,68 @@ items:
   ConfirmPassword: Abcdefg1!
   Expected: Vui lòng điền vào trường này
 - Testcase: RG02
-  Username: AnhDuong11
+  Username: testuser123
   Phone: ''
   Password: Abcdefg1!
   ConfirmPassword: Abcdefg1!
   Expected: Vui lòng điền vào trường này
 - Testcase: RG03
-  Username: AnhDuong11
+  Username: testuser123
   Phone: 0987654321
   Password: ''
   ConfirmPassword: Abcdefg1!
   Expected: Vui lòng điền vào trường này
 - Testcase: RG04
-  Username: AnhDuong11
+  Username: testuser123
   Phone: 0987654321
   Password: Abcdefg1!
   ConfirmPassword: ''
   Expected: Vui lòng điền vào trường này
 - Testcase: RG05
-  Username: AnhDuong11
-  Phone: 0987654321
-  Password: Abcdefg1!
-  ConfirmPassword: Abcdefg1!
-  Expected: tài khoản đã tồn tại trong hệ thống
-- Testcase: RG06
-  Username: AnhDuong12
-  Phone: '9876543210'
+  Username: testuser123
+  Phone: '987654321'
   Password: Abcdefg1!
   ConfirmPassword: Abcdefg1!
   Expected: Số điện thoại không đúng định dạng!
-- Testcase: RG07
-  Username: AnhDuong13
+- Testcase: RG06
+  Username: testuser123
   Phone: 0987654321
   Password: Abcdefg
   ConfirmPassword: Abcdefg
-  Expected: Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!
-- Testcase: RG08
-  Username: AnhDuong14
+  Expected: Mật khẩu phải có ít nhất 8 ký tự!
+- Testcase: RG07
+  Username: testuser123
   Phone: 0987654321
-  Password: Abcdefg1!Abcdefg1!
-  ConfirmPassword: Abcdefg1!Abcdefg1!
-  Expected: Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!
-- Testcase: RG09
-  Username: AnhDuong15
+  Password: Abcdefg1!Abcdefg1!Abcdefg1!
+  ConfirmPassword: Abcdefg1!Abcdefg1!Abcdefg1!
+  Expected: Mật khẩu phải có không quá 20 ký tự!
+- Testcase: RG08
+  Username: testuser123
   Phone: 0987654321
   Password: Abcdefg1!
   ConfirmPassword: Abcdefg
-  Expected: mật khẩu không giống nhau
-- Testcase: RG10
-  Username: AnhDuong16
+  Expected: Xác nhận mật khẩu không khớp!
+- Testcase: RG09
+  Username: tstusr
   Phone: 0987654321
   Password: Abcdefg1!
   ConfirmPassword: Abcdefg1!
-  Expected: AnhDuong16
+  Expected: Tên người dùng phải có ít nhất 8 ký tự!
+- Testcase: RG10
+  Username: testuser12345678901234567890
+  Phone: 0987654321
+  Password: Abcdefg1!
+  ConfirmPassword: Abcdefg1!
+  Expected: Tên người dùng phải có không quá 20 ký tự!
+- Testcase: RG11
+  Username: testuser123
+  Phone: 0987654321
+  Password: Abcdefg
+  ConfirmPassword: Abcdefg
+  Expected: Mật khẩu phải có ít nhất 8 ký tự!
+- Testcase: RG12
+  Username: testuser123
+  Phone: 0987654321
+  Password: Abcdefg1!Abc
+  ConfirmPassword: Abcdefg1!Abc
+  Expected: Mật khẩu phải có không quá 20 ký tự!
