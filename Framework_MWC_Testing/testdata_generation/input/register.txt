@@ -1,56 +1,44 @@
-Chức năng: Đăng ký
+CHỨC NĂNG: ĐĂNG KÝ
 
-Mô tả:
-Người dùng tạo tài khoản bằng Username, Phone, Password, ConfirmPassword.
-Sau khi nhấn Đăng ký:
-- Nếu hợp lệ → tạo tài khoản thành công
-- Nếu không hợp lệ → hiển thị lỗi tương ứng
+==================================================================================
+INPUT
+==================================================================================
+1. Username: bắt buộc
+2. Phone: bắt buộc
+3. Password: bắt buộc
+4. ConfirmPassword: bắt buộc
 
-==================================================
-RÀNG BUỘC DỮ LIỆU
-==================================================
+==================================================================================
+CONSTRAINT
+==================================================================================
 
-1. Username
-- Bắt buộc
-- Không được trùng
-- Username đã tồn tại: AnhDuong11
-
-2. Phone
-- Bắt buộc
-- Phải gồm đúng 10 ký tự
+Phone:
+- Đúng 10 ký tự
 - Chỉ chứa số
 - Bắt đầu bằng 0
-- Không chứa chữ
-- Không chứa ký tự đặc biệt
-- Không chứa khoảng trắng
+- Không chứa chữ, ký tự đặc biệt, khoảng trắng
 
-3. Password
-- Bắt buộc
+Password:
 - Độ dài từ 8 đến 20 ký tự
-- Chứa ký tự chữ thường, chữ hoa, số, ký hiệu đặc biệt
 
-4. ConfirmPassword
-- Bắt buộc
+ConfirmPassword:
 - Phải trùng Password
 
-==================================================
-KẾT QUẢ MONG ĐỢI
-==================================================
+==================================================================================
+EXPECTED
+==================================================================================
 
-1. Nếu bất kỳ field rỗng
+1. Nếu bất kỳ field nào rỗng
 → "Vui lòng điền vào trường này"
 
 2. Nếu Phone sai định dạng
-→ "Số điện thoại không đúng định dạng!"
+→ "Số điện thoại không hợp lệ"
 
-3. Nếu Password < 8 hoặc > 20
-→ "Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!"
+3. Nếu Password sai độ dài
+→ "Mật khẩu phải từ 8 đến 20 ký tự"
 
 4. Nếu ConfirmPassword không trùng
-→ "mật khẩu không giống nhau"
+→ "Mật khẩu không khớp"
 
-5. Nếu Username đã tồn tại
-→ "tài khoản đã tồn tại trong hệ thống"
-
-6. Nếu hợp lệ
-→ Username
+5. Nếu hợp lệ
+→ "Đăng ký thành công"

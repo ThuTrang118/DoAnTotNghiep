@@ -1,13 +1,9 @@
 ﻿Testcase,Username,Phone,Password,ConfirmPassword,Expected
-RG01,,0987654321,Abcdefg1!,Abcdefg1!,Vui lòng điền vào trường này
-RG02,testuser123,,Abcdefg1!,Abcdefg1!,Vui lòng điền vào trường này
-RG03,testuser123,0987654321,,Abcdefg1!,Vui lòng điền vào trường này
-RG04,testuser123,0987654321,Abcdefg1!,,Vui lòng điền vào trường này
-RG05,testuser123,987654321,Abcdefg1!,Abcdefg1!,Số điện thoại không đúng định dạng!
-RG06,testuser123,0987654321,Abcdefg,Abcdefg,Mật khẩu phải có ít nhất 8 ký tự!
-RG07,testuser123,0987654321,Abcdefg1!Abcdefg1!Abcdefg1!,Abcdefg1!Abcdefg1!Abcdefg1!,Mật khẩu phải có không quá 20 ký tự!
-RG08,testuser123,0987654321,Abcdefg1!,Abcdefg,Xác nhận mật khẩu không khớp!
-RG09,tstusr,0987654321,Abcdefg1!,Abcdefg1!,Tên người dùng phải có ít nhất 8 ký tự!
-RG10,testuser12345678901234567890,0987654321,Abcdefg1!,Abcdefg1!,Tên người dùng phải có không quá 20 ký tự!
-RG11,testuser123,0987654321,Abcdefg,Abcdefg,Mật khẩu phải có ít nhất 8 ký tự!
-RG12,testuser123,0987654321,Abcdefg1!Abc,Abcdefg1!Abc,Mật khẩu phải có không quá 20 ký tự!
+RG01,testuser,0987654321,password123,password123,Đăng ký thành công
+RG02,,0987654321,password123,password123,Vui lòng điền vào trường này
+RG03,testuser,,password123,password123,Vui lòng điền vào trường này
+RG04,testuser,0987654321,,password123,Vui lòng điền vào trường này
+RG05,testuser,0987654321,password123,wrongpassword,Mật khẩu không khớp
+RG06,testuser,1234567890,password123,password123,Số điện thoại không hợp lệ
+RG07,testuser,123456789,password123,password123,Số điện thoại không hợp lệ
+RG08,testuser,0987654321,passwor,passwor,Mật khẩu phải từ 8 đến 20 ký tự
