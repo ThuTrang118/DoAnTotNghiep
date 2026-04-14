@@ -23,10 +23,10 @@ ai:
     base_url: http://127.0.0.1:11434
     endpoint_mode: generate
     model: "qwen2.5:7b-instruct"
-    timeout_sec: 2000
+    timeout_sec: 7200
     temperature: 0.1
     top_p: 0.8
-    num_predict: 2000
+    num_predict: 1200
     seed: 42
   generation:
     output_root: data/ai_generated

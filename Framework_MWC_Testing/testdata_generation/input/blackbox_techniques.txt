@@ -1,51 +1,109 @@
-==================================================
-KIẾN THỨC NỀN TẢNG KIỂM THỬ HỘP ĐEN (SENIOR ARCHITECT)
-==================================================
-Bạn là một Senior Test Design Architect chuyên nghiệp. Nhiệm vụ của bạn là phân tích đặc tả nghiệp vụ và sinh dữ liệu kiểm thử (Test Data) chuẩn mực dựa trên các kỹ thuật hộp đen kinh điển.
+==================================================================================
+KIẾN THỨC KIỂM THỬ HỘP ĐEN
+==================================================================================
 
-I. CHI TIẾT CÁC KỸ THUẬT BẮT BUỘC
-1. PHÂN VÙNG TƯƠNG ĐƯƠNG (EQUIVALENCE PARTITIONING - EP)
-- Định nghĩa: Chia miền đầu vào thành các lớp dữ liệu mà hệ thống xử lý giống nhau.
-- Quy tắc xác định:
-  + Nếu là phạm vi (Range): Xác định 1 lớp hợp lệ (Valid) và 2 lớp không hợp lệ (Invalid - ngoài biên trái/phải).
-  + Nếu là tập hợp giá trị (Set): Mỗi giá trị được xử lý riêng biệt là một lớp hợp lệ; các giá trị khác là không hợp lệ.
-  + Nếu là điều kiện "bắt buộc phải có" (Must-be): 1 lớp hợp lệ (thỏa mãn) và 1 lớp không hợp lệ (không thỏa mãn).
+VAI TRÒ & NGUYÊN TẮC TỐI THƯỢNG 
+- Mỗi Coverage Item phải là đơn tử (Atomic): Một mục tiêu, một lỗi, một kỳ vọng.
+- Tuyệt đối không gộp nhiều field rỗng vào 1 testcase.
+- Dữ liệu không tập trung lỗi (non-target fields) PHẢI lấy từ bộ Valid Baseline.
 
-2. PHÂN TÍCH GIÁ TRỊ BIÊN (BOUNDARY VALUE ANALYSIS - BVA)
-- Trọng tâm: Chỉ áp dụng cho các trường có thứ tự hoặc định lượng (số, độ dài chuỗi ký tự).
-- Quy tắc 4 điểm cho khoảng [Min, Max]:
-   - Case 1: Giá trị/Độ dài = Min - 1 (Invalid)
-   - Case 2: Giá trị/Độ dài = Min (Valid)
-   - Case 3: Giá trị/Độ dài = Max (Valid)
-   - Case 4: Giá trị/Độ dài = Max + 1 (Invalid)
-  
-- Quy tắc 3 điểm cho độ dài cố định [N]:
-   - Case 1: Độ dài = N - 1 (Invalid)
-   - Case 2: Độ dài = N (Valid)
-   - Case 3: Độ dài = N + 1 (Invalid)
+I. CHI TIẾT KỸ THUẬT 
+1. EQUIVALENCE PARTITIONING (EP) - Lớp dữ liệu 
+- Áp dụng cho: Sai format, sai ký tự (chứa chữ/ký tự đặc biệt), sai prefix.
+- Mỗi kiểu sai khác nhau là 1 testcase riêng.
 
-KỸ THUẬT "CHUỖI SỐ ĐỆM" (CHỐNG LỖI ĐẾM SAI):
-   Để sinh chuỗi có độ dài X chính xác, AI PHẢI dùng chuỗi lặp số "1234567890".
-   - Ví dụ X=11: Sinh "12345678901" (Dừng đúng số 1).
-   - Ví dụ X=21: Sinh "123456789012345678901" (Dừng đúng số 1).
-   - CẤM: Không sinh văn bản tự do hoặc lặp từ ngữ vì AI không tự đếm được ký tự chữ.
+2. BOUNDARY VALUE ANALYSIS (BVA) - Định lượng 
+Bản chất:
+- Tập trung vào các giá trị tại biên và sát biên
+- BVA là kỹ thuật tăng cường cho EP tại vùng mép của lớp tương đương
+- Dùng khi đặc tả có ràng buộc định lượng rõ ràng
 
-3. BẢNG QUYẾT ĐỊNH (DECISION TABLE - DT)
-- Mục tiêu: Kiểm tra các tổ hợp logic phức tạp giữa các trường dữ liệu.
-- Kịch bản bắt buộc:
-  + Sự phụ thuộc: Trường A chỉ được phép nhập khi đã chọn trường B.
-  + Logic nghiệp vụ: Tổng hợp các điều kiện để dẫn đến một hành động (Ví dụ: Đăng nhập thành công khi cả User và Pass đều đúng).
-  + Logic rỗng: Mỗi trường "Bắt buộc" phải có một kịch bản rỗng riêng biệt (Single Fault).
+BVA áp dụng khi có:
+- khoảng giá trị [Min, Max]
+- độ dài từ Min đến Max
+- số lượng phần tử tối thiểu / tối đa
+- kích thước tối đa
+- số lần tối đa
+- số ký tự đúng bằng N
+- đúng N phần tử
+- số record / số item / số lựa chọn cố định hoặc có giới hạn
 
-II. NGUYÊN TẮC THIẾT KẾ DỮ LIỆU (STRICT RULES)
-1. SINGLE FAULT (Độc lập lỗi): Trong mỗi Testcase kiểm tra lỗi (Invalid), chỉ được phép DUY NHẤT một trường mang dữ liệu sai. Các trường còn lại phải ở trạng thái "Valid Baseline" (Hợp lệ chuẩn).
-2. KHÔNG TỰ SUY DIỄN: Chỉ sử dụng các con số và ràng buộc có trong đặc tả. Không tự tạo ra các biên mới nếu tài liệu không đề cập.
-3. DỮ LIỆU ĐẠI DIỆN: Với kỹ thuật EP, hãy chọn một giá trị nằm giữa vùng tương đương để làm đại diện.
-4. ƯU TIÊN KẾT HỢP: Sau khi quét hết các lỗi đơn lẻ (Single Fault), hãy dùng Decision Table để mô tả các kịch bản kết hợp đúng.
+A. Trường hợp có khoảng [Min, Max]
+--------------------------------------
+Định nghĩa:
+- Min = giá trị nhỏ nhất hợp lệ
+- Max = giá trị lớn nhất hợp lệ
 
-III. QUY TRÌNH THỰC THI
-Bước 1: Trích xuất tất cả các biến số và ràng buộc (Rỗng, Độ dài, Định dạng, Quan hệ).
-Bước 2: Áp dụng BVA cho các trường định lượng (Độ dài chuỗi, Số lượng).
-Bước 3: Áp dụng EP cho các trường định danh hoặc trạng thái.
-Bước 4: Lập bảng Decision Table cho các logic nghiệp vụ quan trọng.
-Bước 5: Đối soát với Output Format để đóng gói kết quả JSON.
+Các điểm biên cần xét:
+- Min - 1
+- Min
+- Min + 1
+- Max - 1
+- Max
+- Max + 1
+
+Áp dụng cho:
+- độ dài chuỗi
+- giá trị số
+- số lượng item
+- số phần tử được chọn
+- số ký tự trong input
+- số record / số dòng / số cột nếu đặc tả có giới hạn
+
+B. Trường hợp fixed-length = N hoặc fixed-count = N
+--------------------------------------
+Nếu đặc tả yêu cầu:
+- đúng N ký tự
+- đúng N số
+- đúng N phần tử
+- đúng N lựa chọn
+thì phải xét:
+- N - 1
+- N
+- N + 1
+
+Ví dụ bản chất:
+- “đúng 10 ký tự”
+- “đúng 6 chữ số”
+- “đúng 1 file”
+- “đúng 3 mục”
+
+C. Trường hợp chỉ có giới hạn tối đa
+--------------------------------------
+Nếu đặc tả chỉ nêu:
+- tối đa N
+- không quá N
+thì phải xét tối thiểu:
+- N
+- N + 1
+và nên xét thêm giá trị ngay trước biên:
+- N - 1
+
+D. Trường hợp chỉ có giới hạn tối thiểu
+--------------------------------------
+Nếu đặc tả chỉ nêu:
+- tối thiểu N
+- ít nhất N
+thì phải xét tối thiểu:
+- N - 1
+- N
+- N + 1
+
+3. DECISION TABLE (DT) - Logic & Quan hệ 
+- Bắt buộc áp dụng cho: Field yêu cầu nhập (Required), Quan hệ giữa 2 field (như ConfirmPassword), và Case thành công (All Valid).
+- Mỗi field bắt buộc phải có 1 case EMPTY riêng biệt.
+
+II. PHÂN LOẠI TRẠNG THÁI (STRICT)
+1. VALID: Thỏa mọi ràng buộc.
+2. EMPTY: Bỏ trống, "", null. (Xử lý bằng DT) .
+3. INVALID: Sai format, sai kiểu, sai logic. (Xử lý bằng EP) .
+4. BOUNDARY: Các điểm chạm ngưỡng của độ dài/giá trị. (Xử lý bằng BVA) .
+
+III. QUY TRÌNH SUY LUẬN 
+1. Thiết lập Valid Baseline (Bộ data chuẩn để đăng ký thành công).
+2. Duyệt từng field:
+   - Nếu Required -> Tạo case EMPTY (DT).
+   - Nếu có Format/Pattern -> Tách các lớp Invalid ký tự (EP).
+   - Nếu có Min/Max/Fixed-length -> Tách đủ các điểm biên (BVA).
+   - Nếu có quan hệ (A so với B) -> Tạo case logic (DT).
+3. Rà soát: Đảm bảo không có testcase nào vừa sai format vừa sai độ dài.

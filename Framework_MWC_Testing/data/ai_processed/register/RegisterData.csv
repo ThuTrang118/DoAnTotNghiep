@@ -1,9 +1,0 @@
-﻿Testcase,Username,Phone,Password,ConfirmPassword,Expected
-RG01,testuser,0987654321,password123,password123,Đăng ký thành công
-RG02,,0987654321,password123,password123,Vui lòng điền vào trường này
-RG03,testuser,,password123,password123,Vui lòng điền vào trường này
-RG04,testuser,0987654321,,password123,Vui lòng điền vào trường này
-RG05,testuser,0987654321,password123,wrongpassword,Mật khẩu không khớp
-RG06,testuser,1234567890,password123,password123,Số điện thoại không hợp lệ
-RG07,testuser,123456789,password123,password123,Số điện thoại không hợp lệ
-RG08,testuser,0987654321,passwor,passwor,Mật khẩu phải từ 8 đến 20 ký tự

@@ -1,44 +1,54 @@
 CHỨC NĂNG: ĐĂNG KÝ
 
 ==================================================================================
-INPUT
+MÔ TẢ
 ==================================================================================
-1. Username: bắt buộc
-2. Phone: bắt buộc
-3. Password: bắt buộc
-4. ConfirmPassword: bắt buộc
+Chức năng đăng ký cho phép người dùng tạo tài khoản mới bằng cách nhập đầy đủ
+thông tin trên form đăng ký. Sau khi người dùng gửi form, hệ thống kiểm tra dữ liệu
+đầu vào theo các ràng buộc của từng field và quan hệ giữa các field.
+Nếu dữ liệu hợp lệ, hệ thống đăng ký thành công.
+Nếu dữ liệu không hợp lệ, hệ thống hiển thị thông báo lỗi tương ứng.
+
+==================================================================================
+INPUT: gồm 4 field
+==================================================================================
+1. Username: bắt buộc 
+2. Phone: bắt buộc 
+3. Password: bắt buộc 
+4. ConfirmPassword: bắt buộc 
 
 ==================================================================================
 CONSTRAINT
 ==================================================================================
 
-Phone:
-- Đúng 10 ký tự
-- Chỉ chứa số
-- Bắt đầu bằng 0
-- Không chứa chữ, ký tự đặc biệt, khoảng trắng
+Phone: gồm 5 yêu cầu
+1. Số ký tự đúng bằng 10
+2. Chỉ chứa số
+3. Bắt đầu bằng 0
+4. Không chứa ký tự chữ
+5. Không được chứa kỹ tự đặc biệt
 
-Password:
-- Độ dài từ 8 đến 20 ký tự
+Password: gồm 1 yêu cầu
+1. Độ dài từ 8 đến 20 ký tự
 
-ConfirmPassword:
-- Phải trùng Password
+ConfirmPassword: gồm 1 yêu cầu
+1. Phải trùng Password
 
 ==================================================================================
 EXPECTED
 ==================================================================================
 
 1. Nếu bất kỳ field nào rỗng
-→ "Vui lòng điền vào trường này"
+→ Expected = "Vui lòng điền vào trường này"
 
 2. Nếu Phone sai định dạng
-→ "Số điện thoại không hợp lệ"
+→ Expected = "Số điện thoại không hợp lệ"
 
 3. Nếu Password sai độ dài
-→ "Mật khẩu phải từ 8 đến 20 ký tự"
+→ Expected = "Mật khẩu phải từ 8 đến 20 ký tự"
 
 4. Nếu ConfirmPassword không trùng
-→ "Mật khẩu không khớp"
+→ Expected = "Mật khẩu không khớp"
 
 5. Nếu hợp lệ
-→ "Đăng ký thành công"
+→ Expected = Username

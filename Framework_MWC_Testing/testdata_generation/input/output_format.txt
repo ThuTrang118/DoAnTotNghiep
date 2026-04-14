@@ -1,57 +1,46 @@
-==================================================
-YÊU CẦU ĐẦU RA (OUTPUT RULES)
-==================================================
-- Chỉ trả về duy nhất 1 JSON object hợp lệ.
-- Không giải thích, không markdown, không văn bản thừa.
-- JSON phải bắt đầu bằng { và kết thúc bằng }.
+==================================================================================
+OUTPUT FORMAT - STRICT JSON ONLY
+==================================================================================
 
-==================================================
-JSON SCHEMA
-==================================================
+NHIỆM VỤ: Chỉ trả về duy nhất 1 JSON object. Không giải thích, không markdown.
+
+RÀNG BUỘC VỀ DỮ LIỆU TRONG JSON:
+1. Inputs: Phải điền giá trị cụ thể (Literal), KHÔNG dùng từ mô tả "invalid", "valid".
+2. Technique: Chỉ dùng "EP", "BVA", "DT".
+3. BoundaryMeta: 
+   - Phải đầy đủ cho mọi item BVA.
+   - "reference_value": Giá trị số của ngưỡng biên đang xét.
+4. Objective: Phải nêu rõ lý do lỗi (Ví dụ: "Kiểm tra Password độ dài tối thiểu - 1").
+
+JSON SCHEMA:
 {
   "feature": "[Tên chức năng]",
   "coverage_summary": {
-    "DT_count": 0,
     "EP_count": 0,
     "BVA_count": 0,
+    "DT_count": 0,
     "TOTAL": 0
   },
   "items": [
     {
-      "Testcase": "[PREFIX]01",
-      "Technique": "DT | EP | BVA",
-      "Objective": "Mô tả rõ mục tiêu kiểm thử",
-      "BoundaryMeta": null,
-      "Inputs": {
-{{ITEM_FIELDS_SCHEMA}}
+      "Testcase": "[ID]",
+      "Technique": "EP|BVA|DT",
+      "Objective": "Mục tiêu đơn tử",
+      "BoundaryMeta": {
+        "field": "tên field",
+        "rule_type": "range|fixed_length|max_only|min_only",
+        "boundary_point": "min-1|min|min+1|max-1|max|max+1|N-1|N|N+1",
+        "reference_value": 0
       },
-      "Expected": "Kết quả mong đợi"
+      "Inputs": { "field1": "value", "field2": "value" },
+      "Expected": "Thông báo lỗi chính xác từ đặc tả"
     }
   ]
 }
 
-==================================================
-RÀNG BUỘC GIÁ TRỊ FIELD
-
-1. Field "Technique":
-- Chỉ được nhận DUY NHẤT 1 trong 3 giá trị sau:
-  - "DT"
-  - "EP"
-  - "BVA"
-- Không được ghi:
-  - "DT | EP | BVA"
-  - "DT, EP, BVA"
-  - "Decision Table"
-  - "Equivalence Partitioning"
-  - "Boundary Value Analysis"
-
-2. Quy tắc gán "Technique":
-- Nếu testcase được sinh từ logic tổ hợp điều kiện / trường bắt buộc / phụ thuộc giữa các field -> "DT"
-- Nếu testcase đại diện cho 1 lớp dữ liệu hợp lệ hoặc không hợp lệ -> "EP"
-- Nếu testcase kiểm tra giá trị biên min/max hoặc N-1/N/N+1 -> "BVA"
-
-==================================================
-KIỂM TRA TRƯỚC KHI XUẤT (SELF-CHECK)
-1. Tính độc lập: Có đúng 1 trường lỗi cho mỗi ca kiểm thử Invalid không?
-2. Tính chính xác: Các giá trị biên (ví dụ: 10 ký tự) có đúng là chuỗi 10 ký tự không?
-3. Tính khớp: Kết quả Expected có khớp từng chữ với tài liệu nghiệp vụ không?
+BẢNG KIỂM TRA TRƯỚC KHI XUẤT:
+- Range [8,20] có đủ 6 case BVA chưa?
+- Fixed-length 10 có đủ 3 case BVA (9, 10, 11) chưa?
+- Các field Required đã có case EMPTY riêng lẻ chưa?
+- ConfirmPassword đã có case "không trùng" (DT) chưa?
+- Case Valid (Thành công) đã có chưa?
