@@ -1,0 +1,76 @@
+{
+  "items": [
+    {
+      "Testcase": "RG01",
+      "Username": "",
+      "Phone": "0987654321",
+      "Password": "password123",
+      "ConfirmPassword": "password123",
+      "Expected": "Vui lòng điền vào trường này"
+    },
+    {
+      "Testcase": "RG02",
+      "Username": "user123",
+      "Phone": "",
+      "Password": "password123",
+      "ConfirmPassword": "password123",
+      "Expected": "Vui lòng điền vào trường này"
+    },
+    {
+      "Testcase": "RG03",
+      "Username": "user123",
+      "Phone": "0987654321",
+      "Password": "",
+      "ConfirmPassword": "password123",
+      "Expected": "Vui lòng điền vào trường này"
+    },
+    {
+      "Testcase": "RG04",
+      "Username": "user123",
+      "Phone": "0987654321",
+      "Password": "password123",
+      "ConfirmPassword": "",
+      "Expected": "Vui lòng điền vào trường này"
+    },
+    {
+      "Testcase": "RG05",
+      "Username": "user123",
+      "Phone": "123456789",
+      "Password": "password123",
+      "ConfirmPassword": "password123",
+      "Expected": "Số điện thoại không hợp lệ"
+    },
+    {
+      "Testcase": "RG06",
+      "Username": "user123",
+      "Phone": "0987654321",
+      "Password": "pass",
+      "ConfirmPassword": "pass",
+      "Expected": "Mật khẩu phải từ 8 đến 20 ký tự"
+    },
+    {
+      "Testcase": "RG07",
+      "Username": "user123",
+      "Phone": "0987654321",
+      "Password": "password123",
+      "ConfirmPassword": "wrongpass",
+      "Expected": "Mật khẩu không khớp"
+    },
+    {
+      "Testcase": "RG08",
+      "Username": "user123",
+      "Phone": "0987654321",
+      "Password": "passw",
+      "ConfirmPassword": "passw",
+      "Expected": "Mật khẩu phải từ 8 đến 20 ký tự"
+    },
+    {
+      "Testcase": "RG09",
+      "Username": "user123",
+      "Phone": "0987654321",
+      "Password": "password12345678901234567890",
+      "ConfirmPassword": "password12345678901234567890",
+      "Expected": "Mật khẩu phải từ 8 đến 20 ký tự"
+    }
+  ]
+}

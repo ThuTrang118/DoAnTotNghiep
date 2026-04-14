@@ -1,0 +1,74 @@
+<items>
+  <item>
+    <Testcase>RG01</Testcase>
+    <Username></Username>
+    <Phone>0987654321</Phone>
+    <Password>password123</Password>
+    <ConfirmPassword>password123</ConfirmPassword>
+    <Expected>Vui lòng điền vào trường này</Expected>
+  </item>
+  <item>
+    <Testcase>RG02</Testcase>
+    <Username>user123</Username>
+    <Phone></Phone>
+    <Password>password123</Password>
+    <ConfirmPassword>password123</ConfirmPassword>
+    <Expected>Vui lòng điền vào trường này</Expected>
+  </item>
+  <item>
+    <Testcase>RG03</Testcase>
+    <Username>user123</Username>
+    <Phone>0987654321</Phone>
+    <Password></Password>
+    <ConfirmPassword>password123</ConfirmPassword>
+    <Expected>Vui lòng điền vào trường này</Expected>
+  </item>
+  <item>
+    <Testcase>RG04</Testcase>
+    <Username>user123</Username>
+    <Phone>0987654321</Phone>
+    <Password>password123</Password>
+    <ConfirmPassword></ConfirmPassword>
+    <Expected>Vui lòng điền vào trường này</Expected>
+  </item>
+  <item>
+    <Testcase>RG05</Testcase>
+    <Username>user123</Username>
+    <Phone>123456789</Phone>
+    <Password>password123</Password>
+    <ConfirmPassword>password123</ConfirmPassword>
+    <Expected>Số điện thoại không hợp lệ</Expected>
+  </item>
+  <item>
+    <Testcase>RG06</Testcase>
+    <Username>user123</Username>
+    <Phone>0987654321</Phone>
+    <Password>pass</Password>
+    <ConfirmPassword>pass</ConfirmPassword>
+    <Expected>Mật khẩu phải từ 8 đến 20 ký tự</Expected>
+  </item>
+  <item>
+    <Testcase>RG07</Testcase>
+    <Username>user123</Username>
+    <Phone>0987654321</Phone>
+    <Password>password123</Password>
+    <ConfirmPassword>wrongpass</ConfirmPassword>
+    <Expected>Mật khẩu không khớp</Expected>
+  </item>
+  <item>
+    <Testcase>RG08</Testcase>
+    <Username>user123</Username>
+    <Phone>0987654321</Phone>
+    <Password>passw</Password>
+    <ConfirmPassword>passw</ConfirmPassword>
+    <Expected>Mật khẩu phải từ 8 đến 20 ký tự</Expected>
+  </item>
+  <item>
+    <Testcase>RG09</Testcase>
+    <Username>user123</Username>
+    <Phone>0987654321</Phone>
+    <Password>password12345678901234567890</Password>
+    <ConfirmPassword>password12345678901234567890</ConfirmPassword>
+    <Expected>Mật khẩu phải từ 8 đến 20 ký tự</Expected>
+  </item>
+</items>

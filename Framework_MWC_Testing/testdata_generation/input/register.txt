@@ -28,8 +28,9 @@ Phone: gồm 5 yêu cầu
 4. Không chứa ký tự chữ
 5. Không được chứa kỹ tự đặc biệt
 
-Password: gồm 1 yêu cầu
+Password: gồm 2 yêu cầu
 1. Độ dài từ 8 đến 20 ký tự
+2. Chỉ chứa chữ
 
 ConfirmPassword: gồm 1 yêu cầu
 1. Phải trùng Password

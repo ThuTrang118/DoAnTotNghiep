@@ -1,109 +1,335 @@
 ==================================================================================
-KIẾN THỨC KIỂM THỬ HỘP ĐEN
+KIẾN THỨC KIỂM THỬ HỘP ĐEN - DÙNG CHUNG CHO MỌI CHỨC NĂNG
 ==================================================================================
 
-VAI TRÒ & NGUYÊN TẮC TỐI THƯỢNG 
-- Mỗi Coverage Item phải là đơn tử (Atomic): Một mục tiêu, một lỗi, một kỳ vọng.
-- Tuyệt đối không gộp nhiều field rỗng vào 1 testcase.
-- Dữ liệu không tập trung lỗi (non-target fields) PHẢI lấy từ bộ Valid Baseline.
+VAI TRÒ
+- Đây là tài liệu hướng dẫn AI suy ra coverage kiểm thử từ đặc tả nghiệp vụ.
+- Chỉ dùng để chọn đúng kỹ thuật, tách đúng coverage item, và sinh testcase đúng bản chất.
+- Không thay thế tài liệu mô tả nghiệp vụ của từng chức năng.
+- Không được tự thêm ràng buộc ngoài đặc tả.
 
-I. CHI TIẾT KỸ THUẬT 
-1. EQUIVALENCE PARTITIONING (EP) - Lớp dữ liệu 
-- Áp dụng cho: Sai format, sai ký tự (chứa chữ/ký tự đặc biệt), sai prefix.
-- Mỗi kiểu sai khác nhau là 1 testcase riêng.
+NGUYÊN TẮC NỀN
+- Chỉ suy luận từ:
+  + field đầu vào
+  + constraint
+  + expected
+  + quan hệ giữa các field
+  + điều kiện thành công / thất bại
+- Không dùng kiến thức mặc định của web/form/app nếu đặc tả không nêu.
+- Mỗi testcase phải có:
+  + Input cụ thể
+  + Expected cụ thể
+- Một testcase chỉ nên có đúng 1 mục tiêu lỗi chính.
+- Nếu 2 trường hợp sai khác nhau về bản chất thì phải là 2 coverage item khác nhau.
+- Nếu một trường hợp không có expected xác định từ đặc tả thì không được tự bịa expected.
 
-2. BOUNDARY VALUE ANALYSIS (BVA) - Định lượng 
-Bản chất:
-- Tập trung vào các giá trị tại biên và sát biên
-- BVA là kỹ thuật tăng cường cho EP tại vùng mép của lớp tương đương
-- Dùng khi đặc tả có ràng buộc định lượng rõ ràng
+==================================================================================
+I. TƯ DUY KIỂM THỬ
+==================================================================================
 
-BVA áp dụng khi có:
-- khoảng giá trị [Min, Max]
-- độ dài từ Min đến Max
-- số lượng phần tử tối thiểu / tối đa
-- kích thước tối đa
-- số lần tối đa
-- số ký tự đúng bằng N
-- đúng N phần tử
-- số record / số item / số lựa chọn cố định hoặc có giới hạn
+Kiểm thử hộp đen là suy ra test từ đặc tả đầu vào/đầu ra và quy tắc nghiệp vụ.
+Mục tiêu là tìm ra lỗi bằng các test có khả năng phát hiện lỗi cao.
 
-A. Trường hợp có khoảng [Min, Max]
+Nguyên tắc thực thi:
+1. Phải xác định rõ expected trước khi sinh testcase.
+2. Phải tạo testcase cho cả dữ liệu hợp lệ và dữ liệu không hợp lệ nếu đặc tả có hỗ trợ.
+3. Không chỉ kiểm tra hệ thống làm đúng điều phải làm, mà còn kiểm tra hệ thống có làm điều không được phép hay không.
+4. Không dùng testcase mơ hồ, không có trọng tâm lỗi.
+
+==================================================================================
+II. PHÂN LOẠI TRẠNG THÁI DỮ LIỆU
+==================================================================================
+
+Với mỗi field, phải tách rõ 3 trạng thái:
+
+1. VALID
+- Giá trị thỏa mọi ràng buộc của field và phù hợp nghiệp vụ.
+
+2. EMPTY / MISSING
+- Không có dữ liệu.
+- Ví dụ: "", bỏ trống, chưa chọn.
+
+3. INVALID
+- Có dữ liệu nhưng sai.
+- Sai có thể do:
+  + sai định dạng
+  + sai kiểu dữ liệu
+  + sai độ dài
+  + sai miền giá trị
+  + sai quan hệ với field khác
+  + sai logic nghiệp vụ
+
+Bắt buộc:
+- EMPTY khác INVALID.
+- Không gộp EMPTY vào INVALID.
+- Nếu 2 INVALID khác nhau về nguyên nhân, phải tách thành 2 coverage item riêng.
+
+==================================================================================
+III. BA KỸ THUẬT CHÍNH
+==================================================================================
+
+1. DECISION TABLE (DT)
 --------------------------------------
-Định nghĩa:
+Dùng khi bản chất bài toán là logic điều kiện-kết quả.
+
+Áp dụng cho:
+- field bắt buộc
+- if / else / then
+- quan hệ giữa nhiều field
+- phụ thuộc chọn trước / chọn sau
+- đối chiếu giữa 2 field
+- tổ hợp điều kiện dẫn đến kết quả khác nhau
+- workflow logic
+
+Quy tắc:
+- Mỗi rule logic độc lập là 1 coverage item.
+- Nếu nhiều field bắt buộc, phải xét trạng thái EMPTY của từng field một cách độc lập nếu đặc tả yêu cầu bao phủ theo field.
+- DT không dùng để mô tả format.
+- DT không dùng để mô tả boundary.
+- DT có thể có 1 rule valid nếu đặc tả có kết quả thành công rõ ràng.
+
+Dấu hiệu thường gặp:
+- bắt buộc
+- nếu ... thì ...
+- chỉ khi ...
+- phụ thuộc vào field khác
+- trùng / không trùng
+- đúng / sai theo tổ hợp điều kiện
+
+2. EQUIVALENCE PARTITIONING (EP)
+--------------------------------------
+Dùng khi bản chất là chia dữ liệu thành các lớp tương đương.
+
+Áp dụng cho:
+- valid class
+- invalid class
+- sai định dạng
+- sai kiểu
+- sai pattern
+- tồn tại / không tồn tại
+- đúng mẫu / sai mẫu
+- sai prefix
+- sai nhóm dữ liệu
+
+Quy tắc:
+- Mỗi lớp dữ liệu khác bản chất là 1 coverage item.
+- Invalid class phải tách riêng từng lớp.
+- Không gộp nhiều kiểu sai khác bản chất vào 1 item.
+- Một item EP không được đồng thời chứa thêm lỗi boundary.
+- Một item EP không được dùng EMPTY nếu EMPTY thuộc rule bắt buộc nhập.
+- Valid class có thể dùng 1 case đại diện.
+
+Quy tắc rất quan trọng:
+- Nếu đặc tả có nhiều kiểu phone sai định dạng như:
+  + không bắt đầu bằng 0
+  + chứa chữ
+  + chứa ký tự đặc biệt
+thì đây là các lớp invalid khác nhau và phải tách riêng.
+- Không dùng 1 dữ liệu làm sai đồng thời nhiều lớp nếu điều đó làm mất khả năng cô lập nguyên nhân lỗi.
+
+3. BOUNDARY VALUE ANALYSIS (BVA)
+--------------------------------------
+Dùng khi đặc tả có ràng buộc định lượng rõ ràng.
+
+Áp dụng khi có:
+- khoảng [Min, Max]
+- độ dài từ Min đến Max
+- đúng N ký tự
+- tối đa N
+- tối thiểu N
+- số lượng phần tử
+- số lựa chọn tối đa / tối thiểu
+
+A. Range [Min, Max]
 - Min = giá trị nhỏ nhất hợp lệ
 - Max = giá trị lớn nhất hợp lệ
 
-Các điểm biên cần xét:
-- Min - 1
-- Min
-- Min + 1
-- Max - 1
-- Max
-- Max + 1
+Điểm biên chuẩn:
+- min-1
+- min
+- min+1
+- max-1
+- max
+- max+1
 
-Áp dụng cho:
-- độ dài chuỗi
-- giá trị số
-- số lượng item
-- số phần tử được chọn
-- số ký tự trong input
-- số record / số dòng / số cột nếu đặc tả có giới hạn
-
-B. Trường hợp fixed-length = N hoặc fixed-count = N
---------------------------------------
-Nếu đặc tả yêu cầu:
-- đúng N ký tự
-- đúng N số
-- đúng N phần tử
-- đúng N lựa chọn
-thì phải xét:
-- N - 1
+B. Fixed-length = N hoặc fixed-count = N
+Điểm biên chuẩn:
+- N-1
 - N
-- N + 1
+- N+1
 
-Ví dụ bản chất:
-- “đúng 10 ký tự”
-- “đúng 6 chữ số”
-- “đúng 1 file”
-- “đúng 3 mục”
+C. Max-only
+Điểm cần xét:
+- max-1
+- max
+- max+1
 
-C. Trường hợp chỉ có giới hạn tối đa
---------------------------------------
-Nếu đặc tả chỉ nêu:
-- tối đa N
-- không quá N
-thì phải xét tối thiểu:
-- N
-- N + 1
-và nên xét thêm giá trị ngay trước biên:
-- N - 1
+D. Min-only
+Điểm cần xét:
+- min-1
+- min
+- min+1
 
-D. Trường hợp chỉ có giới hạn tối thiểu
---------------------------------------
-Nếu đặc tả chỉ nêu:
-- tối thiểu N
-- ít nhất N
-thì phải xét tối thiểu:
-- N - 1
-- N
-- N + 1
+Quy tắc:
+- Mỗi điểm biên là 1 coverage item riêng.
+- Một item BVA chỉ được có đúng 1 boundary focus.
+- Field đang không phải mục tiêu boundary phải dùng dữ liệu hợp lệ bình thường.
+- Không dùng BVA cho EMPTY nếu EMPTY là rule required.
+- Không dùng BVA để mô tả logic quan hệ giữa nhiều field.
 
-3. DECISION TABLE (DT) - Logic & Quan hệ 
-- Bắt buộc áp dụng cho: Field yêu cầu nhập (Required), Quan hệ giữa 2 field (như ConfirmPassword), và Case thành công (All Valid).
-- Mỗi field bắt buộc phải có 1 case EMPTY riêng biệt.
+==================================================================================
+IV. QUY TẮC CHỌN KỸ THUẬT
+==================================================================================
 
-II. PHÂN LOẠI TRẠNG THÁI (STRICT)
-1. VALID: Thỏa mọi ràng buộc.
-2. EMPTY: Bỏ trống, "", null. (Xử lý bằng DT) .
-3. INVALID: Sai format, sai kiểu, sai logic. (Xử lý bằng EP) .
-4. BOUNDARY: Các điểm chạm ngưỡng của độ dài/giá trị. (Xử lý bằng BVA) .
+Chọn theo bản chất coverage, không chọn theo từ khóa đơn lẻ.
 
-III. QUY TRÌNH SUY LUẬN 
-1. Thiết lập Valid Baseline (Bộ data chuẩn để đăng ký thành công).
-2. Duyệt từng field:
-   - Nếu Required -> Tạo case EMPTY (DT).
-   - Nếu có Format/Pattern -> Tách các lớp Invalid ký tự (EP).
-   - Nếu có Min/Max/Fixed-length -> Tách đủ các điểm biên (BVA).
-   - Nếu có quan hệ (A so với B) -> Tạo case logic (DT).
-3. Rà soát: Đảm bảo không có testcase nào vừa sai format vừa sai độ dài.
+1. Chọn DT khi:
+- bài toán là logic điều kiện-kết quả
+- field bắt buộc
+- quan hệ giữa nhiều field
+- tổ hợp input dẫn đến outcome khác nhau
+
+2. Chọn EP khi:
+- bài toán là chia lớp dữ liệu
+- sai format
+- sai pattern
+- sai kiểu
+- sai prefix
+- sai loại dữ liệu
+
+3. Chọn BVA khi:
+- bài toán là biên số lượng / biên độ dài / biên giá trị
+- có min/max/fixed-length rõ ràng
+
+4. Nếu một field có cả format và boundary
+- EP dùng cho format/class
+- BVA dùng cho boundary
+- không được trộn 2 bản chất này vào một item
+
+5. Nếu một chức năng có required + format + boundary + relation
+- required -> DT
+- format/class -> EP
+- boundary -> BVA
+- relation giữa field -> DT
+
+==================================================================================
+V. QUY TRÌNH SUY LUẬN BẮT BUỘC
+==================================================================================
+
+Bước 1. Trích xuất từ đặc tả
+- tên field
+- constraint của từng field
+- expected
+- rule nghiệp vụ
+- quan hệ giữa các field
+
+Bước 2. Tạo valid baseline
+- Chọn một bộ dữ liệu hợp lệ hoàn chỉnh
+- Bộ này dùng để cô lập lỗi khi thay đổi từng field
+
+Bước 3. Phân tích DT
+- Tìm các rule required
+- Tìm rule quan hệ giữa các field
+- Tìm rule thành công / thất bại theo tổ hợp điều kiện
+
+Bước 4. Phân tích EP
+- Tách valid class
+- Tách từng invalid class khác bản chất
+- Không gộp các invalid class khác nhau
+
+Bước 5. Phân tích BVA
+- Xác định loại biên: range / fixed_length / max_only / min_only
+- Sinh đúng các điểm biên chuẩn
+- Mỗi điểm biên là 1 coverage item riêng
+
+Bước 6. Rà soát chồng lấn
+- Không để cùng một coverage item xuất hiện ở 2 kỹ thuật
+- Không để EP ăn sang boundary
+- Không để DT ăn sang format
+- Không để BVA ăn sang relation logic
+
+Bước 7. Sinh testcase
+- Mỗi coverage item -> đúng 1 testcase
+- Mỗi testcase chỉ có 1 lỗi chính
+- Expected phải đúng nguyên văn theo đặc tả khi đặc tả đã nêu rõ
+
+NGUYÊN TẮC CÔ LẬP LỖI (SINGLE-FAULT / ERROR ISOLATION)
+- Mỗi testcase âm tính chỉ được có đúng 1 lỗi chính.
+- Khi kiểm tra một field hoặc một rule cụ thể, tất cả các field không phải mục tiêu lỗi phải dùng dữ liệu hợp lệ (valid baseline).
+- Nếu kiểm tra một loại lỗi cụ thể của chính field đó, các thuộc tính còn lại của field đó cũng phải giữ hợp lệ nếu có thể, để cô lập đúng nguyên nhân lỗi.
+
+Quy tắc áp dụng:
+1. Nếu kiểm tra EMPTY của field A:
+- field A = rỗng
+- mọi field còn lại = hợp lệ
+
+2. Nếu kiểm tra INVALID CLASS của field A:
+- chỉ làm sai đúng 1 lớp invalid đang kiểm tra
+- không làm sai thêm boundary, required, hay lớp invalid khác
+
+3. Nếu kiểm tra BOUNDARY của field A:
+- chỉ làm sai đúng 1 điểm biên
+- không làm sai thêm format, required, relation
+
+4. Nếu kiểm tra RELATION giữa field A và field B:
+- chỉ làm sai đúng quan hệ đó
+- mọi field còn lại = hợp lệ
+- bản thân A và B cũng phải hợp lệ về required/format/boundary, chỉ sai relation
+
+Ví dụ nguyên tắc chung:
+- test “chứa chữ” -> vẫn giữ đúng độ dài nếu đặc tả có độ dài cố định
+- test “không bắt đầu bằng 0” -> vẫn giữ toàn số và đúng độ dài
+- test “sai độ dài” -> vẫn giữ đúng format/ký tự/prefix
+- test “không trùng” -> vẫn giữ hai field đều hợp lệ riêng lẻ, chỉ sai quan hệ so khớp
+
+CẤM:
+- Không tạo testcase làm sai đồng thời nhiều nguyên nhân nếu mục tiêu là kiểm thử đơn lỗi.
+- Không dùng dữ liệu vừa sai format vừa sai độ dài nếu đặc tả cần phân biệt hai nguyên nhân đó.
+- Không chọn dữ liệu gây mơ hồ nguyên nhân lỗi.
+
+==================================================================================
+VI. QUY TẮC VIẾT SUMMARY / OBJECTIVE
+==================================================================================
+
+- Mỗi summary chỉ mô tả đúng 1 coverage item.
+- Summary phải đủ cụ thể để map thành đúng 1 testcase.
+- Không dùng mô tả quá rộng như:
+  + dữ liệu không hợp lệ
+  + ngoài khoảng
+  + hoặc
+  + bất kỳ
+nếu điều đó gộp nhiều coverage item khác bản chất.
+
+- Summary phải mô tả mục tiêu kiểm thử, không phải chép dữ liệu literal.
+- Objective của testcase phải phản ánh đúng coverage item tương ứng.
+
+==================================================================================
+VII. SELF-CHECK NỘI BỘ
+==================================================================================
+
+Trước khi xuất kết quả, phải tự kiểm tra:
+
+1. Đã có expected rõ ràng cho từng item chưa
+2. Mỗi field bắt buộc đã có coverage EMPTY cần thiết chưa
+3. Mỗi invalid class khác bản chất đã tách riêng chưa
+4. Nếu có range [Min, Max], đã có đủ min-1, min, min+1, max-1, max, max+1 chưa
+5. Nếu có fixed N, đã có đủ N-1, N, N+1 chưa
+6. DT / EP / BVA đã phân ranh đúng chưa
+7. Có item nào đang chứa hơn 1 lỗi chính không
+8. Có item nào đang gộp nhiều coverage item không
+9. Có item nào expected bị tự suy diễn ngoài đặc tả không
+10. Có item nào không thể map về một rule rõ ràng trong đặc tả không
+
+Nếu chưa đạt, phải sửa rồi mới xuất kết quả.
+
+==================================================================================
+VIII. RÀNG BUỘC THỰC THI
+==================================================================================
+
+- Không markdown
+- Không giải thích ngoài output yêu cầu
+- Không comment
+- Không code fence
+- Không text trước output
+- Không text sau output
+- Chỉ trả nội dung cuối cùng theo output_format.txt
