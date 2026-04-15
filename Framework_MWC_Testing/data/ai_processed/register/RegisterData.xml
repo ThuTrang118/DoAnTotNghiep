@@ -9,7 +9,7 @@
   </item>
   <item>
     <Testcase>RG02</Testcase>
-    <Username>newuser123</Username>
+    <Username>testuser123</Username>
     <Phone></Phone>
     <Password>password123</Password>
     <ConfirmPassword>password123</ConfirmPassword>
@@ -17,15 +17,15 @@
   </item>
   <item>
     <Testcase>RG03</Testcase>
-    <Username>newuser123</Username>
+    <Username>testuser123</Username>
     <Phone>0987654321</Phone>
     <Password></Password>
-    <ConfirmPassword></ConfirmPassword>
+    <ConfirmPassword>password123</ConfirmPassword>
     <Expected>Vui lòng điền vào trường này</Expected>
   </item>
   <item>
     <Testcase>RG04</Testcase>
-    <Username>newuser123</Username>
+    <Username>testuser123</Username>
     <Phone>0987654321</Phone>
     <Password>password123</Password>
     <ConfirmPassword></ConfirmPassword>
@@ -41,7 +41,7 @@
   </item>
   <item>
     <Testcase>RG06</Testcase>
-    <Username>newuser123</Username>
+    <Username>testuser123</Username>
     <Phone>987654321</Phone>
     <Password>password123</Password>
     <ConfirmPassword>password123</ConfirmPassword>
@@ -49,7 +49,7 @@
   </item>
   <item>
     <Testcase>RG07</Testcase>
-    <Username>newuser123</Username>
+    <Username>testuser123</Username>
     <Phone>0a87654321</Phone>
     <Password>password123</Password>
     <ConfirmPassword>password123</ConfirmPassword>
@@ -57,7 +57,7 @@
   </item>
   <item>
     <Testcase>RG08</Testcase>
-    <Username>newuser123</Username>
+    <Username>testuser123</Username>
     <Phone>098765432a</Phone>
     <Password>password123</Password>
     <ConfirmPassword>password123</ConfirmPassword>
@@ -65,23 +65,23 @@
   </item>
   <item>
     <Testcase>RG09</Testcase>
-    <Username>newuser123</Username>
-    <Phone>09876 54321</Phone>
+    <Username>testuser123</Username>
+    <Phone>0987654 321</Phone>
     <Password>password123</Password>
     <ConfirmPassword>password123</ConfirmPassword>
     <Expected>Số điện thoại không hợp lệ</Expected>
   </item>
   <item>
     <Testcase>RG10</Testcase>
-    <Username>newuser123</Username>
+    <Username>testuser123</Username>
     <Phone>0987654321</Phone>
-    <Password>pass123</Password>
-    <ConfirmPassword>pass123</ConfirmPassword>
+    <Password>passwrd</Password>
+    <ConfirmPassword>passwrd</ConfirmPassword>
     <Expected>Mật khẩu phải từ 8 đến 20 ký tự</Expected>
   </item>
   <item>
     <Testcase>RG11</Testcase>
-    <Username>newuser123</Username>
+    <Username>testuser123</Username>
     <Phone>0987654321</Phone>
     <Password>password12345678901234567890</Password>
     <ConfirmPassword>password12345678901234567890</ConfirmPassword>
@@ -89,7 +89,7 @@
   </item>
   <item>
     <Testcase>RG12</Testcase>
-    <Username>newuser123</Username>
+    <Username>testuser123</Username>
     <Phone>0987654321</Phone>
     <Password>password123</Password>
     <ConfirmPassword>password1234</ConfirmPassword>
@@ -97,10 +97,10 @@
   </item>
   <item>
     <Testcase>RG13</Testcase>
-    <Username>newuser123</Username>
+    <Username>testuser123</Username>
     <Phone>0987654321</Phone>
     <Password>password123</Password>
     <ConfirmPassword>password123</ConfirmPassword>
-    <Expected>newuser123</Expected>
+    <Expected>testuser123</Expected>
   </item>
 </items>

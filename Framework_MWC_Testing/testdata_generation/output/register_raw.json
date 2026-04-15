@@ -20,7 +20,7 @@
       "Objective": "Kiểm tra trường Phone không được để trống",
       "BoundaryMeta": null,
       "Inputs": {
-        "Username": "newuser123",
+        "Username": "testuser123",
         "Phone": "",
         "Password": "password123",
         "ConfirmPassword": "password123"
@@ -33,10 +33,10 @@
       "Objective": "Kiểm tra trường Password không được để trống",
       "BoundaryMeta": null,
       "Inputs": {
-        "Username": "newuser123",
+        "Username": "testuser123",
         "Phone": "0987654321",
         "Password": "",
-        "ConfirmPassword": ""
+        "ConfirmPassword": "password123"
       },
       "Expected": "Vui lòng điền vào trường này"
     },
@@ -46,7 +46,7 @@
       "Objective": "Kiểm tra trường ConfirmPassword không được để trống",
       "BoundaryMeta": null,
       "Inputs": {
-        "Username": "newuser123",
+        "Username": "testuser123",
         "Phone": "0987654321",
         "Password": "password123",
         "ConfirmPassword": ""
@@ -56,7 +56,7 @@
     {
       "Testcase": "RG05",
       "Technique": "DT",
-      "Objective": "Kiểm tra trường Username không được trùng với Username đã đăng ký trước đó",
+      "Objective": "Kiểm tra trường Username không được trùng với tài khoản đã đăng ký trước đó",
       "BoundaryMeta": null,
       "Inputs": {
         "Username": "AnhDuong11",
@@ -69,10 +69,10 @@
     {
       "Testcase": "RG06",
       "Technique": "EP",
-      "Objective": "Kiểm tra Phone bắt buộc phải bắt đầu bằng số 0",
+      "Objective": "Kiểm tra trường Phone bắt buộc phải bắt đầu bằng số 0",
       "BoundaryMeta": null,
       "Inputs": {
-        "Username": "newuser123",
+        "Username": "testuser123",
         "Phone": "987654321",
         "Password": "password123",
         "ConfirmPassword": "password123"
@@ -82,10 +82,10 @@
     {
       "Testcase": "RG07",
       "Technique": "EP",
-      "Objective": "Kiểm tra Phone chỉ được chứa ký tự số (0-9)",
+      "Objective": "Kiểm tra trường Phone chỉ được chứa ký tự số (0-9)",
       "BoundaryMeta": null,
       "Inputs": {
-        "Username": "newuser123",
+        "Username": "testuser123",
         "Phone": "0a87654321",
         "Password": "password123",
         "ConfirmPassword": "password123"
@@ -95,10 +95,10 @@
     {
       "Testcase": "RG08",
       "Technique": "EP",
-      "Objective": "Kiểm tra Phone không được chứa ký tự đặc biệt (!@#$%^&*...)",
+      "Objective": "Kiểm tra trường Phone không được chứa ký tự đặc biệt (!@#$%^&*...)",
       "BoundaryMeta": null,
       "Inputs": {
-        "Username": "newuser123",
+        "Username": "testuser123",
         "Phone": "098765432a",
         "Password": "password123",
         "ConfirmPassword": "password123"
@@ -108,11 +108,11 @@
     {
       "Testcase": "RG09",
       "Technique": "EP",
-      "Objective": "Kiểm tra Phone không được chứa khoảng trắng",
+      "Objective": "Kiểm tra trường Phone không được chứa khoảng trắng",
       "BoundaryMeta": null,
       "Inputs": {
-        "Username": "newuser123",
-        "Phone": "09876 54321",
+        "Username": "testuser123",
+        "Phone": "0987654 321",
         "Password": "password123",
         "ConfirmPassword": "password123"
       },
@@ -121,23 +121,23 @@
     {
       "Testcase": "RG10",
       "Technique": "EP",
-      "Objective": "Kiểm tra độ dài của Password từ 8 đến 20 ký tự",
+      "Objective": "Kiểm tra trường Password phải từ 8 đến 20 ký tự",
       "BoundaryMeta": null,
       "Inputs": {
-        "Username": "newuser123",
+        "Username": "testuser123",
         "Phone": "0987654321",
-        "Password": "pass123",
-        "ConfirmPassword": "pass123"
+        "Password": "passwrd",
+        "ConfirmPassword": "passwrd"
       },
       "Expected": "Mật khẩu phải từ 8 đến 20 ký tự"
     },
     {
       "Testcase": "RG11",
       "Technique": "EP",
-      "Objective": "Kiểm tra độ dài của Password từ 8 đến 20 ký tự",
+      "Objective": "Kiểm tra trường Password phải từ 8 đến 20 ký tự",
       "BoundaryMeta": null,
       "Inputs": {
-        "Username": "newuser123",
+        "Username": "testuser123",
         "Phone": "0987654321",
         "Password": "password12345678901234567890",
         "ConfirmPassword": "password12345678901234567890"
@@ -147,10 +147,10 @@
     {
       "Testcase": "RG12",
       "Technique": "DT",
-      "Objective": "Kiểm tra ConfirmPassword phải trùng với Password",
+      "Objective": "Kiểm tra trường ConfirmPassword phải trùng hoàn toàn với Password",
       "BoundaryMeta": null,
       "Inputs": {
-        "Username": "newuser123",
+        "Username": "testuser123",
         "Phone": "0987654321",
         "Password": "password123",
         "ConfirmPassword": "password1234"
@@ -160,15 +160,15 @@
     {
       "Testcase": "RG13",
       "Technique": "DT",
-      "Objective": "Kiểm tra tất cả các trường đều hợp lệ",
+      "Objective": "Kiểm tra trường hợp hợp lệ khi tất cả các trường đều đúng",
       "BoundaryMeta": null,
       "Inputs": {
-        "Username": "newuser123",
+        "Username": "testuser123",
         "Phone": "0987654321",
         "Password": "password123",
         "ConfirmPassword": "password123"
       },
-      "Expected": "newuser123"
+      "Expected": "testuser123"
     }
   ]
 }

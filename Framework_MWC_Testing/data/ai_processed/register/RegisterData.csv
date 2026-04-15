@@ -1,14 +1,14 @@
 ﻿Testcase,Username,Phone,Password,ConfirmPassword,Expected
 RG01,,0987654321,password123,password123,Vui lòng điền vào trường này
-RG02,newuser123,,password123,password123,Vui lòng điền vào trường này
-RG03,newuser123,0987654321,,,Vui lòng điền vào trường này
-RG04,newuser123,0987654321,password123,,Vui lòng điền vào trường này
+RG02,testuser123,,password123,password123,Vui lòng điền vào trường này
+RG03,testuser123,0987654321,,password123,Vui lòng điền vào trường này
+RG04,testuser123,0987654321,password123,,Vui lòng điền vào trường này
 RG05,AnhDuong11,0987654321,password123,password123,tài khoản đã tồn tại trong hệ thống
-RG06,newuser123,987654321,password123,password123,Số điện thoại không hợp lệ
-RG07,newuser123,0a87654321,password123,password123,Số điện thoại không hợp lệ
-RG08,newuser123,098765432a,password123,password123,Số điện thoại không hợp lệ
-RG09,newuser123,09876 54321,password123,password123,Số điện thoại không hợp lệ
-RG10,newuser123,0987654321,pass123,pass123,Mật khẩu phải từ 8 đến 20 ký tự
-RG11,newuser123,0987654321,password12345678901234567890,password12345678901234567890,Mật khẩu phải từ 8 đến 20 ký tự
-RG12,newuser123,0987654321,password123,password1234,Mật khẩu không khớp
-RG13,newuser123,0987654321,password123,password123,newuser123
+RG06,testuser123,987654321,password123,password123,Số điện thoại không hợp lệ
+RG07,testuser123,0a87654321,password123,password123,Số điện thoại không hợp lệ
+RG08,testuser123,098765432a,password123,password123,Số điện thoại không hợp lệ
+RG09,testuser123,0987654 321,password123,password123,Số điện thoại không hợp lệ
+RG10,testuser123,0987654321,passwrd,passwrd,Mật khẩu phải từ 8 đến 20 ký tự
+RG11,testuser123,0987654321,password12345678901234567890,password12345678901234567890,Mật khẩu phải từ 8 đến 20 ký tự
+RG12,testuser123,0987654321,password123,password1234,Mật khẩu không khớp
+RG13,testuser123,0987654321,password123,password123,testuser123

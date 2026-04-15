@@ -130,10 +130,19 @@ BoundaryMeta phải đúng:
   "reference_value": 0
 }
 
+BoundaryMeta chỉ được dùng khi testcase thực sự là boundary coverage.
+
 BẮT BUỘC:
 - reference_value = mốc gốc
 - boundary_point = 1 giá trị
 - input phải khớp boundary
+- Nếu testcase thuộc BVA → BoundaryMeta KHÔNG được null
+- Nếu testcase KHÔNG phải BVA → BoundaryMeta PHẢI là null
+
+MAPPING BẮT BUỘC:
+
+- boundary_point phải khớp với input thực tế
+- reference_value phải đúng mốc gốc trong đặc tả
 
 ==================================================================================
 ISOLATION

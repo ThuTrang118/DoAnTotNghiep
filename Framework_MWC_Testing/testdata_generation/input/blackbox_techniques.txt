@@ -152,9 +152,7 @@ BVA CHỈ được dùng khi đặc tả có ràng buộc định lượng rõ r
 NẾU KHÔNG CÓ:
 → KHÔNG được dùng BVA
 
-----------------------------------------------------------------------------------
 1. ĐỊNH NGHĨA MIN / MAX / N
-----------------------------------------------------------------------------------
 
 - min: giá trị nhỏ nhất hợp lệ
 - max: giá trị lớn nhất hợp lệ
@@ -165,9 +163,7 @@ QUAN TRỌNG:
 - reference_value phải là mốc này
 - KHÔNG được dùng giá trị đã lệch biên làm reference_value
 
-----------------------------------------------------------------------------------
 2. ĐỊNH NGHĨA ĐIỂM BIÊN
-----------------------------------------------------------------------------------
 
 - min-1: nhỏ hơn min đúng 1 đơn vị
 - min: bằng min
@@ -182,19 +178,13 @@ QUAN TRỌNG:
 - chuỗi → 1 ký tự
 - số → 1 đơn vị số
 
-----------------------------------------------------------------------------------
 3. XÁC ĐỊNH BIÊN
-----------------------------------------------------------------------------------
 
-Range:
-- min-1, min, max, max+1
+Range: min-1, min, max, max+1
 
-Fixed:
-- N-1, N, N+1
+Fixed: N-1, N, N+1
 
-----------------------------------------------------------------------------------
 4. BIÊN TƯỜNG MINH ⇒ BVA BẮT BUỘC
-----------------------------------------------------------------------------------
 
 Nếu có biên:
 → PHẢI dùng BVA
@@ -203,9 +193,7 @@ KHÔNG được:
 - thay bằng EP
 - gộp thành 1 testcase
 
-----------------------------------------------------------------------------------
 5. BVA SCHEMA LOGIC
-----------------------------------------------------------------------------------
 
 Fixed:
 - rule_type = fixed_length
@@ -221,9 +209,7 @@ CẤM:
 - sai rule_type
 - reference_value không phải mốc gốc
 
-----------------------------------------------------------------------------------
 6. SINH DỮ LIỆU BIÊN
-----------------------------------------------------------------------------------
 
 - N-1 → input phải đúng N-1
 - N → input phải đúng N
@@ -232,9 +218,7 @@ CẤM:
 CẤM:
 - boundary ≠ input
 
-----------------------------------------------------------------------------------
 7. VALID & INVALID BOUNDARY
-----------------------------------------------------------------------------------
 
 - min, max → VALID
 - min-1, max+1 → INVALID
@@ -242,12 +226,40 @@ CẤM:
 QUAN TRỌNG:
 - BVA phải có cả valid và invalid boundary khi cần
 
-----------------------------------------------------------------------------------
 8. CÔ LẬP BVA
-----------------------------------------------------------------------------------
-
 - chỉ sai biên
 - rule khác phải đúng
+
+9. BẮT BUỘC ĐỦ COVERAGE BVA
+Nếu tồn tại biên:
+
+→ PHẢI liệt kê ĐẦY ĐỦ tất cả boundary point theo đúng loại:
+
+Range:
+- min-1
+- min
+- max
+- max+1
+
+Fixed:
+- N-1
+- N
+- N+1
+
+QUY TẮC BẮT BUỘC:
+- Mỗi boundary point = 1 coverage item riêng
+- Không được thiếu bất kỳ điểm nào
+- Không được gộp nhiều điểm vào 1 testcase
+
+10. ÁNH XẠ BOUNDARY → INPUT
+Input phải KHỚP CHÍNH XÁC với boundary_point:
+
+- N-1 → độ dài = N-1
+- N → độ dài = N
+- N+1 → độ dài = N+1
+
+CẤM:
+- ghi boundary_point nhưng input không đúng
 
 ==================================================================================
 VII. SINGLE-FAULT ISOLATION

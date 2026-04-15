@@ -25,7 +25,7 @@ Username: gồm 1 yêu cầu
 VD Username đã đăng ký "AnhDuong11"
 
 Phone: gồm 6 yêu cầu
-1. Đúng 10 ký tự
+1. Đúng 10 ký tự (đây là giá trị cố định N = 10)
 2. Bắt buộc bắt đầu bằng số 0
 3. Chỉ được chứa ký tự số (0-9)
 4. Không được chứa ký tự chữ (a-z, A-Z)
@@ -33,7 +33,7 @@ Phone: gồm 6 yêu cầu
 6. Không được chứa khoảng trắng
 
 Password: gồm 1 yêu cầu
-1. Độ dài từ 8 đến 20 ký tự
+1. Độ dài từ 8 đến 20 ký tự (min = 8, max = 20)
 
 ConfirmPassword: gồm 1 yêu cầu
 1. Phải trùng hoàn toàn với Password
