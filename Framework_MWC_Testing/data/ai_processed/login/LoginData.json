@@ -3,7 +3,7 @@
     {
       "Testcase": "LG01",
       "Username": "",
-      "Password": "AnhDuong@123",
+      "Password": "Aa1!aaaa",
       "Expected": "Vui lòng điền vào trường này"
     },
     {
@@ -20,14 +20,26 @@
     },
     {
       "Testcase": "LG04",
-      "Username": "NguyenVanA",
-      "Password": "AnhDuong@123",
+      "Username": "AnhDuong11",
+      "Password": "Aa1!aaa",
       "Expected": "Username hoặc Password không đúng!"
     },
     {
       "Testcase": "LG05",
       "Username": "AnhDuong11",
-      "Password": "NguyenVanA@123",
+      "Password": "Aa1!aaaaa",
+      "Expected": "Username hoặc Password không đúng!"
+    },
+    {
+      "Testcase": "LG06",
+      "Username": "AnhDuong11",
+      "Password": "Aa1!aaa",
+      "Expected": "Username hoặc Password không đúng!"
+    },
+    {
+      "Testcase": "LG07",
+      "Username": "AnhDuong11",
+      "Password": "Aa1!aaaaaa",
       "Expected": "Username hoặc Password không đúng!"
     }
   ]

@@ -1,20 +1,29 @@
+```json
 {
   "feature": "Đăng nhập",
+  "coverage_summary": {
+    "DT_count": 2,
+    "EP_count": 0,
+    "BVA_count": 4,
+    "TOTAL": 6
+  },
   "items": [
     {
-      "Testcase": "LG01",
+      "Testcase": "Kiểm tra trường Username khi để trống",
       "Technique": "DT",
-      "Objective": "Kiểm tra trường hợp Username rỗng",
+      "Objective": "",
+      "BoundaryMeta": null,
       "Inputs": {
         "Username": "",
-        "Password": "AnhDuong@123"
+        "Password": "Aa1!aaaa"
       },
       "Expected": "Vui lòng điền vào trường này"
     },
     {
-      "Testcase": "LG02",
+      "Testcase": "Kiểm tra trường Password khi để trống",
       "Technique": "DT",
-      "Objective": "Kiểm tra trường hợp Password rỗng",
+      "Objective": "",
+      "BoundaryMeta": null,
       "Inputs": {
         "Username": "AnhDuong11",
         "Password": ""
@@ -22,9 +31,10 @@
       "Expected": "Vui lòng điền vào trường này"
     },
     {
-      "Testcase": "LG03",
+      "Testcase": "Kiểm tra Username = AnhDuong11 và Password = AnhDuong@123",
       "Technique": "DT",
-      "Objective": "Kiểm tra trường hợp đăng nhập thành công",
+      "Objective": "",
+      "BoundaryMeta": null,
       "Inputs": {
         "Username": "AnhDuong11",
         "Password": "AnhDuong@123"
@@ -32,24 +42,69 @@
       "Expected": "AnhDuong11"
     },
     {
-      "Testcase": "LG04",
-      "Technique": "DT",
-      "Objective": "Kiểm tra trường hợp Username không đúng",
+      "Testcase": "Kiểm tra Username = AnhDuong11 và Password không đúng",
+      "Technique": "BVA",
+      "Objective": "",
+      "BoundaryMeta": {
+        "field": "Password",
+        "rule_type": "range",
+        "boundary_point": "min-1",
+        "reference_value": 0
+      },
       "Inputs": {
-        "Username": "NguyenVanA",
-        "Password": "AnhDuong@123"
+        "Username": "AnhDuong11",
+        "Password": "Aa1!aaa"
       },
       "Expected": "Username hoặc Password không đúng!"
     },
     {
-      "Testcase": "LG05",
-      "Technique": "DT",
-      "Objective": "Kiểm tra trường hợp Password không đúng",
+      "Testcase": "Kiểm tra Username = AnhDuong11 và Password không đúng",
+      "Technique": "BVA",
+      "Objective": "",
+      "BoundaryMeta": {
+        "field": "Password",
+        "rule_type": "range",
+        "boundary_point": "max+1",
+        "reference_value": 0
+      },
       "Inputs": {
         "Username": "AnhDuong11",
-        "Password": "NguyenVanA@123"
+        "Password": "Aa1!aaaaa"
+      },
+      "Expected": "Username hoặc Password không đúng!"
+    },
+    {
+      "Testcase": "Kiểm tra Username = AnhDuong11 và Password không đúng",
+      "Technique": "BVA",
+      "Objective": "",
+      "BoundaryMeta": {
+        "field": "Password",
+        "rule_type": "fixed_length",
+        "boundary_point": "N-1",
+        "reference_value": 8
+      },
+      "Inputs": {
+        "Username": "AnhDuong11",
+        "Password": "Aa1!aaa"
+      },
+      "Expected": "Username hoặc Password không đúng!"
+    },
+    {
+      "Testcase": "Kiểm tra Username = AnhDuong11 và Password không đúng",
+      "Technique": "BVA",
+      "Objective": "",
+      "BoundaryMeta": {
+        "field": "Password",
+        "rule_type": "fixed_length",
+        "boundary_point": "N+1",
+        "reference_value": 8
+      },
+      "Inputs": {
+        "Username": "AnhDuong11",
+        "Password": "Aa1!aaaaaa"
       },
       "Expected": "Username hoặc Password không đúng!"
     }
   ]
 }
+```

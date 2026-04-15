@@ -1,0 +1,61 @@
+==================================================================================
+MÔ TẢ
+==================================================================================
+Chức năng đánh giá sản phẩm cho phép người dùng gửi nhận xét và đánh giá
+mức độ hài lòng đối với sản phẩm đang xem trên website.
+
+Người dùng nhập thông tin vào form đánh giá và nhấn nút "Gửi".
+Hệ thống sẽ kiểm tra dữ liệu đầu vào theo các ràng buộc của từng field.
+
+Nếu dữ liệu hợp lệ, hệ thống gửi đánh giá thành công.
+Nếu dữ liệu không hợp lệ, hệ thống hiển thị thông báo lỗi tương ứng.
+
+==================================================================================
+INPUT: gồm 6 field
+==================================================================================
+1. FullName: bắt buộc
+2. Phone: bắt buộc
+3. Email: bắt buộc
+4. Title: bắt buộc
+5. Rating: bắt buộc
+6. Content: bắt buộc
+
+==================================================================================
+CONSTRAINT
+==================================================================================
+
+Phone: gồm 5 yêu cầu
+1. Đúng 10 chữ số
+2. Bắt đầu bằng số 0
+3. Chỉ chứa ký tự số
+4. Không chứa ký tự chữ
+5. Không chứa ký tự đặc biệt hoặc khoảng trắng
+
+Email: gồm 2 yêu cầu
+1. Đúng định dạng email
+2. Phải có đuôi "@gmail.com"
+
+Rating: gồm 1 yêu cầu
+1. Giá trị nằm trong khoảng từ 0 đến 5
+
+Content:
+1. Không được để trống
+
+==================================================================================
+EXPECTED
+==================================================================================
+
+1. Nếu bất kỳ field nào rỗng
+→ Expected = "Vui lòng điền vào trường này"
+
+2. Nếu Phone sai định dạng
+→ Expected = "Số điện thoại không hợp lệ"
+
+3. Nếu Email sai định dạng
+→ Expected = "Email không hợp lệ"
+
+4. Nếu Rating ngoài khoảng 0 đến 5
+→ Expected = "Số sao không hợp lệ"
+
+5. Nếu tất cả dữ liệu hợp lệ
+→ Expected = "Gửi đánh giá thành công"

@@ -1,6 +1,8 @@
 ﻿Testcase,Username,Password,Expected
-LG01,,AnhDuong@123,Vui lòng điền vào trường này
+LG01,,Aa1!aaaa,Vui lòng điền vào trường này
 LG02,AnhDuong11,,Vui lòng điền vào trường này
 LG03,AnhDuong11,AnhDuong@123,AnhDuong11
-LG04,NguyenVanA,AnhDuong@123,Username hoặc Password không đúng!
-LG05,AnhDuong11,NguyenVanA@123,Username hoặc Password không đúng!
+LG04,AnhDuong11,Aa1!aaa,Username hoặc Password không đúng!
+LG05,AnhDuong11,Aa1!aaaaa,Username hoặc Password không đúng!
+LG06,AnhDuong11,Aa1!aaa,Username hoặc Password không đúng!
+LG07,AnhDuong11,Aa1!aaaaaa,Username hoặc Password không đúng!

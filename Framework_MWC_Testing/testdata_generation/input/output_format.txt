@@ -1,39 +1,37 @@
 ==================================================================================
-OUTPUT FORMAT - STRICT JSON ONLY
+OUTPUT FORMAT - FINAL PARSE-SAFE VERSION
 ==================================================================================
 
-CHỈ trả về DUY NHẤT 1 JSON object hợp lệ.
+CHỈ TRẢ VỀ DUY NHẤT 1 JSON object hợp lệ.
 
-CẤM TUYỆT ĐỐI:
-- giải thích
+JSON phải:
+- bắt đầu bằng ký tự { đầu tiên
+- kết thúc bằng ký tự } cuối cùng
+
+==================================================================================
+CẤM TUYỆT ĐỐI
+==================================================================================
+
+Không được output:
 - markdown
 - code fence
-- comment
+- ```json
+- comment kiểu // hoặc /* */
+- giải thích
+- ghi chú
+- self-check results
 - text trước JSON
 - text sau JSON
+- key ngoài schema quy định
 
-JSON phải bắt đầu bằng ký tự { đầu tiên.
-JSON phải kết thúc bằng ký tự } cuối cùng.
-
-==================================================================================
-MỤC TIÊU OUTPUT
-==================================================================================
-
-Output phải:
-1. biểu diễn đúng coverage suy ra từ đặc tả
-2. gán đúng kỹ thuật cho từng item
-3. có expected rõ ràng cho từng item
-4. không thiếu field input
-5. không thêm field lạ
-6. không gộp nhiều coverage item vào một testcase
-7. không tạo testcase ngoài coverage thực tế
+Nếu in ra bất kỳ thứ gì ngoài JSON object hợp lệ -> output sai.
 
 ==================================================================================
-JSON SCHEMA
+JSON SCHEMA DUY NHẤT ĐƯỢC PHÉP
 ==================================================================================
 
 {
-  "feature": "[Tên chức năng]",
+  "feature": "",
   "coverage_summary": {
     "DT_count": 0,
     "EP_count": 0,
@@ -42,226 +40,189 @@ JSON SCHEMA
   },
   "items": [
     {
-      "Testcase": "[PREFIX]01",
+      "Testcase": "",
       "Technique": "DT",
-      "Objective": "Mô tả ngắn gọn mục tiêu kiểm thử",
+      "Objective": "",
       "BoundaryMeta": null,
       "Inputs": {
-{{ITEM_FIELDS_SCHEMA}}
+        {{ITEM_FIELDS_SCHEMA}}
       },
-      "Expected": "Kết quả mong đợi"
+      "Expected": ""
     }
   ]
 }
 
 ==================================================================================
-RÀNG BUỘC BẮT BUỘC
+CẤM THAY ĐỔI SCHEMA
 ==================================================================================
 
-1. Technique chỉ được là:
-- "DT"
-- "EP"
-- "BVA"
+Không được tạo thêm bất kỳ top-level key nào ngoài:
+- "feature"
+- "coverage_summary"
+- "items"
 
-2. Không được ghi nhiều Technique trong một item.
+Không được tạo các key như:
+- "TestCases"
+- "PhoneInvalidTestCases"
+- "PasswordBoundaryTestCases"
+- "RelationTestCases"
+- "SuccessTestCases"
+- "SelfCheck"
+- bất kỳ key nhóm phụ nào khác
 
-3. Inputs:
-- phải đủ đúng các field của chức năng
-- không thiếu field
-- không thêm field lạ
-- phải dùng dữ liệu literal thật
-- không dùng nhãn mô tả thay cho dữ liệu như:
-  + valid
-  + invalid
-  + empty
-  + null
-  + min
-  + max
-  + N-1
-  + N
-  + N+1
-  + chuỗi mô tả khác
-
-4. Expected:
-- bắt buộc phải có ở mọi item
-- phải là kết quả cụ thể
-- nếu đặc tả đã nêu thông báo lỗi/thành công rõ ràng thì phải dùng đúng nội dung đó
-- không được để Expected mơ hồ
-- không được tự bịa Expected ngoài đặc tả
-
-5. Objective:
-- phải mô tả đúng 1 mục tiêu kiểm thử
-- không được mô tả quá rộng
-- không được gộp nhiều lỗi trong 1 objective
-
-6. TOTAL phải bằng:
-DT_count + EP_count + BVA_count
-
-7. Số lượng phần tử trong items phải đúng bằng TOTAL.
+Tất cả testcase phải nằm trong:
+- items[]
 
 ==================================================================================
-RÀNG BUỘC PHÂN RANH KỸ THUẬT
+QUY TẮC CHO Objective
 ==================================================================================
 
-1. DT chỉ dùng cho:
-- required / empty
-- quan hệ giữa các field
-- logic điều kiện-kết quả
-- workflow logic
+- Objective PHẢI viết bằng tiếng Việt
+- Không được dùng tiếng Anh
+- Objective phải mô tả đúng 1 mục tiêu kiểm thử chính
+- Objective không được quá rộng
+- Objective không được mô tả nhiều lỗi cùng lúc
 
-2. EP chỉ dùng cho:
+Ví dụ đúng:
+- "Kiểm tra trường Username khi để trống"
+- "Kiểm tra trường Phone khi không bắt đầu bằng số 0"
+- "Kiểm tra trường Password với độ dài nhỏ hơn 8 ký tự"
+- "Kiểm tra trường ConfirmPassword khi không trùng với Password"
+- "Kiểm tra đăng ký thành công với dữ liệu hợp lệ"
+
+==================================================================================
+QUY TẮC BẮT BUỘC
+==================================================================================
+
+1. TOTAL = DT_count + EP_count + BVA_count
+2. Số phần tử items = TOTAL
+3. Mỗi item = đúng 1 coverage item
+4. Mỗi item negative = đúng 1 lỗi chính
+5. Nếu đặc tả có hành vi thành công -> phải có ít nhất 1 testcase success
+6. Chỉ sinh negative testcase khi expected xác định được từ đặc tả
+
+==================================================================================
+INPUTS
+==================================================================================
+
+- Inputs phải đủ đúng các field của chức năng
+- Không thiếu field
+- Không thêm field lạ
+- Phải dùng dữ liệu literal thật
+
+CẤM dùng các giá trị giả:
+- "valid"
+- "invalid"
+- "empty"
+- "min"
+- "max"
+- "N-1"
+- "N"
+- "N+1"
+- mô tả thay cho dữ liệu thật
+
+==================================================================================
+EXPECTED
+==================================================================================
+
+- Phải đúng EXACT theo đặc tả
+- Không được tự sửa câu
+- Không được tự bịa expected mới
+- Không được dùng expected của lỗi khác
+
+==================================================================================
+TECHNIQUE RULE
+==================================================================================
+
+DT:
+- required
+- relation logic
+- workflow dependency
+
+EP:
+- format
+- pattern
+- prefix
 - equivalence class
-- sai format
-- sai kiểu
-- sai pattern
-- sai prefix
-- các lớp dữ liệu khác bản chất
 
-3. BVA chỉ dùng cho:
-- boundary của độ dài
-- boundary của số lượng
-- boundary của giá trị số
-- fixed-length
+BVA:
+- boundary độ dài
+- boundary giá trị số
+- fixed length
 - min/max
 
-4. EP không được:
-- dùng EMPTY nếu EMPTY thuộc rule bắt buộc
-- dùng boundary point
-- mô tả min/max/N-1/N/N+1
-
-5. BVA không được:
-- mô tả format class
-- mô tả required empty
-- mô tả quan hệ logic nhiều field
-
-6. Mỗi item chỉ thuộc đúng 1 kỹ thuật chính.
+CẤM:
+- DT chứa format
+- EP chứa boundary point
+- BVA chứa format class
 
 ==================================================================================
-RÀNG BUỘC CHO INVALID CLASS
+BVA RULE - PARSE SAFE VÀ CHÍNH XÁC
 ==================================================================================
 
-- Mỗi invalid class khác bản chất phải là 1 item riêng.
-- Không dùng một testcase để đại diện cho nhiều invalid class khác nhau.
-- Nếu dữ liệu được chọn làm sai đồng thời nhiều class mà gây mơ hồ nguyên nhân, testcase đó không hợp lệ.
-- Với invalid class, các field không phải mục tiêu lỗi phải dùng dữ liệu hợp lệ.
-
-==================================================================================
-RÀNG BUỘC CHO BVA
-==================================================================================
-
-BoundaryMeta:
-- null nếu item không phải BVA
-- nếu là BVA thì phải là object theo đúng schema sau:
+Nếu item là BVA thì BoundaryMeta phải theo đúng schema:
 
 {
-  "field": "<tên field>",
+  "field": "",
   "rule_type": "range|fixed_length|max_only|min_only",
   "boundary_point": "min-1|min|min+1|max-1|max|max+1|N-1|N|N+1",
   "reference_value": 0
 }
 
-Quy tắc thêm:
-1. Nếu rule_type = "range"
-- boundary_point chỉ được là:
-  min-1, min, min+1, max-1, max, max+1
+BẮT BUỘC:
+1. boundary_point chỉ được là 1 giá trị duy nhất
+2. reference_value phải đúng mốc thật
+3. Input phải khớp 100% với BoundaryMeta
+4. Không được viết ghi chú như // N+1
+5. Không được ghi một boundary nhưng dùng input của boundary khác
 
-2. Nếu rule_type = "fixed_length"
-- boundary_point chỉ được là:
-  N-1, N, N+1
-
-3. Nếu rule_type = "max_only"
-- boundary_point chỉ được là:
-  max-1, max, max+1
-
-4. Nếu rule_type = "min_only"
-- boundary_point chỉ được là:
-  min-1, min, min+1
-
-5. reference_value:
-- là giá trị mốc số học của biên
-- ví dụ:
-  + min = 8
-  + max = 20
-  + N = 10
-
-6. Mỗi item BVA chỉ được có đúng 1 boundary focus.
-7. Field không phải mục tiêu boundary phải dùng dữ liệu hợp lệ bình thường.
+Ví dụ:
+- boundary_point = "N-1"
+- reference_value = 10
+→ input phải dài đúng 9 ký tự
 
 ==================================================================================
-RÀNG BUỘC VỀ CHẤT LƯỢNG TESTCASE
+ISOLATION RULE
 ==================================================================================
 
-Mỗi item phải thỏa đồng thời:
-1. Có đúng 1 coverage item rõ ràng
-2. Có đúng 1 mục tiêu lỗi chính hoặc 1 mục tiêu valid chính
-3. Có expected cụ thể
-4. Có dữ liệu input literal thật
-5. Có thể truy ngược về một rule cụ thể trong đặc tả
-
-Một item bị xem là không hợp lệ nếu:
-- gộp nhiều coverage item
-- gộp nhiều lỗi khác bản chất
-- dùng dữ liệu vừa sai format vừa sai boundary mà không cô lập được nguyên nhân
-- objective không khớp với input
-- technique không khớp với bản chất coverage
-- expected không khớp đặc tả
+- Mỗi testcase âm tính chỉ có 1 lỗi chính
+- Các field không phải mục tiêu lỗi phải valid
+- Nếu test relation:
+  + các field liên quan phải hợp lệ riêng lẻ
+  + chỉ sai đúng quan hệ
 
 ==================================================================================
-RÀNG BUỘC JSON HỢP LỆ
+VALID DATA RULE
 ==================================================================================
 
-- Tất cả property name phải dùng dấu ngoặc kép đôi
-- Tất cả string phải dùng dấu ngoặc kép đôi
-- Không được dùng:
-  - // comment
-  - /* comment */
-  - #
-  - ```
-  - ...
-- Không được để placeholder chưa thay thế
-- Không được thiếu dấu phẩy hoặc thiếu dấu ngoặc
-RÀNG BUỘC CÔ LẬP LỖI
-- Mỗi item âm tính phải đại diện cho đúng 1 lỗi chính.
-- Các field không phải mục tiêu lỗi phải dùng dữ liệu hợp lệ.
-- Nếu item kiểm tra một loại lỗi cụ thể của một field, dữ liệu của field đó phải chỉ sai đúng loại lỗi đó nếu có thể.
+Khi cần dữ liệu valid:
+- dùng dữ liệu ngắn nhất
+- đơn giản nhất
+- vẫn hợp lệ
 
-Ví dụ nguyên tắc:
-- Test EMPTY của field A -> các field khác phải valid
-- Test format của field A -> không được đồng thời sai độ dài của field A nếu độ dài là một rule riêng
-- Test boundary của field A -> không được đồng thời sai format của field A
-- Test relation A-B -> A và B phải hợp lệ riêng lẻ, chỉ sai quan hệ giữa chúng
-
-Một item bị xem là không hợp lệ nếu:
-- field mục tiêu sai đồng thời nhiều nguyên nhân khác bản chất
-- field không phải mục tiêu lỗi cũng đang sai
-- dữ liệu làm cho expected có thể đến từ nhiều nguyên nhân khác nhau
+Ví dụ Password hợp lệ tối giản:
+- "Aa1!aaaa"
 
 ==================================================================================
 SELF-CHECK NỘI BỘ
 ==================================================================================
 
-Trước khi xuất JSON, phải tự kiểm tra:
-
-1. Mỗi testcase đã có Expected cụ thể chưa
-2. Mỗi field bắt buộc đã có coverage EMPTY cần thiết chưa
-3. Mỗi invalid class khác bản chất đã có item riêng chưa
-4. Nếu có fixed-length = N, đã có đủ N-1, N, N+1 chưa
-5. Nếu có range [Min, Max], đã có đủ các điểm biên quan trọng chưa
-6. Mỗi item đã được gán đúng một Technique chưa
-7. Có item EP nào đang chứa boundary không
-8. Có item BVA nào đang chứa thêm lỗi format / empty không
-9. coverage_summary có khớp đúng với items chưa
-10. Inputs có đúng đủ field của chức năng chưa
-11. Expected có khớp đúng đặc tả chưa
-12. Có item nào còn mơ hồ nguyên nhân lỗi không
-
-Nếu chưa đạt, không được xuất JSON.
+AI phải tự kiểm tra trong nội bộ trước khi output:
+1. Có đủ required chưa
+2. Có đủ invalid class có expected chưa
+3. Có đủ boundary cần thiết chưa
+4. Có testcase relation chưa
+5. Có testcase success chưa
+6. Có item nào sai schema không
+7. Có key ngoài schema không
+8. Objective có phải tiếng Việt không
+9. Có comment/code fence/text ngoài JSON không
 
 KHÔNG được in self-check ra ngoài.
-Sau khi kiểm tra xong, CHỈ in JSON.
+Sau khi kiểm tra xong, CHỈ được output JSON object duy nhất.
 
 ==================================================================================
-NHIỆM VỤ CUỐI CÙNG
+FINAL
 ==================================================================================
 
-Suy ra coverage đầy đủ từ đặc tả và chỉ xuất duy nhất 1 JSON object hợp lệ.
+CHỈ OUTPUT 1 JSON object hợp lệ theo đúng schema duy nhất ở trên.

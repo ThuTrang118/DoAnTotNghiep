@@ -20,20 +20,27 @@ INPUT: gồm 4 field
 ==================================================================================
 CONSTRAINT
 ==================================================================================
+Username: gồm 1 yêu cầu
+1. Không được trùng với Username đã đăng ký trước đó.
+VD Username đã đăng ký "AnhDuong11"
 
-Phone: gồm 5 yêu cầu
-1. Số ký tự đúng bằng 10
-2. Chỉ chứa số
-3. Bắt đầu bằng 0
-4. Không chứa ký tự chữ
-5. Không được chứa kỹ tự đặc biệt
+Phone: gồm 6 yêu cầu
+1. Đúng 10 ký tự
+2. Bắt buộc bắt đầu bằng số 0
+3. Chỉ được chứa ký tự số (0-9)
+4. Không được chứa ký tự chữ (a-z, A-Z)
+5. Không được chứa ký tự đặc biệt (!@#$%^&*...)
+6. Không được chứa khoảng trắng
 
-Password: gồm 2 yêu cầu
+Password: gồm 5 yêu cầu
 1. Độ dài từ 8 đến 20 ký tự
-2. Chỉ chứa chữ
+2. Phải chứa ít nhất 1 chữ thường (a-z)
+3. Phải chứa ít nhất 1 chữ hoa (A-Z)
+4. Phải chứa ít nhất 1 chữ số (0-9)
+5. Phải chứa ít nhất 1 ký tự đặc biệt (!@#$%^&*...)
 
 ConfirmPassword: gồm 1 yêu cầu
-1. Phải trùng Password
+1. Phải trùng hoàn toàn với Password
 
 ==================================================================================
 EXPECTED
@@ -42,14 +49,17 @@ EXPECTED
 1. Nếu bất kỳ field nào rỗng
 → Expected = "Vui lòng điền vào trường này"
 
-2. Nếu Phone sai định dạng
+2. Nếu Username trùng với Username đã đăng ký 
+→ Expected = "tài khoản đã tồn tại trong hệ thống"
+
+3. Nếu Phone sai định dạng
 → Expected = "Số điện thoại không hợp lệ"
 
-3. Nếu Password sai độ dài
+4. Nếu Password sai độ dài
 → Expected = "Mật khẩu phải từ 8 đến 20 ký tự"
 
-4. Nếu ConfirmPassword không trùng
+5. Nếu ConfirmPassword không trùng
 → Expected = "Mật khẩu không khớp"
 
-5. Nếu hợp lệ
+6. Nếu hợp lệ
 → Expected = Username

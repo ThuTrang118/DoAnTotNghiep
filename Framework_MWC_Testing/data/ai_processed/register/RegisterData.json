@@ -3,74 +3,106 @@
     {
       "Testcase": "RG01",
       "Username": "",
-      "Phone": "0987654321",
-      "Password": "password123",
-      "ConfirmPassword": "password123",
+      "Phone": "0123456789",
+      "Password": "Aa1!aaaaaa",
+      "ConfirmPassword": "Aa1!aaaaaa",
       "Expected": "Vui lòng điền vào trường này"
     },
     {
       "Testcase": "RG02",
-      "Username": "user123",
+      "Username": "testuser123",
       "Phone": "",
-      "Password": "password123",
-      "ConfirmPassword": "password123",
+      "Password": "Aa1!aaaaaa",
+      "ConfirmPassword": "Aa1!aaaaaa",
       "Expected": "Vui lòng điền vào trường này"
     },
     {
       "Testcase": "RG03",
-      "Username": "user123",
-      "Phone": "0987654321",
+      "Username": "testuser123",
+      "Phone": "0123456789",
       "Password": "",
-      "ConfirmPassword": "password123",
+      "ConfirmPassword": "Aa1!aaaaaa",
       "Expected": "Vui lòng điền vào trường này"
     },
     {
       "Testcase": "RG04",
-      "Username": "user123",
-      "Phone": "0987654321",
-      "Password": "password123",
+      "Username": "testuser123",
+      "Phone": "0123456789",
+      "Password": "Aa1!aaaaaa",
       "ConfirmPassword": "",
       "Expected": "Vui lòng điền vào trường này"
     },
     {
       "Testcase": "RG05",
-      "Username": "user123",
-      "Phone": "123456789",
-      "Password": "password123",
-      "ConfirmPassword": "password123",
-      "Expected": "Số điện thoại không hợp lệ"
+      "Username": "AnhDuong11",
+      "Phone": "0123456789",
+      "Password": "Aa1!aaaaaa",
+      "ConfirmPassword": "Aa1!aaaaaa",
+      "Expected": "tài khoản đã tồn tại trong hệ thống"
     },
     {
       "Testcase": "RG06",
-      "Username": "user123",
-      "Phone": "0987654321",
-      "Password": "pass",
-      "ConfirmPassword": "pass",
-      "Expected": "Mật khẩu phải từ 8 đến 20 ký tự"
+      "Username": "testuser123",
+      "Phone": "9876543210",
+      "Password": "Aa1!aaaaaa",
+      "ConfirmPassword": "Aa1!aaaaaa",
+      "Expected": "Số điện thoại không hợp lệ"
     },
     {
       "Testcase": "RG07",
-      "Username": "user123",
-      "Phone": "0987654321",
-      "Password": "password123",
-      "ConfirmPassword": "wrongpass",
-      "Expected": "Mật khẩu không khớp"
+      "Username": "testuser123",
+      "Phone": "0a123456789",
+      "Password": "Aa1!aaaaaa",
+      "ConfirmPassword": "Aa1!aaaaaa",
+      "Expected": "Số điện thoại không hợp lệ"
     },
     {
       "Testcase": "RG08",
-      "Username": "user123",
-      "Phone": "0987654321",
-      "Password": "passw",
-      "ConfirmPassword": "passw",
-      "Expected": "Mật khẩu phải từ 8 đến 20 ký tự"
+      "Username": "testuser123",
+      "Phone": "0@123456789",
+      "Password": "Aa1!aaaaaa",
+      "ConfirmPassword": "Aa1!aaaaaa",
+      "Expected": "Số điện thoại không hợp lệ"
     },
     {
       "Testcase": "RG09",
-      "Username": "user123",
-      "Phone": "0987654321",
-      "Password": "password12345678901234567890",
-      "ConfirmPassword": "password12345678901234567890",
+      "Username": "testuser123",
+      "Phone": "0 123456789",
+      "Password": "Aa1!aaaaaa",
+      "ConfirmPassword": "Aa1!aaaaaa",
+      "Expected": "Số điện thoại không hợp lệ"
+    },
+    {
+      "Testcase": "RG10",
+      "Username": "testuser123",
+      "Phone": "0123456789",
+      "Password": "Aa1!aaa",
+      "ConfirmPassword": "Aa1!aaa",
       "Expected": "Mật khẩu phải từ 8 đến 20 ký tự"
+    },
+    {
+      "Testcase": "RG11",
+      "Username": "testuser123",
+      "Phone": "0123456789",
+      "Password": "Aa1!aaaaaaaab",
+      "ConfirmPassword": "Aa1!aaaaaaaab",
+      "Expected": "Mật khẩu phải từ 8 đến 20 ký tự"
+    },
+    {
+      "Testcase": "RG12",
+      "Username": "testuser123",
+      "Phone": "0123456789",
+      "Password": "Aa1!aaaaaa",
+      "ConfirmPassword": "Bb2@bbbbbb",
+      "Expected": "Mật khẩu không khớp"
+    },
+    {
+      "Testcase": "RG13",
+      "Username": "testuser124",
+      "Phone": "0123456789",
+      "Password": "Aa1!aaaaaa",
+      "ConfirmPassword": "Aa1!aaaaaa",
+      "Expected": "testuser124"
     }
   ]
 }
