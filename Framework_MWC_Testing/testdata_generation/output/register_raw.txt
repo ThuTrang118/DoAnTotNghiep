@@ -1,191 +1,175 @@
 ```json
 {
   "feature": "Đăng ký",
-  "coverage_summary": {
-    "DT_count": 4,
-    "EP_count": 6,
-    "BVA_count": 3,
-    "TOTAL": 13
-  },
   "items": [
     {
-      "Testcase": "Kiểm tra trường Username khi để trống",
-      "Technique": "DT",
-      "Objective": "Kiểm tra trường Username khi để trống",
+      "Testcase": "Username rỗng",
+      "Technique": "EP",
+      "Objective": "Kiểm tra trường Username không được để trống",
       "BoundaryMeta": null,
       "Inputs": {
         "Username": "",
-        "Phone": "0123456789",
-        "Password": "Aa1!aaaaaa",
-        "ConfirmPassword": "Aa1!aaaaaa"
+        "Phone": "0987654321",
+        "Password": "password123",
+        "ConfirmPassword": "password123"
       },
       "Expected": "Vui lòng điền vào trường này"
     },
     {
-      "Testcase": "Kiểm tra trường Phone khi để trống",
-      "Technique": "DT",
-      "Objective": "Kiểm tra trường Phone khi để trống",
+      "Testcase": "Phone rỗng",
+      "Technique": "EP",
+      "Objective": "Kiểm tra trường Phone không được để trống",
       "BoundaryMeta": null,
       "Inputs": {
-        "Username": "testuser123",
+        "Username": "newuser123",
         "Phone": "",
-        "Password": "Aa1!aaaaaa",
-        "ConfirmPassword": "Aa1!aaaaaa"
+        "Password": "password123",
+        "ConfirmPassword": "password123"
       },
       "Expected": "Vui lòng điền vào trường này"
     },
     {
-      "Testcase": "Kiểm tra trường Password khi để trống",
-      "Technique": "DT",
-      "Objective": "Kiểm tra trường Password khi để trống",
+      "Testcase": "Password rỗng",
+      "Technique": "EP",
+      "Objective": "Kiểm tra trường Password không được để trống",
       "BoundaryMeta": null,
       "Inputs": {
-        "Username": "testuser123",
-        "Phone": "0123456789",
+        "Username": "newuser123",
+        "Phone": "0987654321",
         "Password": "",
-        "ConfirmPassword": "Aa1!aaaaaa"
-      },
-      "Expected": "Vui lòng điền vào trường này"
-    },
-    {
-      "Testcase": "Kiểm tra trường ConfirmPassword khi để trống",
-      "Technique": "DT",
-      "Objective": "Kiểm tra trường ConfirmPassword khi để trống",
-      "BoundaryMeta": null,
-      "Inputs": {
-        "Username": "testuser123",
-        "Phone": "0123456789",
-        "Password": "Aa1!aaaaaa",
         "ConfirmPassword": ""
       },
       "Expected": "Vui lòng điền vào trường này"
     },
     {
-      "Testcase": "Kiểm tra Username đã tồn tại",
+      "Testcase": "ConfirmPassword rỗng",
+      "Technique": "EP",
+      "Objective": "Kiểm tra trường ConfirmPassword không được để trống",
+      "BoundaryMeta": null,
+      "Inputs": {
+        "Username": "newuser123",
+        "Phone": "0987654321",
+        "Password": "password123",
+        "ConfirmPassword": ""
+      },
+      "Expected": "Vui lòng điền vào trường này"
+    },
+    {
+      "Testcase": "Username đã tồn tại",
       "Technique": "DT",
-      "Objective": "Kiểm tra Username đã tồn tại",
+      "Objective": "Kiểm tra trường Username không được trùng với Username đã đăng ký trước đó",
       "BoundaryMeta": null,
       "Inputs": {
         "Username": "AnhDuong11",
-        "Phone": "0123456789",
-        "Password": "Aa1!aaaaaa",
-        "ConfirmPassword": "Aa1!aaaaaa"
+        "Phone": "0987654321",
+        "Password": "password123",
+        "ConfirmPassword": "password123"
       },
       "Expected": "tài khoản đã tồn tại trong hệ thống"
     },
     {
-      "Testcase": "Kiểm tra Phone không bắt đầu bằng số 0",
-      "Technique": "DT",
-      "Objective": "Kiểm tra Phone không bắt đầu bằng số 0",
-      "BoundaryMeta": null,
-      "Inputs": {
-        "Username": "testuser123",
-        "Phone": "9876543210",
-        "Password": "Aa1!aaaaaa",
-        "ConfirmPassword": "Aa1!aaaaaa"
-      },
-      "Expected": "Số điện thoại không hợp lệ"
-    },
-    {
-      "Testcase": "Kiểm tra Phone chứa ký tự chữ",
+      "Testcase": "Phone không hợp lệ - thiếu số 0",
       "Technique": "EP",
-      "Objective": "Kiểm tra Phone chứa ký tự chữ",
+      "Objective": "Kiểm tra Phone bắt buộc phải bắt đầu bằng số 0",
       "BoundaryMeta": null,
       "Inputs": {
-        "Username": "testuser123",
-        "Phone": "0a123456789",
-        "Password": "Aa1!aaaaaa",
-        "ConfirmPassword": "Aa1!aaaaaa"
+        "Username": "newuser123",
+        "Phone": "987654321",
+        "Password": "password123",
+        "ConfirmPassword": "password123"
       },
       "Expected": "Số điện thoại không hợp lệ"
     },
     {
-      "Testcase": "Kiểm tra Phone chứa ký tự đặc biệt",
+      "Testcase": "Phone không hợp lệ - chứa ký tự chữ",
       "Technique": "EP",
-      "Objective": "Kiểm tra Phone chứa ký tự đặc biệt",
+      "Objective": "Kiểm tra Phone chỉ được chứa ký tự số (0-9)",
       "BoundaryMeta": null,
       "Inputs": {
-        "Username": "testuser123",
-        "Phone": "0@123456789",
-        "Password": "Aa1!aaaaaa",
-        "ConfirmPassword": "Aa1!aaaaaa"
+        "Username": "newuser123",
+        "Phone": "0a87654321",
+        "Password": "password123",
+        "ConfirmPassword": "password123"
       },
       "Expected": "Số điện thoại không hợp lệ"
     },
     {
-      "Testcase": "Kiểm tra Phone chứa khoảng trắng",
+      "Testcase": "Phone không hợp lệ - chứa ký tự đặc biệt",
       "Technique": "EP",
-      "Objective": "Kiểm tra Phone chứa khoảng trắng",
+      "Objective": "Kiểm tra Phone không được chứa ký tự đặc biệt (!@#$%^&*...)",
       "BoundaryMeta": null,
       "Inputs": {
-        "Username": "testuser123",
-        "Phone": "0 123456789",
-        "Password": "Aa1!aaaaaa",
-        "ConfirmPassword": "Aa1!aaaaaa"
+        "Username": "newuser123",
+        "Phone": "098765432a",
+        "Password": "password123",
+        "ConfirmPassword": "password123"
       },
       "Expected": "Số điện thoại không hợp lệ"
     },
     {
-      "Testcase": "Kiểm tra Password độ dài nhỏ hơn 8 ký tự",
-      "Technique": "BVA",
-      "Objective": "Kiểm tra Password độ dài nhỏ hơn 8 ký tự",
-      "BoundaryMeta": {
-        "field": "Password",
-        "rule_type": "fixed_length",
-        "boundary_point": "N-1",
-        "reference_value": 8
-      },
+      "Testcase": "Phone không hợp lệ - chứa khoảng trắng",
+      "Technique": "EP",
+      "Objective": "Kiểm tra Phone không được chứa khoảng trắng",
+      "BoundaryMeta": null,
       "Inputs": {
-        "Username": "testuser123",
-        "Phone": "0123456789",
-        "Password": "Aa1!aaa",
-        "ConfirmPassword": "Aa1!aaa"
+        "Username": "newuser123",
+        "Phone": "09876 54321",
+        "Password": "password123",
+        "ConfirmPassword": "password123"
+      },
+      "Expected": "Số điện thoại không hợp lệ"
+    },
+    {
+      "Testcase": "Password quá ngắn - 7 ký tự",
+      "Technique": "EP",
+      "Objective": "Kiểm tra độ dài của Password từ 8 đến 20 ký tự",
+      "BoundaryMeta": null,
+      "Inputs": {
+        "Username": "newuser123",
+        "Phone": "0987654321",
+        "Password": "pass123",
+        "ConfirmPassword": "pass123"
       },
       "Expected": "Mật khẩu phải từ 8 đến 20 ký tự"
     },
     {
-      "Testcase": "Kiểm tra Password độ dài lớn hơn 20 ký tự",
-      "Technique": "BVA",
-      "Objective": "Kiểm tra Password độ dài lớn hơn 20 ký tự",
-      "BoundaryMeta": {
-        "field": "Password",
-        "rule_type": "fixed_length",
-        "boundary_point": "N+1",
-        "reference_value": 20
-      },
+      "Testcase": "Password quá dài - 21 ký tự",
+      "Technique": "EP",
+      "Objective": "Kiểm tra độ dài của Password từ 8 đến 20 ký tự",
+      "BoundaryMeta": null,
       "Inputs": {
-        "Username": "testuser123",
-        "Phone": "0123456789",
-        "Password": "Aa1!aaaaaaaab",
-        "ConfirmPassword": "Aa1!aaaaaaaab"
+        "Username": "newuser123",
+        "Phone": "0987654321",
+        "Password": "password12345678901234567890",
+        "ConfirmPassword": "password12345678901234567890"
       },
       "Expected": "Mật khẩu phải từ 8 đến 20 ký tự"
     },
     {
-      "Testcase": "Kiểm tra ConfirmPassword không trùng với Password",
+      "Testcase": "ConfirmPassword không khớp",
       "Technique": "DT",
-      "Objective": "Kiểm tra ConfirmPassword không trùng với Password",
+      "Objective": "Kiểm tra ConfirmPassword phải trùng với Password",
       "BoundaryMeta": null,
       "Inputs": {
-        "Username": "testuser123",
-        "Phone": "0123456789",
-        "Password": "Aa1!aaaaaa",
-        "ConfirmPassword": "Bb2@bbbbbb"
+        "Username": "newuser123",
+        "Phone": "0987654321",
+        "Password": "password123",
+        "ConfirmPassword": "password1234"
       },
       "Expected": "Mật khẩu không khớp"
     },
     {
-      "Testcase": "Kiểm tra đăng ký thành công với dữ liệu hợp lệ",
+      "Testcase": "Hợp lệ - Username, Phone, Password và ConfirmPassword đều hợp lệ",
       "Technique": "DT",
-      "Objective": "Kiểm tra đăng ký thành công với dữ liệu hợp lệ",
+      "Objective": "Kiểm tra tất cả các trường đều hợp lệ",
       "BoundaryMeta": null,
       "Inputs": {
-        "Username": "testuser124",
-        "Phone": "0123456789",
-        "Password": "Aa1!aaaaaa",
-        "ConfirmPassword": "Aa1!aaaaaa"
+        "Username": "newuser123",
+        "Phone": "0987654321",
+        "Password": "password123",
+        "ConfirmPassword": "password123"
       },
-      "Expected": "testuser124"
+      "Expected": "newuser123"
     }
   ]
 }

@@ -1,21 +1,34 @@
-Chức năng: Đăng nhập
+CHỨC NĂNG: ĐĂNG NHẬP
 
-Mô tả:
+==================================================================================
+MÔ TẢ
+==================================================================================
 - Chức năng đăng nhập cho phép người dùng truy cập vào hệ thống bằng Username và Password đã đăng ký trước đó.
 - Sau khi người dùng nhấn nút Đăng nhập, hệ thống kiểm tra dữ liệu đầu vào và xác thực thông tin tài khoản.
 - Nếu thông tin đúng, hệ thống đăng nhập thành công.
 - Nếu thông tin không hợp lệ hoặc không đúng, hệ thống hiển thị thông báo lỗi tương ứng.
 
-Ràng buộc dữ liệu:
-1. Username: 
-   - Không được bỏ trống
-2. Password: 
-   - Không được bỏ trống
-3. Chỉ có một tài khoản hợp lệ duy nhất trong hệ thống:
-   - Username: AnhDuong11
-   - Password: AnhDuong@123
+==================================================================================
+INPUT: gồm 2 field
+==================================================================================
+1. Username: bắt buộc 
+2. Password: bắt buộc 
 
-Kết quả mong đợi:
+==================================================================================
+CONSTRAINT
+==================================================================================
+Username: gồm 1 yêu cầu
+- Phải đúng tài khoản Username đã đăng ký 
+Username: AnhDuong11
+
+Password: gồm 1 yêu cầu
+- Phải đúng Password đã đăng ký với Username 
+Password: AnhDuong@123
+
+==================================================================================
+EXPECTED
+==================================================================================
+
 1. Nếu Username rỗng hoặc Password rỗng
    - Expected = "Vui lòng điền vào trường này"
 

@@ -32,12 +32,8 @@ Phone: gồm 6 yêu cầu
 5. Không được chứa ký tự đặc biệt (!@#$%^&*...)
 6. Không được chứa khoảng trắng
 
-Password: gồm 5 yêu cầu
+Password: gồm 1 yêu cầu
 1. Độ dài từ 8 đến 20 ký tự
-2. Phải chứa ít nhất 1 chữ thường (a-z)
-3. Phải chứa ít nhất 1 chữ hoa (A-Z)
-4. Phải chứa ít nhất 1 chữ số (0-9)
-5. Phải chứa ít nhất 1 ký tự đặc biệt (!@#$%^&*...)
 
 ConfirmPassword: gồm 1 yêu cầu
 1. Phải trùng hoàn toàn với Password

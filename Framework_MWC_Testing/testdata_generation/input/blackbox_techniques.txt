@@ -1,18 +1,18 @@
 ==================================================================================
-BLACKBOX TESTING KNOWLEDGE - UNIVERSAL PRODUCTION VERSION
+BLACKBOX TESTING KNOWLEDGE - UNIVERSAL FINAL VERSION
 ==================================================================================
 
 VAI TRÒ
-- Đây là tài liệu hướng dẫn AI suy ra coverage kiểm thử từ đặc tả nghiệp vụ.
-- Mục tiêu:
-  + xác định đúng field đầu vào
-  + đọc đúng constraint
-  + đọc đúng expected
-  + chọn đúng kỹ thuật kiểm thử chính
-  + tách đúng coverage item
-  + sinh đúng testcase
+- Đây là tài liệu kiến thức chung để AI suy ra coverage kiểm thử từ đặc tả nghiệp vụ.
+- Tài liệu này chỉ hướng dẫn:
+  + cách đọc đặc tả
+  + cách nhận diện constraint
+  + cách chọn kỹ thuật kiểm thử
+  + cách tách coverage item
+  + cách sinh testcase đúng bản chất
 - Tài liệu này KHÔNG sinh JSON output.
 - Tài liệu này KHÔNG thay thế mô tả nghiệp vụ riêng của từng chức năng.
+- Tài liệu này không được thiên về bất kỳ chức năng cụ thể nào.
 
 ==================================================================================
 I. NGUYÊN TẮC NỀN TẢNG
@@ -28,16 +28,16 @@ I. NGUYÊN TẮC NỀN TẢNG
 2. Không được:
 - tự thêm constraint
 - tự thêm nghiệp vụ không có trong mô tả
-- tự bịa thông báo lỗi
-- tự giả định hành vi hệ thống nếu đặc tả không nói
+- tự bịa expected
+- tự giả định format, độ dài, miền giá trị nếu đặc tả không nói
 
 3. Mỗi testcase phải:
 - có đúng 1 mục tiêu kiểm thử chính
 - có input cụ thể
 - có expected cụ thể
-- có thể truy ngược về 1 rule hoặc 1 hành vi rõ ràng trong đặc tả
+- truy ngược được về 1 rule hoặc 1 hành vi rõ ràng trong đặc tả
 
-4. Với testcase negative:
+4. Với testcase âm tính:
 - chỉ được có đúng 1 lỗi chính
 - các field không phải mục tiêu lỗi phải dùng dữ liệu hợp lệ
 
@@ -46,46 +46,65 @@ I. NGUYÊN TẮC NỀN TẢNG
 - nhiều invalid class khác bản chất vào 1 testcase
 - nhiều boundary point vào 1 testcase
 
-6. Coverage phải bám theo HÀNH VI CÓ THỂ QUAN SÁT ĐƯỢC:
-- chỉ tạo testcase âm tính riêng khi expected của lỗi đó xác định được từ đặc tả
-- nếu nhiều lỗi khác nhau cùng ánh xạ về 1 expected chung rõ ràng, có thể tách riêng từng lỗi để bao phủ đầy đủ
-- nếu một constraint tồn tại nhưng không có expected riêng hoặc expected chung đủ rõ, không được tự tạo negative testcase riêng cho constraint đó
-
 ==================================================================================
-II. PHÂN LOẠI TRẠNG THÁI DỮ LIỆU
+II. PHÂN LOẠI COVERAGE THEO FIELD
 ==================================================================================
 
-Mỗi field cần được phân tích theo các trạng thái:
+Với MỖI field, AI phải tự phân loại coverage theo 4 nhóm trước khi sinh testcase:
+
+1. REQUIRED
+- field có bắt buộc hay không
+- nếu có expected khi rỗng -> tạo 1 testcase EMPTY riêng
+
+2. INVALID CLASS
+- liệt kê từng lớp lỗi độc lập có expected xác định được
+- mỗi lớp lỗi độc lập = 1 coverage item riêng
+
+3. BOUNDARY
+- chỉ xét nếu field có biên định lượng rõ ràng trong đặc tả
+- mỗi boundary point = 1 coverage item riêng
+
+4. RELATION
+- nếu field có quan hệ với field khác và quan hệ đó có expected rõ ràng
+- tạo 1 coverage item riêng cho lỗi quan hệ
+
+Chỉ sau khi phân loại xong từng field mới được hợp nhất thành bộ testcase cuối cùng.
+
+==================================================================================
+III. VALID / EMPTY / INVALID
+==================================================================================
+
+Mỗi field cần được phân tích theo 3 trạng thái:
 
 1. VALID
-- giá trị thỏa tất cả constraint liên quan đến field đó
+- giá trị thỏa tất cả constraint liên quan
 
 2. EMPTY / MISSING
 - không nhập dữ liệu
-- chuỗi rỗng
+- để trống
 - chưa chọn giá trị
-- bỏ trống
 
 3. INVALID
 - có dữ liệu nhưng sai
-- invalid có thể là:
-  + sai độ dài
-  + sai format
-  + sai kiểu dữ liệu
-  + sai prefix / suffix
-  + sai pattern
-  + sai miền giá trị
-  + sai tập ký tự cho phép
-  + sai quan hệ với field khác
-  + sai logic nghiệp vụ
+
+INVALID có thể gồm:
+- sai độ dài
+- sai format
+- sai kiểu dữ liệu
+- sai prefix / suffix
+- sai pattern
+- sai miền giá trị
+- sai tập ký tự cho phép
+- sai quan hệ với field khác
+- sai logic nghiệp vụ
 
 QUY TẮC:
 - EMPTY khác INVALID
-- không được gộp EMPTY vào INVALID
-- mỗi invalid class chỉ được thành testcase riêng nếu class đó có expected xác định được từ đặc tả
+- không gộp EMPTY vào INVALID
+- mỗi invalid class chỉ được thành testcase riêng nếu class đó có expected xác định được từ đặc tả hoặc thuộc một expected chung đủ rõ
 
 ==================================================================================
-III. DECISION TABLE (DT)
+IV. DECISION TABLE (DT)
 ==================================================================================
 
 DT dùng khi bản chất kiểm thử là:
@@ -95,315 +114,175 @@ DT dùng khi bản chất kiểm thử là:
 - workflow logic
 - tổ hợp trạng thái dẫn tới kết quả khác nhau
 
-Áp dụng điển hình cho:
-- required field
-- confirm phải khớp password
-- chọn tỉnh trước rồi mới chọn quận/huyện
-- quan hệ cha - con giữa các combobox
-- điều kiện xác thực hợp lệ / không hợp lệ
+KHÔNG dùng DT cho:
+- boundary
+- format class
+- một lớp dữ liệu đơn
+
+==================================================================================
+V. EQUIVALENCE PARTITIONING (EP)
+==================================================================================
+
+EP dùng khi:
+- dữ liệu được chia thành các lớp tương đương
 
 QUY TẮC:
-1. Mỗi field required -> 1 testcase EMPTY riêng nếu đặc tả có expected khi field đó rỗng.
-2. Không gộp nhiều field rỗng vào 1 testcase.
-3. Quan hệ giữa 2 hay nhiều field -> tạo testcase riêng cho lỗi quan hệ đó nếu expected xác định được.
-4. DT không dùng để mô tả boundary.
-5. DT không dùng để mô tả format class.
-
-LƯU Ý QUAN TRỌNG:
-- Nếu đặc tả nói "nếu bất kỳ field nào rỗng" thì phải tách từng field rỗng riêng để cô lập lỗi.
-- Nếu đặc tả có điều kiện thành công rõ ràng thì phải có ít nhất 1 testcase success.
+- mỗi invalid class = 1 testcase
+- không gộp class
 
 ==================================================================================
-IV. EQUIVALENCE PARTITIONING (EP)
+V.1. SAME EXPECTED ≠ SAME TESTCASE
 ==================================================================================
 
-EP dùng khi bản chất kiểm thử là:
-- chia dữ liệu thành các lớp tương đương
-- mỗi lớp đại diện cho một loại hành vi của hệ thống
+Nếu nhiều invalid class khác nhau cùng dẫn tới một expected:
 
-Áp dụng cho:
-- sai format
-- sai prefix
-- sai pattern
-- sai kiểu
-- sai quan hệ class
-- key tồn tại / không tồn tại
-- dữ liệu thuộc lớp hợp lệ / không hợp lệ
-
-QUY TẮC:
-1. Mỗi INVALID CLASS chỉ thành 1 testcase khi class đó có expected quan sát được.
-2. Không được gộp nhiều invalid class khác bản chất vào 1 testcase.
-3. Không dùng EMPTY trong EP nếu EMPTY thuộc rule bắt buộc nhập.
-4. Một EP testcase chỉ được đại diện cho 1 lớp dữ liệu chính.
-
-VÍ DỤ:
-Nếu đặc tả nói:
-- Phone sai định dạng -> "Số điện thoại không hợp lệ"
-và Phone có các rule:
-- không bắt đầu bằng 0
-- chứa chữ
-- chứa ký tự đặc biệt
-- chứa khoảng trắng
-
-→ có thể tách thành các testcase EP riêng vì các lỗi này đều có expected chung rõ ràng.
-
-NGƯỢC LẠI:
-Nếu Password có nhiều rule thành phần nhưng đặc tả chỉ nêu expected cho lỗi độ dài,
-→ chỉ sinh testcase cho lỗi độ dài
-→ không tự sinh testcase riêng cho:
-- thiếu chữ thường
-- thiếu chữ hoa
-- thiếu chữ số
-- thiếu ký tự đặc biệt
-trừ khi đặc tả có expected riêng hoặc expected chung thật sự rõ cho các lỗi đó
+→ PHẢI tách riêng từng testcase
 
 ==================================================================================
-V. BOUNDARY VALUE ANALYSIS (BVA)
+VI. BOUNDARY VALUE ANALYSIS (BVA)
 ==================================================================================
 
-BVA chỉ dùng khi đặc tả có ràng buộc định lượng rõ ràng:
-- min / max
-- khoảng [min, max]
-- đúng N ký tự
+BVA CHỈ được dùng khi đặc tả có ràng buộc định lượng rõ ràng:
+
+- từ min đến max
+- đúng N
 - tối đa N
 - tối thiểu N
-- giá trị số trong miền
+
+NẾU KHÔNG CÓ:
+→ KHÔNG được dùng BVA
 
 ----------------------------------------------------------------------------------
-1. XÁC ĐỊNH BIÊN
+1. ĐỊNH NGHĨA MIN / MAX / N
 ----------------------------------------------------------------------------------
 
-A. Range [min, max]
-Các điểm biên chuẩn:
-- min-1
-- min
-- min+1
-- max-1
-- max
-- max+1
+- min: giá trị nhỏ nhất hợp lệ
+- max: giá trị lớn nhất hợp lệ
+- N: giá trị cố định phải đạt
 
-B. Fixed length = N
-Các điểm biên chuẩn:
-- N-1
-- N
-- N+1
-
-C. Max-only
-Các điểm cần xét:
-- max-1
-- max
-- max+1
-
-D. Min-only
-Các điểm cần xét:
-- min-1
-- min
-- min+1
+QUAN TRỌNG:
+- Đây là MỐC GỐC
+- reference_value phải là mốc này
+- KHÔNG được dùng giá trị đã lệch biên làm reference_value
 
 ----------------------------------------------------------------------------------
-2. NGUYÊN TẮC BVA BẮT BUỘC
+2. ĐỊNH NGHĨA ĐIỂM BIÊN
 ----------------------------------------------------------------------------------
 
-1. Mỗi boundary point = 1 testcase.
-2. Không gộp nhiều boundary point vào 1 testcase.
-3. Không ghi boundary_point dạng tổ hợp như:
-- N-1|N|N+1
-- min|min+1|max
-4. Mỗi testcase BVA chỉ có 1 boundary focus chính.
+- min-1: nhỏ hơn min đúng 1 đơn vị
+- min: bằng min
+- max: bằng max
+- max+1: lớn hơn max đúng 1 đơn vị
+
+- N-1: nhỏ hơn N đúng 1 đơn vị
+- N: bằng N
+- N+1: lớn hơn N đúng 1 đơn vị
+
+"1 đơn vị" phụ thuộc kiểu dữ liệu:
+- chuỗi → 1 ký tự
+- số → 1 đơn vị số
 
 ----------------------------------------------------------------------------------
-3. SINH DỮ LIỆU BIÊN CHÍNH XÁC
+3. XÁC ĐỊNH BIÊN
 ----------------------------------------------------------------------------------
 
-Nếu reference_value = 10:
-- N-1 -> input phải dài đúng 9 ký tự
-- N -> input phải dài đúng 10 ký tự
-- N+1 -> input phải dài đúng 11 ký tự
+Range:
+- min-1, min, max, max+1
 
-Nếu reference_value = 8:
-- min-1 -> input phải đúng 7 ký tự
-- min -> input phải đúng 8 ký tự
-- min+1 -> input phải đúng 9 ký tự
+Fixed:
+- N-1, N, N+1
+
+----------------------------------------------------------------------------------
+4. BIÊN TƯỜNG MINH ⇒ BVA BẮT BUỘC
+----------------------------------------------------------------------------------
+
+Nếu có biên:
+→ PHẢI dùng BVA
+
+KHÔNG được:
+- thay bằng EP
+- gộp thành 1 testcase
+
+----------------------------------------------------------------------------------
+5. BVA SCHEMA LOGIC
+----------------------------------------------------------------------------------
+
+Fixed:
+- rule_type = fixed_length
+- reference_value = N
+- boundary = N-1, N, N+1
+
+Range:
+- rule_type = range
+- reference_value = min hoặc max
+- boundary = min-1, min, max, max+1
 
 CẤM:
-- reference_value = 10 nhưng input dài 8 hoặc 12
-- objective ghi 9 ký tự nhưng input thực tế lại dài 10
-- mô tả mơ hồ như "quá ngắn", "quá dài" mà không hiện thực đúng giá trị biên
+- sai rule_type
+- reference_value không phải mốc gốc
 
 ----------------------------------------------------------------------------------
-4. CÔ LẬP BVA
+6. SINH DỮ LIỆU BIÊN
 ----------------------------------------------------------------------------------
 
-Khi test BVA:
-- chỉ sai boundary
-- các rule khác phải đúng
+- N-1 → input phải đúng N-1
+- N → input phải đúng N
+- N+1 → input phải đúng N+1
 
-Ví dụ:
-- test độ dài Password -> vẫn phải chứa tối thiểu:
-  + 1 chữ thường
-  + 1 chữ hoa
-  + 1 chữ số
-  + 1 ký tự đặc biệt
-- nhưng chỉ cần 1 ký tự đại diện cho mỗi nhóm, không cần bao phủ toàn bộ tập ký tự
+CẤM:
+- boundary ≠ input
 
-==================================================================================
-VI. QUY TẮC SINH GIÁ TRỊ VALID ĐẠI DIỆN
-==================================================================================
+----------------------------------------------------------------------------------
+7. VALID & INVALID BOUNDARY
+----------------------------------------------------------------------------------
 
-Khi cần dữ liệu VALID để làm nền cho testcase khác:
+- min, max → VALID
+- min-1, max+1 → INVALID
 
-1. Chỉ dùng GIÁ TRỊ VALID ĐẠI DIỆN TỐI GIẢN:
-- ngắn nhất có thể
-- đơn giản nhất có thể
-- vẫn thỏa toàn bộ constraint
+QUAN TRỌNG:
+- BVA phải có cả valid và invalid boundary khi cần
 
-2. Nếu field yêu cầu "ít nhất 1 ký tự thuộc nhóm X"
-→ chỉ cần dùng 1 ký tự đại diện của nhóm đó
-→ không cần bao phủ toàn bộ tập ký tự
+----------------------------------------------------------------------------------
+8. CÔ LẬP BVA
+----------------------------------------------------------------------------------
 
-Ví dụ:
-- ít nhất 1 chữ thường -> chỉ cần 1 chữ thường
-- ít nhất 1 chữ hoa -> chỉ cần 1 chữ hoa
-- ít nhất 1 chữ số -> chỉ cần 1 chữ số
-- ít nhất 1 ký tự đặc biệt -> chỉ cần 1 ký tự đặc biệt
-
-3. Không được sinh dữ liệu valid quá dài hoặc quá phức tạp nếu không cần thiết.
-
-4. Với testcase biên hợp lệ:
-- nếu mục tiêu là min, min+1, max-1, max
-→ tạo chuỗi đúng độ dài đó với cấu trúc đơn giản nhất vẫn hợp lệ
-
-Ví dụ:
-Password hợp lệ tối giản:
-- "Aa1!aaaa" cho biên 8
-- không cần dùng chuỗi quá dài, quá rối, hoặc chứa quá nhiều loại ký tự
+- chỉ sai biên
+- rule khác phải đúng
 
 ==================================================================================
 VII. SINGLE-FAULT ISOLATION
 ==================================================================================
 
-Mỗi testcase âm tính chỉ được có 1 lỗi chính.
-
-Nguyên tắc:
-1. Field mục tiêu lỗi -> chỉ sai 1 rule
-2. Field khác -> valid
-3. Nếu lỗi là quan hệ giữa 2 field:
-- từng field phải hợp lệ riêng lẻ
-- chỉ sai đúng quan hệ giữa chúng
-
-Ví dụ:
-- test "Phone chứa chữ" -> vẫn đúng độ dài, vẫn bắt đầu bằng 0
-- test "Phone sai độ dài" -> vẫn chỉ dùng ký tự số, vẫn bắt đầu bằng 0 nếu có thể
-- test "ConfirmPassword không khớp" -> Password và ConfirmPassword đều hợp lệ riêng lẻ, chỉ sai quan hệ khớp
+- 1 testcase = 1 lỗi
 
 ==================================================================================
-VIII. QUY TẮC BAO PHỦ SUCCESS / HAPPY PATH
+VIII. SUCCESS
 ==================================================================================
 
-Ngoài các testcase lỗi, phải luôn có testcase thành công.
-
-QUY TẮC:
-1. Mỗi chức năng phải có ít nhất 1 testcase success nếu đặc tả có mô tả hành vi thành công.
-2. Nếu đã có testcase biên hợp lệ (ví dụ min hoặc max hợp lệ), các testcase đó có thể đồng thời là success.
-3. Tuy nhiên, nếu mục tiêu của testcase biên hợp lệ chủ yếu là chứng minh acceptance của boundary, nên ưu tiên thêm 1 happy path điển hình riêng để mô tả luồng thành công tổng quát rõ ràng.
-4. Happy path điển hình riêng nên dùng dữ liệu hợp lệ bình thường, không cần nằm đúng ở biên.
-5. Khi cần chọn giữa hai cách:
-- bộ tối thiểu
-- bộ dễ đọc, dễ báo cáo
-hãy ưu tiên bộ dễ đọc, dễ báo cáo nhưng không sinh thừa vô nghĩa.
-
-ÁP DỤNG CHUNG:
-- Login: nên có 1 success case rõ ràng
-- Register: nên có 1 success case rõ ràng ngoài các biên hợp lệ nếu các biên đang phục vụ BVA
-- Search: nên có 1 case key hợp lệ tồn tại
-- Order: nên có 1 case đặt hàng thành công
-- Product review: nên có 1 case gửi đánh giá thành công
+- phải có testcase thành công nếu đặc tả có
 
 ==================================================================================
 IX. COVERAGE CHECKLIST
 ==================================================================================
 
-Trước khi sinh testcase, AI phải đảm bảo:
-
-1. REQUIRED
-- mỗi field bắt buộc có testcase EMPTY riêng
-
-2. EP
-- mỗi invalid class có expected xác định thì có testcase riêng
-
-3. BVA
-- nếu có min/max hoặc fixed length và đặc tả có expected liên quan đến boundary
-→ sinh đủ boundary testcase cần thiết
-
-4. RELATION
-- mỗi quan hệ field có expected rõ ràng có testcase riêng
-
-5. SUCCESS
-- có ít nhất 1 testcase thành công
-- ưu tiên có 1 happy path điển hình riêng nếu điều đó giúp coverage rõ hơn
-
-6. KHÔNG sinh testcase âm tính cho constraint không có expected xác định
+- đủ required
+- đủ invalid class
+- đủ BVA nếu có biên
+- đủ relation
+- có success
+- không gộp coverage
 
 ==================================================================================
 X. CẤM TUYỆT ĐỐI
 ==================================================================================
 
-- Gộp nhiều lỗi
-- Gộp nhiều class
-- Sai độ dài so với boundary
-- Dùng dữ liệu mơ hồ
-- Thiếu coverage có expected rõ ràng
-- Tự bịa expected cho constraint chưa được đặc tả
-- Bỏ mất happy path khi đặc tả có hành vi thành công
+- gộp testcase
+- sai boundary
+- thiếu coverage
+- tự bịa rule
 
 ==================================================================================
 XI. NGÔN NGỮ OUTPUT
 ==================================================================================
 
-- Objective PHẢI viết bằng tiếng Việt
-- Không được dùng tiếng Anh
-- Phải mô tả rõ:
-  + field nào đang được kiểm tra
-  + lỗi gì
-
-Ví dụ:
-- "Kiểm tra trường Phone khi chứa ký tự chữ"
-- "Kiểm tra trường Password với độ dài nhỏ hơn 8 ký tự"
-
-==================================================================================
-XII. CẤM SINH TESTCASE NGOÀI ĐẶC TẢ
-==================================================================================
-
-- Nếu một field KHÔNG có constraint về format
-→ KHÔNG được tự tạo testcase format
-
-Ví dụ:
-- Username không có rule về ký tự
-→ KHÔNG được sinh testcase "chứa ký tự đặc biệt"
-
-==================================================================================
-XIII. COVERAGE PHẢI ĐẦY ĐỦ 100%
-==================================================================================
-
-AI bắt buộc phải sinh đủ:
-
-1. REQUIRED:
-- mỗi field bắt buộc = 1 testcase EMPTY
-
-2. EP:
-- mỗi invalid class có expected = 1 testcase
-
-3. BVA:
-- phải sinh đủ các boundary point cần thiết:
-  + N-1
-  + N
-  + N+1
-  + min / max nếu có
-
-4. RELATION:
-- mỗi quan hệ field = 1 testcase
-
-5. SUCCESS:
-- bắt buộc có ít nhất 1 testcase thành công
-
-Nếu thiếu bất kỳ nhóm nào → KHÔNG được output
+- Objective phải là tiếng Việt

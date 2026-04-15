@@ -1,7 +1,7 @@
 items:
 - Testcase: LG01
   Username: ''
-  Password: Aa1!aaaa
+  Password: AnhDuong@123
   Expected: Vui lòng điền vào trường này
 - Testcase: LG02
   Username: AnhDuong11
@@ -13,17 +13,9 @@ items:
   Expected: AnhDuong11
 - Testcase: LG04
   Username: AnhDuong11
-  Password: Aa1!aaa
+  Password: SaiPass@123
   Expected: Username hoặc Password không đúng!
 - Testcase: LG05
-  Username: AnhDuong11
-  Password: Aa1!aaaaa
-  Expected: Username hoặc Password không đúng!
-- Testcase: LG06
-  Username: AnhDuong11
-  Password: Aa1!aaa
-  Expected: Username hoặc Password không đúng!
-- Testcase: LG07
-  Username: AnhDuong11
-  Password: Aa1!aaaaaa
+  Username: KhongTonTai123
+  Password: AnhDuong@123
   Expected: Username hoặc Password không đúng!

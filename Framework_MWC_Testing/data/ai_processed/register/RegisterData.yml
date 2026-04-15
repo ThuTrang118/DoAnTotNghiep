@@ -1,79 +1,79 @@
 items:
 - Testcase: RG01
   Username: ''
-  Phone: 0123456789
-  Password: Aa1!aaaaaa
-  ConfirmPassword: Aa1!aaaaaa
+  Phone: 0987654321
+  Password: password123
+  ConfirmPassword: password123
   Expected: Vui lòng điền vào trường này
 - Testcase: RG02
-  Username: testuser123
+  Username: newuser123
   Phone: ''
-  Password: Aa1!aaaaaa
-  ConfirmPassword: Aa1!aaaaaa
+  Password: password123
+  ConfirmPassword: password123
   Expected: Vui lòng điền vào trường này
 - Testcase: RG03
-  Username: testuser123
-  Phone: 0123456789
+  Username: newuser123
+  Phone: 0987654321
   Password: ''
-  ConfirmPassword: Aa1!aaaaaa
+  ConfirmPassword: ''
   Expected: Vui lòng điền vào trường này
 - Testcase: RG04
-  Username: testuser123
-  Phone: 0123456789
-  Password: Aa1!aaaaaa
+  Username: newuser123
+  Phone: 0987654321
+  Password: password123
   ConfirmPassword: ''
   Expected: Vui lòng điền vào trường này
 - Testcase: RG05
   Username: AnhDuong11
-  Phone: 0123456789
-  Password: Aa1!aaaaaa
-  ConfirmPassword: Aa1!aaaaaa
+  Phone: 0987654321
+  Password: password123
+  ConfirmPassword: password123
   Expected: tài khoản đã tồn tại trong hệ thống
 - Testcase: RG06
-  Username: testuser123
-  Phone: '9876543210'
-  Password: Aa1!aaaaaa
-  ConfirmPassword: Aa1!aaaaaa
+  Username: newuser123
+  Phone: '987654321'
+  Password: password123
+  ConfirmPassword: password123
   Expected: Số điện thoại không hợp lệ
 - Testcase: RG07
-  Username: testuser123
-  Phone: 0a123456789
-  Password: Aa1!aaaaaa
-  ConfirmPassword: Aa1!aaaaaa
+  Username: newuser123
+  Phone: 0a87654321
+  Password: password123
+  ConfirmPassword: password123
   Expected: Số điện thoại không hợp lệ
 - Testcase: RG08
-  Username: testuser123
-  Phone: 0@123456789
-  Password: Aa1!aaaaaa
-  ConfirmPassword: Aa1!aaaaaa
+  Username: newuser123
+  Phone: 098765432a
+  Password: password123
+  ConfirmPassword: password123
   Expected: Số điện thoại không hợp lệ
 - Testcase: RG09
-  Username: testuser123
-  Phone: 0 123456789
-  Password: Aa1!aaaaaa
-  ConfirmPassword: Aa1!aaaaaa
+  Username: newuser123
+  Phone: 09876 54321
+  Password: password123
+  ConfirmPassword: password123
   Expected: Số điện thoại không hợp lệ
 - Testcase: RG10
-  Username: testuser123
-  Phone: 0123456789
-  Password: Aa1!aaa
-  ConfirmPassword: Aa1!aaa
+  Username: newuser123
+  Phone: 0987654321
+  Password: pass123
+  ConfirmPassword: pass123
   Expected: Mật khẩu phải từ 8 đến 20 ký tự
 - Testcase: RG11
-  Username: testuser123
-  Phone: 0123456789
-  Password: Aa1!aaaaaaaab
-  ConfirmPassword: Aa1!aaaaaaaab
+  Username: newuser123
+  Phone: 0987654321
+  Password: password12345678901234567890
+  ConfirmPassword: password12345678901234567890
   Expected: Mật khẩu phải từ 8 đến 20 ký tự
 - Testcase: RG12
-  Username: testuser123
-  Phone: 0123456789
-  Password: Aa1!aaaaaa
-  ConfirmPassword: Bb2@bbbbbb
+  Username: newuser123
+  Phone: 0987654321
+  Password: password123
+  ConfirmPassword: password1234
   Expected: Mật khẩu không khớp
 - Testcase: RG13
-  Username: testuser124
-  Phone: 0123456789
-  Password: Aa1!aaaaaa
-  ConfirmPassword: Aa1!aaaaaa
-  Expected: testuser124
+  Username: newuser123
+  Phone: 0987654321
+  Password: password123
+  ConfirmPassword: password123
+  Expected: newuser123
