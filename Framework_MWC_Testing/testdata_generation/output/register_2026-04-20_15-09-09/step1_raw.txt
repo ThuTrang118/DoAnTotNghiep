@@ -1,0 +1,310 @@
+{
+  "feature": "ĐĂNG KÝ",
+  "description": "Chức năng đăng ký cho phép người dùng tạo tài khoản mới bằng cách nhập đầy đủ thông tin trên form đăng ký. Sau khi người dùng gửi form, hệ thống kiểm tra dữ liệu đầu vào theo các ràng buộc của từng field và quan hệ giữa các field.",
+  "coverage_items": [
+    {
+      "id": "1",
+      "field": "Username",
+      "technique": "EP",
+      "description": "Username rỗng",
+      "validity": "invalid",
+      "partition_type": "invalid",
+      "boundary": null,
+      "representative_value": "",
+      "rule": "Bắt buộc nhập",
+      "expected_class": "Vui lòng điền vào trường này"
+    },
+    {
+      "id": "2",
+      "field": "Username",
+      "technique": "EP",
+      "description": "Username trùng với Username đã đăng ký",
+      "validity": "invalid",
+      "partition_type": "invalid",
+      "boundary": null,
+      "representative_value": "AnhDuong11",
+      "rule": "Không được trùng với Username đã đăng ký trước đó",
+      "expected_class": "tài khoản đã tồn tại trong hệ thống"
+    },
+    {
+      "id": "3",
+      "field": "Username",
+      "technique": "EP",
+      "description": "Username hợp lệ",
+      "validity": "valid",
+      "partition_type": "valid",
+      "boundary": null,
+      "representative_value": "NewUser123",
+      "rule": "Bắt buộc nhập",
+      "expected_class": "Dữ liệu hợp lệ"
+    },
+    {
+      "id": "4",
+      "field": "Phone",
+      "technique": "BVA",
+      "description": "Phone có 9 ký tự",
+      "validity": "invalid",
+      "partition_type": null,
+      "boundary": {
+        "kind": "exact",
+        "reference": 10,
+        "point": "N-1"
+      },
+      "representative_value": "012345678",
+      "rule": "Đúng 10 ký tự",
+      "expected_class": "Số điện thoại không hợp lệ"
+    },
+    {
+      "id": "5",
+      "field": "Phone",
+      "technique": "BVA",
+      "description": "Phone có 10 ký tự",
+      "validity": "valid",
+      "partition_type": null,
+      "boundary": {
+        "kind": "exact",
+        "reference": 10,
+        "point": "N"
+      },
+      "representative_value": "0123456789",
+      "rule": "Đúng 10 ký tự",
+      "expected_class": "Dữ liệu hợp lệ"
+    },
+    {
+      "id": "6",
+      "field": "Phone",
+      "technique": "BVA",
+      "description": "Phone có 11 ký tự",
+      "validity": "invalid",
+      "partition_type": null,
+      "boundary": {
+        "kind": "exact",
+        "reference": 10,
+        "point": "N+1"
+      },
+      "representative_value": "01234567890",
+      "rule": "Đúng 10 ký tự",
+      "expected_class": "Số điện thoại không hợp lệ"
+    },
+    {
+      "id": "7",
+      "field": "Phone",
+      "technique": "EP",
+      "description": "Phone không bắt đầu bằng số 0",
+      "validity": "invalid",
+      "partition_type": "invalid",
+      "boundary": null,
+      "representative_value": "1234567890",
+      "rule": "Bắt buộc bắt đầu bằng số 0",
+      "expected_class": "Số điện thoại không hợp lệ"
+    },
+    {
+      "id": "8",
+      "field": "Phone",
+      "technique": "EP",
+      "description": "Phone chứa ký tự chữ",
+      "validity": "invalid",
+      "partition_type": "invalid",
+      "boundary": null,
+      "representative_value": "0123a56789",
+      "rule": "Chỉ được chứa ký tự số",
+      "expected_class": "Số điện thoại không hợp lệ"
+    },
+    {
+      "id": "9",
+      "field": "Phone",
+      "technique": "EP",
+      "description": "Phone chứa ký tự đặc biệt",
+      "validity": "invalid",
+      "partition_type": "invalid",
+      "boundary": null,
+      "representative_value": "0123!56789",
+      "rule": "Không được chứa ký tự đặc biệt",
+      "expected_class": "Số điện thoại không hợp lệ"
+    },
+    {
+      "id": "10",
+      "field": "Phone",
+      "technique": "EP",
+      "description": "Phone chứa khoảng trắng",
+      "validity": "invalid",
+      "partition_type": "invalid",
+      "boundary": null,
+      "representative_value": "0123 56789",
+      "rule": "Không được chứa khoảng trắng",
+      "expected_class": "Số điện thoại không hợp lệ"
+    },
+    {
+      "id": "11",
+      "field": "Phone",
+      "technique": "EP",
+      "description": "Phone hợp lệ",
+      "validity": "valid",
+      "partition_type": "valid",
+      "boundary": null,
+      "representative_value": "0123456789",
+      "rule": "Bắt buộc nhập",
+      "expected_class": "Dữ liệu hợp lệ"
+    },
+    {
+      "id": "12",
+      "field": "Password",
+      "technique": "BVA",
+      "description": "Password có 7 ký tự",
+      "validity": "invalid",
+      "partition_type": null,
+      "boundary": {
+        "kind": "range",
+        "reference": 8,
+        "point": "MIN-1"
+      },
+      "representative_value": "Pass123",
+      "rule": "Độ dài từ 8 đến 20 ký tự",
+      "expected_class": "Mật khẩu phải từ 8 đến 20 ký tự"
+    },
+    {
+      "id": "13",
+      "field": "Password",
+      "technique": "BVA",
+      "description": "Password có 8 ký tự",
+      "validity": "valid",
+      "partition_type": null,
+      "boundary": {
+        "kind": "range",
+        "reference": 8,
+        "point": "MIN"
+      },
+      "representative_value": "Pass1234",
+      "rule": "Độ dài từ 8 đến 20 ký tự",
+      "expected_class": "Dữ liệu hợp lệ"
+    },
+    {
+      "id": "14",
+      "field": "Password",
+      "technique": "BVA",
+      "description": "Password có 9 ký tự",
+      "validity": "valid",
+      "partition_type": null,
+      "boundary": {
+        "kind": "range",
+        "reference": 8,
+        "point": "MIN+1"
+      },
+      "representative_value": "Pass12345",
+      "rule": "Độ dài từ 8 đến 20 ký tự",
+      "expected_class": "Dữ liệu hợp lệ"
+    },
+    {
+      "id": "15",
+      "field": "Password",
+      "technique": "BVA",
+      "description": "Password có 19 ký tự",
+      "validity": "valid",
+      "partition_type": null,
+      "boundary": {
+        "kind": "range",
+        "reference": 20,
+        "point": "MAX-1"
+      },
+      "representative_value": "Pass1234567890123456789",
+      "rule": "Độ dài từ 8 đến 20 ký tự",
+      "expected_class": "Dữ liệu hợp lệ"
+    },
+    {
+      "id": "16",
+      "field": "Password",
+      "technique": "BVA",
+      "description": "Password có 20 ký tự",
+      "validity": "valid",
+      "partition_type": null,
+      "boundary": {
+        "kind": "range",
+        "reference": 20,
+        "point": "MAX"
+      },
+      "representative_value": "Pass12345678901234567890",
+      "rule": "Độ dài từ 8 đến 20 ký tự",
+      "expected_class": "Dữ liệu hợp lệ"
+    },
+    {
+      "id": "17",
+      "field": "Password",
+      "technique": "BVA",
+      "description": "Password có 21 ký tự",
+      "validity": "invalid",
+      "partition_type": null,
+      "boundary": {
+        "kind": "range",
+        "reference": 20,
+        "point": "MAX+1"
+      },
+      "representative_value": "Pass123456789012345678901",
+      "rule": "Độ dài từ 8 đến 20 ký tự",
+      "expected_class": "Mật khẩu phải từ 8 đến 20 ký tự"
+    },
+    {
+      "id": "18",
+      "field": "Password",
+      "technique": "EP",
+      "description": "Password rỗng",
+      "validity": "invalid",
+      "partition_type": "invalid",
+      "boundary": null,
+      "representative_value": "",
+      "rule": "Bắt buộc nhập",
+      "expected_class": "Vui lòng điền vào trường này"
+    },
+    {
+      "id": "19",
+      "field": "Password",
+      "technique": "EP",
+      "description": "Password hợp lệ",
+      "validity": "valid",
+      "partition_type": "valid",
+      "boundary": null,
+      "representative_value": "Pass1234567890",
+      "rule": "Bắt buộc nhập",
+      "expected_class": "Dữ liệu hợp lệ"
+    },
+    {
+      "id": "20",
+      "field": "ConfirmPassword",
+      "technique": "EP",
+      "description": "ConfirmPassword rỗng",
+      "validity": "invalid",
+      "partition_type": "invalid",
+      "boundary": null,
+      "representative_value": "",
+      "rule": "Bắt buộc nhập",
+      "expected_class": "Vui lòng điền vào trường này"
+    },
+    {
+      "id": "21",
+      "field": "ConfirmPassword",
+      "technique": "EP",
+      "description": "ConfirmPassword không khớp với Password",
+      "validity": "invalid",
+      "partition_type": "invalid",
+      "boundary": null,
+      "representative_value": "WrongPass123",
+      "rule": "Phải khớp với Password",
+      "expected_class": "Vui lòng điền vào trường này"
+    },
+    {
+      "id": "22",
+      "field": "ConfirmPassword",
+      "technique": "EP",
+      "description": "ConfirmPassword khớp với Password",
+      "validity": "valid",
+      "partition_type": "valid",
+      "boundary": null,
+      "representative_value": "Pass1234567890",
+      "rule": "Phải khớp với Password",
+      "expected_class": "Dữ liệu hợp lệ"
+    }
+  ],
+  "coverage_items_count": {
+    "EP": 14,
+    "BVA": 8
+  }
+}

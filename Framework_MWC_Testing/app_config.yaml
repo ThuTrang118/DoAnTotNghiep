@@ -26,7 +26,7 @@ ai:
     timeout_sec: 7200
     temperature: 0.0
     top_p: 0.1
-    num_predict: 3000
+    num_predict: 6000
     seed: 42
   generation:
     output_root: data/ai_generated
