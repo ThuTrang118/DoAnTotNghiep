@@ -1,0 +1,28 @@
+{
+  "feature": "string",
+  "description": "string",
+  "testcase_summary": {
+    "total_testcases": number
+  },
+  "testcases": [
+    {
+      "id": "string",
+      "name": "string",
+      "description": "string",
+      "objective": "string",
+      "coverage_refs": ["string"],
+      "decision_basis": {
+        "conditions": [
+          {
+            "field": "string",
+            "state": "string"
+          }
+        ],
+        "optimization_note": "string"
+      },
+      "inputs": {},
+      "expected": "string",
+      "priority": "High" | "Medium" | "Low"
+    }
+  ]
+}

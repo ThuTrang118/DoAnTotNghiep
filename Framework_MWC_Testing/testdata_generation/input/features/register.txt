@@ -10,42 +10,49 @@ Nếu dữ liệu hợp lệ, hệ thống đăng ký thành công.
 Nếu dữ liệu không hợp lệ, hệ thống hiển thị thông báo lỗi tương ứng.
 
 ==================================================================================
-INPUT: gồm 4 field
+INPUT: gồm đúng 4 field
 ==================================================================================
-1. Username: bắt buộc 
-2. Phone: bắt buộc 
-3. Password: bắt buộc 
-4. ConfirmPassword: bắt buộc 
+1. Username: bắt buộc
+2. Phone: bắt buộc
+3. Password: bắt buộc
+4. ConfirmPassword: bắt buộc
+
+Lưu ý:
+- Step 1 phải phân tích coverage cho đầy đủ cả 4 field trên.
+- Không được bỏ sót ConfirmPassword.
+- Rule quan hệ "ConfirmPassword phải trùng Password" phải được gắn cho field ConfirmPassword.
 
 ==================================================================================
 CONSTRAINT
 ==================================================================================
-Username: gồm 1 yêu cầu
-1. Không được trùng với Username đã đăng ký trước đó.
-VD Username đã đăng ký "AnhDuong11"
+Username: gồm 2 yêu cầu
+1. Bắt buộc nhập
+2. Không được trùng với Username đã đăng ký trước đó.
+VD Username đã đăng ký: "AnhDuong11"
 
 Phone: gồm 6 yêu cầu
-1. Đúng 10 ký tự (đây là giá trị cố định N = 10)
-2. Bắt buộc bắt đầu bằng số 0
-3. Chỉ được chứa ký tự số (0-9)
-4. Không được chứa ký tự chữ (a-z, A-Z)
-5. Không được chứa ký tự đặc biệt (!@#$%^&*...)
+1. Bắt buộc nhập
+2. Đúng 10 ký tự (đây là giá trị cố định N = 10)
+3. Bắt buộc bắt đầu bằng số 0
+4. Chỉ được chứa ký tự số (0-9)
+5. Không được chứa ký tự chữ (a-z, A-Z) hoặc ký tự đặc biệt (!@#$%^&*)
 6. Không được chứa khoảng trắng
 
-Password: gồm 1 yêu cầu
-1. Độ dài từ 8 đến 20 ký tự (min = 8, max = 20)
+Password: gồm 2 yêu cầu
+1. Bắt buộc nhập
+2. Độ dài từ 8 đến 20 ký tự (min = 8, max = 20)
 
-ConfirmPassword: gồm 1 yêu cầu
-1. Phải trùng hoàn toàn với Password
+ConfirmPassword: gồm 2 yêu cầu
+1. Bắt buộc nhập
+2. Phải trùng hoàn toàn với Password
 
 ==================================================================================
-EXPECTED
+KỲ VỌNG NGHIỆP VỤ
 ==================================================================================
-
 1. Nếu bất kỳ field nào rỗng
 → Expected = "Vui lòng điền vào trường này"
 
-2. Nếu Username trùng với Username đã đăng ký 
+2. Nếu Username trùng với Username đã đăng ký
 → Expected = "tài khoản đã tồn tại trong hệ thống"
 
 3. Nếu Phone sai định dạng
@@ -54,8 +61,8 @@ EXPECTED
 4. Nếu Password sai độ dài
 → Expected = "Mật khẩu phải từ 8 đến 20 ký tự"
 
-5. Nếu ConfirmPassword không trùng
+5. Nếu ConfirmPassword không trùng Password
 → Expected = "Mật khẩu không khớp"
 
-6. Nếu hợp lệ
+6. Nếu toàn bộ dữ liệu hợp lệ
 → Expected = Username

@@ -7,9 +7,9 @@ FEATURE_ITEM_FIELDS: Dict[str, List[str]] = {
     "login": ["Username", "Password"],
     "register": ["Username", "Phone", "Password", "ConfirmPassword"],
     "search": ["Keyword"],
-    "order": ["Product", "Quantity"],
+    "order": ["FullName", "Phone", "Address", "Province", "District", "Ward"],
     "profile_update": ["Field", "Value"],
-    "product_review": ["Product", "Rating", "Comment"],
+    "product_review": ["FullName", "Phone", "Email", "Title", "Rating", "Content"],
 }
 
 FEATURE_TESTCASE_PREFIX: Dict[str, str] = {
@@ -32,10 +32,56 @@ FEATURE_OUTPUT_BASENAME: Dict[str, str] = {
 
 
 def normalize_feature_name(feature: str) -> str:
+    """
+    Chuẩn hoá tên chức năng về feature key nội bộ.
+    Hỗ trợ key kỹ thuật, alias tiếng Việt có/không dấu và một số biến thể dài.
+    """
     feature = (feature or "").strip().lower()
+
     aliases = {
+        # login
+        "login": "login",
+        "đăng nhập": "login",
+        "dang nhap": "login",
+        "đăng nhập tài khoản": "login",
+        "dang nhap tai khoan": "login",
+
+        # register
+        "register": "register",
+        "đăng ký": "register",
+        "dang ky": "register",
+        "đăng ký tài khoản": "register",
+        "dang ky tai khoan": "register",
+        "tạo tài khoản": "register",
+        "tao tai khoan": "register",
+
+        # search
+        "search": "search",
+        "tìm kiếm": "search",
+        "tim kiem": "search",
+
+        # order
+        "order": "order",
+        "đặt hàng": "order",
+        "dat hang": "order",
+
+        # profile update
+        "profile_update": "profile_update",
+        "profile update": "profile_update",
         "profile": "profile_update",
+        "cập nhật thông tin": "profile_update",
+        "cap nhat thong tin": "profile_update",
+        "cập nhật thông tin cá nhân": "profile_update",
+        "cap nhat thong tin ca nhan": "profile_update",
+
+        # product review
+        "product_review": "product_review",
+        "product review": "product_review",
+        "review": "product_review",
+        "đánh giá sản phẩm": "product_review",
+        "danh gia san pham": "product_review",
     }
+
     return aliases.get(feature, feature)
 
 
@@ -60,61 +106,22 @@ def get_feature_output_basename(feature: str) -> str:
     return FEATURE_OUTPUT_BASENAME[feature_name]
 
 
-def build_item_fields_schema(feature: str, indent: str = "      ") -> str:
-    fields = get_feature_item_fields(feature)
-    return "\n".join([f'{indent}"{field}": "",' for field in fields])
-
-
-def build_item_fields_rules(feature: str) -> str:
-    fields = get_feature_item_fields(feature)
-    return "\n".join([f"- {field}" for field in fields])
-
-
-def build_item_fields_type_rules(feature: str) -> str:
-    fields = get_feature_item_fields(feature)
-    return "\n".join([f"- {field} là string" for field in fields])
-
-
-def build_testcase_id_rule_text() -> str:
-    lines = [
-        "Testcase phải có định dạng:",
-        "",
-        "<PREFIX><NN>",
-        "",
-        "Trong đó:",
-        "- PREFIX là viết tắt của chức năng",
-        "- NN là số thứ tự 2 chữ số: 01, 02, 03...",
-        "",
-        "Mapping PREFIX theo feature:",
-    ]
-
-    for feature, prefix in FEATURE_TESTCASE_PREFIX.items():
-        lines.append(f"- {feature} -> {prefix}")
-
-    lines.extend(
-        [
-            "",
-            "Ví dụ:",
-            "- LG01, LG02, LG03",
-            "- RG01, RG02",
-            "- SR01",
-        ]
-    )
-
-    return "\n".join(lines)
-
-
 def get_feature_column_order(feature: str) -> List[str]:
     fields = get_feature_item_fields(feature)
-    return ["Testcase", "Technique", "Objective", *fields, "Expected"]
+    return ["Testcase", *fields, "Expected"]
 
 
-def assign_testcase_ids(feature: str, items: List[dict]) -> List[dict]:
+def extract_inputs_from_testcase(item: dict) -> dict:
+    if not isinstance(item, dict):
+        raise ValueError(f"Each testcase must be a dict, got: {type(item).__name__}")
+
+    inputs = item.get("inputs", {})
+    if not isinstance(inputs, dict):
+        raise ValueError("Invalid testcase: 'inputs' must be an object")
+
+    return inputs
+
+
+def build_default_testcase_id(feature: str, index: int) -> str:
     prefix = get_feature_testcase_prefix(feature)
-
-    for i, item in enumerate(items, start=1):
-        if not isinstance(item, dict):
-            raise ValueError(f"Each item must be a dict, got: {type(item).__name__}")
-        item["Testcase"] = f"{prefix}{i:02d}"
-
-    return items
+    return f"{prefix}{index:02d}"

@@ -1,0 +1,27 @@
+{
+  "feature": "string",
+  "description": "string",
+  "coverage_items": [
+    {
+      "id": "string",
+      "field": "string",
+      "technique": "EP" | "BVA",
+      "description": "string",
+      "validity": "valid" | "invalid",
+      "partition_type": "valid" | "invalid" | null,
+      "boundary": {
+        "kind": "exact" | "range",
+        "reference": number,
+        "point": "N-1" | "N" | "N+1" | "MIN-1" | "MIN" | "MIN+1" | "MAX-1" | "MAX" | "MAX+1"
+      } | null,
+      "representative_value": "string",
+      "rule": "string",
+      "expected_class": "string"
+    }
+  ],
+  "coverage_summary": {
+    "EP_count": number,
+    "BVA_count": number,
+    "TOTAL": number
+  }
+}

@@ -1,0 +1,93 @@
+VAI TRÒ:
+Sinh testcase Step 2 bằng Decision Table.
+
+INPUT:
+- Step 1 coverage (bắt buộc)
+- Đặc tả
+
+PHẠM VI:
+- KHÔNG tạo coverage mới
+- KHÔNG sửa coverage
+- KHÔNG đổi boundary
+- KHÔNG suy diễn ngoài spec
+
+OUTPUT:
+- Chỉ JSON
+- Không text ngoài JSON
+
+-----------------------
+RULE CHUNG
+-----------------------
+1. Mỗi coverage_item = 1 condition
+2. Mỗi testcase = 1 combination có ý nghĩa
+3. testcase phải truy vết được về coverage
+
+-----------------------
+TESTCASE BẮT BUỘC
+-----------------------
+
+1. HAPPY PATH
+- tất cả coverage valid
+- expected = success theo spec
+
+CẤM:
+- dùng invalid coverage
+
+-----------------------
+
+2. SINGLE FAULT
+- mỗi testcase chỉ 1 lỗi
+- các field khác phải valid
+
+-----------------------
+
+3. BVA
+- mỗi boundary point phải xuất hiện
+- không được thiếu
+
+-----------------------
+
+4. BUSINESS RULE
+- mỗi rule phải có testcase
+
+-----------------------
+COVERAGE
+-----------------------
+1. Mỗi coverage_item phải được dùng ≥1 lần
+2. coverage_refs không được rỗng
+3. chỉ dùng id từ Step 1
+
+-----------------------
+INPUT
+-----------------------
+1. đủ tất cả field
+2. value phải đúng condition
+3. invalid testcase chỉ sai 1 field
+
+-----------------------
+EXPECTED
+-----------------------
+- phải đúng spec
+- không được:
+  "string", "error", "invalid"
+
+-----------------------
+OPTIMIZE
+-----------------------
+Được:
+- gộp nếu cùng expected + không mất coverage
+
+CẤM:
+- gộp khác bản chất
+- mất BVA
+- mất single-fault
+
+-----------------------
+CHECK
+-----------------------
+- có happy path chưa?
+- đủ BVA chưa?
+- thiếu coverage không?
+- có testcase >1 lỗi không?
+
+Nếu có lỗi → KHÔNG output

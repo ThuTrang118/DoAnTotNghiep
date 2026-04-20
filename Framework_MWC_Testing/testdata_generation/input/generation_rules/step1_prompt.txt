@@ -1,0 +1,117 @@
+VAI TRÒ:
+Sinh coverage Step 1 bằng EP + BVA.
+
+NHIỆM VỤ:
+Đọc đặc tả → sinh coverage_items (atomic).
+
+PHẠM VI:
+- CHỈ Step 1
+- KHÔNG testcase
+- KHÔNG Decision Table
+- KHÔNG giải thích
+
+OUTPUT:
+- Chỉ 1 JSON
+- Không text ngoài JSON
+
+-----------------------
+RULE CHUNG
+-----------------------
+1. Mỗi coverage_item = 1 condition atomic
+2. Không gộp nhiều lỗi khác bản chất vào 1 item
+3. Không suy diễn rule ngoài đặc tả
+4. Mỗi field phải có coverage
+5. rule, validity, expected_class không được rỗng
+
+-----------------------
+VALID COVERAGE BẮT BUỘC
+-----------------------
+1. Nếu đặc tả cho phép xác định lớp hợp lệ cho field, phải sinh ít nhất 1 coverage_item valid cho field đó
+2. Không được chỉ sinh invalid mà bỏ qua valid
+3. valid coverage phải là item riêng
+4. valid coverage không được suy ra ngầm
+5. Nếu field có thể xác định trạng thái hợp lệ từ đặc tả, phải output rõ item valid
+
+-----------------------
+CHỌN KỸ THUẬT
+-----------------------
+Dùng EP:
+- required / empty
+- format đúng / format sai
+- chứa ký tự / không chứa ký tự
+- trùng / không trùng
+- bắt đầu bằng / không bắt đầu bằng
+- quan hệ giữa field
+- mọi rule logic không có min/max/N rõ ràng
+
+Dùng BVA CHỈ khi có:
+- exact N
+- range MIN..MAX
+
+CẤM:
+- dùng BVA khi không có min/max/N
+- dùng BVA cho field quan hệ
+- biến rule EP thành BVA
+
+-----------------------
+EP RULE
+-----------------------
+- technique = EP
+- partition_type = valid / invalid
+- validity = partition_type
+- boundary = null
+- representative_value phải đúng lớp valid hoặc invalid
+- expected_class phải đúng đặc tả
+
+-----------------------
+BVA RULE
+-----------------------
+- technique = BVA
+- partition_type = null
+- boundary bắt buộc
+
+exact:
+- N-1 (invalid)
+- N (valid)
+- N+1 (invalid)
+
+range:
+- MIN-1 (invalid)
+- MIN (valid)
+- MIN+1 (valid)
+- MAX-1 (valid)
+- MAX (valid)
+- MAX+1 (invalid)
+
+CẤM:
+- thiếu điểm
+- sai reference
+- gộp nhiều boundary point vào 1 item
+
+-----------------------
+ATOMIC RULE
+-----------------------
+1. Nếu một rule chứa nhiều lỗi khác bản chất thì phải tách thành nhiều item
+2. Nếu có "hoặc", "/", "và" mà tạo ra nhiều invalid representative_value khác nhau thì phải tách
+3. Không được giữ 1 coverage_item gộp nhiều kiểu lỗi chỉ vì chúng cùng chung expected
+4. description phải mô tả đúng 1 trạng thái duy nhất
+
+-----------------------
+EXPECTED_CLASS
+-----------------------
+- Không dùng: valid, invalid, error, success
+- Phải dùng message đúng đặc tả
+- Nếu không có message cụ thể cho item valid → dùng "Dữ liệu hợp lệ"
+
+-----------------------
+CHECK TRƯỚC OUTPUT
+-----------------------
+- Có thiếu field không?
+- Mỗi field có valid chưa, nếu đặc tả xác định được valid?
+- Mỗi field có invalid chưa?
+- BVA đủ điểm chưa?
+- Có dùng sai BVA không?
+- Có item gộp lỗi không?
+- Có rule nào chứa "hoặc", "/", "và" mà chưa tách không?
+
+Nếu có lỗi → KHÔNG output

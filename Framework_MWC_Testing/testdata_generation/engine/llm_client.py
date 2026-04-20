@@ -36,7 +36,7 @@ class OllamaLLMClient:
     def __init__(
         self,
         base_url: str = "http://127.0.0.1:11434",
-        model: str = "qwen2.5:7b-instruct",
+        model: str = "qwen3:14b",
         endpoint_mode: str = "generate",
         timeout_sec: int = 180,
         temperature: float = 0.1,

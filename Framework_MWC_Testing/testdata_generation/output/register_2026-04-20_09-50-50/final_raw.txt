@@ -1,0 +1,218 @@
+{
+  "feature": "string",
+  "description": "string",
+  "testcase_summary": {
+    "total_testcases": 24
+  },
+  "testcases": [
+    {
+      "id": "TC001",
+      "name": "Happy Path - All Valid Fields",
+      "description": "All fields are valid according to coverage items",
+      "objective": "Verify successful registration with valid inputs",
+      "coverage_refs": ["1", "4", "9", "16"],
+      "decision_basis": {
+        "conditions": [
+          {"field": "Username", "state": "valid"},
+          {"field": "Phone", "state": "valid"},
+          {"field": "Password", "state": "valid"},
+          {"field": "ConfirmPassword", "state": "valid"}
+        ],
+        "optimization_note": "All fields valid"
+      },
+      "inputs": {
+        "Username": "12345678",
+        "Phone": "123456789012",
+        "Password": "12345678",
+        "ConfirmPassword": "12345678"
+      },
+      "expected": "12345678",
+      "priority": "High"
+    },
+    {
+      "id": "TC002",
+      "name": "Single Fault - Invalid Username",
+      "description": "Username is invalid (duplicate) while other fields are valid",
+      "objective": "Verify error handling for duplicate username",
+      "coverage_refs": ["2", "4", "9", "16"],
+      "decision_basis": {
+        "conditions": [
+          {"field": "Username", "state": "invalid"},
+          {"field": "Phone", "state": "valid"},
+          {"field": "Password", "state": "valid"},
+          {"field": "ConfirmPassword", "state": "valid"}
+        ],
+        "optimization_note": "Single invalid field"
+      },
+      "inputs": {
+        "Username": "12345678",
+        "Phone": "123456789012",
+        "Password": "12345678",
+        "ConfirmPassword": "12345678"
+      },
+      "expected": "Vui lòng nhập lại mật khẩu",
+      "priority": "Medium"
+    },
+    {
+      "id": "TC003",
+      "name": "Single Fault - Invalid Phone (9 characters)",
+      "description": "Phone has 9 characters while other fields are valid",
+      "objective": "Verify error handling for invalid phone length",
+      "coverage_refs": ["3", "1", "9", "16"],
+      "decision_basis": {
+        "conditions": [
+          {"field": "Phone", "state": "invalid"},
+          {"field": "Username", "state": "valid"},
+          {"field": "Password", "state": "valid"},
+          {"field": "ConfirmPassword", "state": "valid"}
+        ],
+        "optimization_note": "Single invalid field"
+      },
+      "inputs": {
+        "Username": "12345678",
+        "Phone": "123456789",
+        "Password": "12345678",
+        "ConfirmPassword": "12345678"
+      },
+      "expected": "Số điện thoại không hợp lệ",
+      "priority": "Medium"
+    },
+    {
+      "id": "TC004",
+      "name": "Single Fault - Invalid Phone (11 characters)",
+      "description": "Phone has 11 characters while other fields are valid",
+      "objective": "Verify error handling for invalid phone length",
+      "coverage_refs": ["5", "1", "9", "16"],
+      "decision_basis": {
+        "conditions": [
+          {"field": "Phone", "state": "invalid"},
+          {"field": "Username", "state": "valid"},
+          {"field": "Password", "state": "valid"},
+          {"field": "ConfirmPassword", "state": "valid"}
+        ],
+        "optimization_note": "Single invalid field"
+      },
+      "inputs": {
+        "Username": "12345678",
+        "Phone": "1234567890123",
+        "Password": "12345678",
+        "ConfirmPassword": "12345678"
+      },
+      "expected": "Số điện thoại không hợp lệ",
+      "priority": "Medium"
+    },
+    {
+      "id": "TC005",
+      "name": "Single Fault - Invalid Phone (invalid format)",
+      "description": "Phone has invalid format (missing digits) while other fields are valid",
+      "objective": "Verify error handling for invalid phone format",
+      "coverage_refs": ["6", "1", "9", "16"],
+      "decision_basis": {
+        "conditions": [
+          {"field": "Phone", "state": "invalid"},
+          {"field": "Username", "state": "valid"},
+          {"field": "Password", "state": "valid"},
+          {"field": "ConfirmPassword", "state": "valid"}
+        ],
+        "optimization_note": "Single invalid field"
+      },
+      "inputs": {
+        "Username": "12345678",
+        "Phone": "1234567890",
+        "Password": "12345678",
+        "ConfirmPassword": "12345678"
+      },
+      "expected": "Số điện thoại không hợp lệ",
+      "priority": "Medium"
+    },
+    {
+      "id": "TC006",
+      "name": "Single Fault - Invalid Phone (invalid characters)",
+      "description": "Phone contains invalid characters while other fields are valid",
+      "objective": "Verify error handling for invalid phone characters",
+      "coverage_refs": ["7", "1", "9", "16"],
+      "decision_basis": {
+        "conditions": [
+          {"field": "Phone", "state": "invalid"},
+          {"field": "Username", "state": "valid"},
+          {"field": "Password", "state": "valid"},
+          {"field": "ConfirmPassword", "state": "valid"}
+        ],
+        "optimization_note": "Single invalid field"
+      },
+      "inputs": {
+        "Username": "12345678",
+        "Phone": "1234567890a",
+        "Password": "12345678",
+        "ConfirmPassword": "12345678"
+      },
+      "expected": "Số điện thoại không hợp lệ",
+      "priority": "Medium"
+    },
+    {
+      "id": "TC007",
+      "name": "Single Fault - Invalid Password (7 characters)",
+      "description": "Password has 7 characters while other fields are valid",
+      "objective": "Verify error handling for invalid password length",
+      "coverage_refs": ["8", "1", "4", "16"],
+      "decision_basis": {
+        "conditions": [
+          {"field": "Password", "state": "invalid"},
+          {"field": "Username", "state": "valid"},
+          {"field": "Phone", "state": "valid"},
+          {"field": "ConfirmPassword", "state": "valid"}
+        ],
+        "optimization_note": "Single invalid field"
+      },
+      "inputs": {
+        "Username": "12345678",
+        "Phone": "123456789012",
+        "Password": "1234567",
+        "ConfirmPassword": "12345678"
+      },
+      "expected": "Mật khẩu phải từ 8 đến 20 ký tự",
+      "priority": "Medium"
+    },
+    {
+      "id": "TC008",
+      "name": "Single Fault - Invalid Password (21 characters)",
+      "description": "Password has 21 characters while other fields are valid",
+      "objective": "Verify error handling for invalid password length",
+      "coverage_refs": ["10", "1", "4", "16"],
+      "decision_basis": {
+        "conditions": [
+          {"field": "Password", "state": "invalid"},
+          {"field": "Username", "state": "valid"},
+          {"field": "Phone", "state": "valid"},
+          {"field": "ConfirmPassword", "state": "valid"}
+        ],
+        "optimization_note": "Single invalid field"
+      },
+      "inputs": {
+        "Username": "12345678",
+        "Phone": "123456789012",
+        "Password": "123456789012345678901",
+        "ConfirmPassword": "12345678"
+      },
+      "expected": "Mật khẩu phải từ 8 đến 20 ký tự",
+      "priority": "Medium"
+    },
+    {
+      "id": "TC009",
+      "name": "Single Fault - Invalid Confirm Password (mismatch)",
+      "description": "Confirm Password does not match Password while other fields are valid",
+      "objective": "Verify error handling for mismatched confirm password",
+      "coverage_refs": ["11", "1", "4", "9"],
+      "decision_basis": {
+        "conditions": [
+          {"field": "ConfirmPassword", "state": "invalid"},
+          {"field": "Username", "state": "valid"},
+          {"field": "Phone", "state": "valid"},
+          {"field": "Password", "state": "valid"}
+        ],
+        "optimization_note": "Single invalid field"
+      },
+      "inputs": {
+        "Username": "12345678",
+        "Phone": "123456789012",
+        "Password": "123
