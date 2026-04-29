@@ -40,13 +40,46 @@ WRAP_CENTER = Alignment(horizontal="center", vertical="center", wrap_text=True)
 
 INVALID_SHEET_CHARS = re.compile(r"[\\/*?:\[\]]")
 
+# =============================================================================
+# STEP 1 COLUMN DEFINITIONS
+# =============================================================================
+STEP1_INTERNAL_COLUMNS = [
+    "Coverage No",
+    "Coverage ID",
+    "Description",
+    "Representative Value",
+    "Expected Class",
+    "Technique",
+    "Rule",
+    "Validity",
+    "Partition Type",
+    "Boundary Kind",
+    "Boundary Reference",
+    "Boundary Point",
+]
+
+STEP1_DISPLAY_HEADERS = [
+    "No.",
+    "Coverage ID",
+    "Test Condition Description",
+    "Test Data (Representative Value)",
+    "Expected Result / Expected Behavior",
+    "Testing Technique (EP/BVA)",
+    "Validation Rule / Business Rule",
+    "Data Validity (Valid/Invalid)",
+    "Equivalence Partition Type",
+    "Boundary Type",
+    "Boundary Reference Value",
+    "Boundary Point (MIN, MAX, N...)",
+]
+
 
 # =============================================================================
-# STEP 2 / PROCESSED DATA EXPORTER
+# STEP 3 / PROCESSED DATA EXPORTER
 # =============================================================================
 class DataExporter:
     """
-    Exporter cho pipeline 2 bước.
+    Exporter cho pipeline 3 bước.
 
     Mục tiêu:
     1. Raw/run artifacts:
@@ -55,6 +88,8 @@ class DataExporter:
          output/register_2026-04-19_10-15-32/
             step1.json
             step1.xlsx
+            step2_dt.json
+            step2_dt_invalid.json
             final.json
             final_invalid.json
             ...
@@ -203,6 +238,8 @@ class DataExporter:
         Ví dụ:
         - step1.json
         - step1_invalid.json
+        - step2_dt.json
+        - step2_dt_invalid.json
         - final.json
         - final_invalid.json
         """
@@ -539,18 +576,18 @@ class Step1ExcelExporter:
             grouped[field].append(
                 {
                     "Coverage No": f"C{counters[field]}",
-                    "Field": field,
-                    "ID": self.as_clean_str(item.get("id")),
+                    "Coverage ID": self.as_clean_str(item.get("id")),
+                    "Description": self.as_clean_str(item.get("description")),
+                    "Representative Value": self.as_clean_str(item.get("representative_value")),
+                    "Expected Class": self.as_clean_str(item.get("expected_class")),
                     "Technique": self.as_clean_str(item.get("technique")).upper(),
                     "Rule": self.as_clean_str(item.get("rule")),
                     "Validity": self.as_clean_str(item.get("validity")),
                     "Partition Type": self.as_clean_str(item.get("partition_type")),
-                    "Representative Value": self.as_clean_str(item.get("representative_value")),
-                    "Description": self.as_clean_str(item.get("description")),
-                    "Expected Class": self.as_clean_str(item.get("expected_class")),
                     "Boundary Kind": self.as_clean_str(boundary.get("kind")),
                     "Boundary Reference": self.as_clean_str(boundary.get("reference")),
                     "Boundary Point": self.as_clean_str(boundary.get("point")).upper(),
+                    "Field": field,
                 }
             )
 
@@ -709,7 +746,7 @@ class Step1ExcelExporter:
         ]:
             for col, value in enumerate(values, start=1):
                 cell = ws.cell(row, col, value)
-                self.apply_data_cell(cell, LEFT if col in {1, 5, 5} else CENTER)
+                self.apply_data_cell(cell, LEFT if col in {1, 5} else CENTER)
             row += 1
 
         for field, rows in field_rows.items():
@@ -726,7 +763,7 @@ class Step1ExcelExporter:
             ]
             for col, value in enumerate(values, start=1):
                 cell = ws.cell(row, col, value)
-                self.apply_data_cell(cell, LEFT if col in {1, 5, 5} else CENTER)
+                self.apply_data_cell(cell, LEFT if col in {1, 5} else CENTER)
             row += 1
 
         ws.freeze_panes = "A12"
@@ -848,35 +885,21 @@ class Step1ExcelExporter:
             ws.cell(idx, 2).alignment = LEFT if idx < meta_start_row + 2 else CENTER
 
         header_row = 9
-        headers = [
-            "Coverage No",
-            "Coverage ID",
-            "Technique",
-            "Rule",
-            "Validity",
-            "Partition Type",
-            "Representative Value",
-            "Description",
-            "Expected Class",
-            "Boundary Kind",
-            "Boundary Reference",
-            "Boundary Point",
-        ]
-        for col, header in enumerate(headers, start=1):
+        for col, header in enumerate(STEP1_DISPLAY_HEADERS, start=1):
             self.apply_table_header(ws.cell(header_row, col, header))
 
         current_row = header_row + 1
         for row in rows:
             values = [
                 row["Coverage No"],
-                row["ID"],
+                row["Coverage ID"],
+                row["Description"],
+                row["Representative Value"],
+                row["Expected Class"],
                 row["Technique"],
                 row["Rule"],
                 row["Validity"],
                 row["Partition Type"],
-                row["Representative Value"],
-                row["Description"],
-                row["Expected Class"],
                 row["Boundary Kind"],
                 row["Boundary Reference"],
                 row["Boundary Point"],
@@ -884,13 +907,13 @@ class Step1ExcelExporter:
             aligns = [
                 CENTER,
                 CENTER,
+                WRAP_LEFT,
+                WRAP_LEFT,
+                WRAP_LEFT,
                 CENTER,
                 WRAP_LEFT,
                 CENTER,
                 CENTER,
-                WRAP_LEFT,
-                WRAP_LEFT,
-                WRAP_LEFT,
                 CENTER,
                 CENTER,
                 CENTER,
@@ -904,18 +927,18 @@ class Step1ExcelExporter:
         ws.auto_filter.ref = f"A9:L{max(current_row - 1, 9)}"
 
         manual_widths = {
-            "A": 12,
+            "A": 10,
             "B": 14,
-            "C": 12,
-            "D": 28,
-            "E": 12,
-            "F": 16,
-            "G": 22,
-            "H": 42,
+            "C": 38,
+            "D": 24,
+            "E": 30,
+            "F": 18,
+            "G": 32,
+            "H": 20,
             "I": 24,
-            "J": 14,
-            "K": 18,
-            "L": 16,
+            "J": 16,
+            "K": 22,
+            "L": 24,
         }
         for col, width in manual_widths.items():
             ws.column_dimensions[col].width = width
@@ -943,3 +966,292 @@ class Step1ExcelExporter:
 def export_step1_to_excel(json_path: str | Path, output_path: str | Path) -> Path:
     exporter = Step1ExcelExporter()
     return exporter.export_step1_to_excel(json_path, output_path)
+
+# =============================================================================
+# STEP 2 DECISION TABLE -> EXCEL EXPORTER
+# =============================================================================
+class Step2DecisionTableExcelExporter:
+    """
+    Export Step 2 Decision Table JSON -> Excel dạng bảng quyết định.
+
+    Dạng bảng mô phỏng mẫu bài giảng:
+    - Cột 1: Nguyên nhân / Kết quả
+    - Cột 2: Giá trị
+    - Các cột tiếp theo: Các sự kết hợp 1..n
+    - Hàng điều kiện: Y/N/-
+    - Hàng kết quả: đánh dấu x tại kết quả tương ứng
+    """
+
+    TRUE_STATES = {
+        "y", "yes", "true", "t", "1",
+        "valid", "hop le", "hợp lệ",
+        "pass", "passed", "ok",
+    }
+
+    FALSE_STATES = {
+        "n", "no", "false", "f", "0",
+        "invalid", "khong hop le", "không hợp lệ", "ko hop le", "ko hợp lệ",
+        "fail", "failed", "not ok",
+    }
+
+    @staticmethod
+    def _clean(value: Any) -> str:
+        return "" if value is None else str(value).strip()
+
+    @staticmethod
+    def _normalize_state(value: Any) -> str:
+        raw = "" if value is None else str(value).strip()
+        key = raw.lower()
+
+        # Chuẩn hóa tiếng Việt không dấu ở mức đơn giản để bắt các trạng thái phổ biến.
+        key_ascii = (
+            key.replace("ợ", "o")
+            .replace("ơ", "o")
+            .replace("ô", "o")
+            .replace("ó", "o")
+            .replace("ò", "o")
+            .replace("ỏ", "o")
+            .replace("õ", "o")
+            .replace("ọ", "o")
+            .replace("ệ", "e")
+            .replace("ê", "e")
+            .replace("é", "e")
+            .replace("è", "e")
+            .replace("ẻ", "e")
+            .replace("ẽ", "e")
+            .replace("ẹ", "e")
+            .replace("ậ", "a")
+            .replace("ă", "a")
+            .replace("â", "a")
+            .replace("á", "a")
+            .replace("à", "a")
+            .replace("ả", "a")
+            .replace("ã", "a")
+            .replace("ạ", "a")
+            .replace("í", "i")
+            .replace("ì", "i")
+            .replace("ỉ", "i")
+            .replace("ĩ", "i")
+            .replace("ị", "i")
+            .replace("ú", "u")
+            .replace("ù", "u")
+            .replace("ủ", "u")
+            .replace("ũ", "u")
+            .replace("ụ", "u")
+            .replace("ư", "u")
+            .replace("ý", "y")
+            .replace("ỳ", "y")
+            .replace("ỷ", "y")
+            .replace("ỹ", "y")
+            .replace("ỵ", "y")
+            .replace("đ", "d")
+        )
+
+        if key in Step2DecisionTableExcelExporter.TRUE_STATES or key_ascii in Step2DecisionTableExcelExporter.TRUE_STATES:
+            return "Y"
+        if key in Step2DecisionTableExcelExporter.FALSE_STATES or key_ascii in Step2DecisionTableExcelExporter.FALSE_STATES:
+            return "N"
+        if key in {"-", "don't care", "dont care", "n/a", "na", "any", "bất kỳ", "bat ky"}:
+            return "-"
+        return raw or "-"
+
+    def _extract_conditions(self, rules: List[Dict[str, Any]]) -> List[str]:
+        conditions: List[str] = []
+        seen = set()
+
+        for rule in rules:
+            if not isinstance(rule, dict):
+                continue
+            for condition in rule.get("conditions", []):
+                if not isinstance(condition, dict):
+                    continue
+                field = self._clean(condition.get("field"))
+                if not field or field in seen:
+                    continue
+                seen.add(field)
+                conditions.append(field)
+
+        return conditions
+
+    def _extract_actions(self, rules: List[Dict[str, Any]]) -> List[str]:
+        actions: List[str] = []
+        seen = set()
+
+        for rule in rules:
+            if not isinstance(rule, dict):
+                continue
+            expected = self._clean(rule.get("expected"))
+            if not expected or expected in seen:
+                continue
+            seen.add(expected)
+            actions.append(expected)
+
+        return actions
+
+    def _get_condition_state(self, rule: Dict[str, Any], condition_name: str) -> str:
+        for condition in rule.get("conditions", []):
+            if not isinstance(condition, dict):
+                continue
+            field = self._clean(condition.get("field"))
+            if field != condition_name:
+                continue
+            return self._normalize_state(condition.get("state"))
+        return "-"
+
+    @staticmethod
+    def _apply_cell_style(cell, is_header: bool = False, align=None) -> None:
+        cell.border = BORDER_ALL
+        cell.alignment = align or WRAP_CENTER
+        if is_header:
+            cell.fill = HEADER_FILL
+            cell.font = HEADER_FONT
+
+    def export_step2_to_excel(self, data: Dict[str, Any], output_path: str | Path) -> Path:
+        if not isinstance(data, dict):
+            raise ValueError("Step2 data must be a JSON object")
+
+        rules_raw = data.get("decision_rules", [])
+        if not isinstance(rules_raw, list) or not rules_raw:
+            raise ValueError("Step2 JSON must contain non-empty decision_rules")
+
+        rules: List[Dict[str, Any]] = [r for r in rules_raw if isinstance(r, dict)]
+        if not rules:
+            raise ValueError("Step2 decision_rules must contain objects")
+
+        conditions = self._extract_conditions(rules)
+        actions = self._extract_actions(rules)
+
+        if not conditions:
+            raise ValueError("Step2 decision_rules must contain conditions")
+        if not actions:
+            raise ValueError("Step2 decision_rules must contain expected actions/results")
+
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Decision_Table"
+
+        feature_name = self._clean(data.get("feature")) or "feature"
+        description = self._clean(data.get("description"))
+
+        total_rules = len(rules)
+        last_col = 2 + total_rules
+
+        ws.cell(1, 1, f"STEP 2 DECISION TABLE - {feature_name.upper()}")
+        ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=last_col)
+        self._apply_cell_style(ws.cell(1, 1), is_header=True, align=LEFT)
+
+        if description:
+            ws.cell(2, 1, description)
+            ws.merge_cells(start_row=2, start_column=1, end_row=2, end_column=last_col)
+            ws.cell(2, 1).alignment = WRAP_LEFT
+
+        title_row = 4
+        header_row = 5
+
+        ws.merge_cells(start_row=title_row, start_column=3, end_row=title_row, end_column=last_col)
+        ws.cell(title_row, 3, "Các sự kết hợp")
+        self._apply_cell_style(ws.cell(title_row, 3), is_header=True)
+
+        ws.cell(header_row, 1, "Nguyên nhân")
+        ws.cell(header_row, 2, "Giá trị")
+        self._apply_cell_style(ws.cell(header_row, 1), is_header=True)
+        self._apply_cell_style(ws.cell(header_row, 2), is_header=True)
+
+        for idx in range(1, total_rules + 1):
+            cell = ws.cell(header_row, idx + 2, idx)
+            self._apply_cell_style(cell, is_header=True)
+
+        row = header_row + 1
+        for condition_name in conditions:
+            ws.cell(row, 1, condition_name)
+            ws.cell(row, 2, "Y/N")
+            self._apply_cell_style(ws.cell(row, 1), align=WRAP_LEFT)
+            self._apply_cell_style(ws.cell(row, 2), align=CENTER)
+
+            for col_idx, rule in enumerate(rules, start=3):
+                state = self._get_condition_state(rule, condition_name)
+                self._apply_cell_style(ws.cell(row, col_idx, state), align=CENTER)
+            row += 1
+
+        ws.cell(row, 1, "Kết quả")
+        ws.cell(row, 2, "")
+        self._apply_cell_style(ws.cell(row, 1), is_header=True, align=LEFT)
+        self._apply_cell_style(ws.cell(row, 2), is_header=True)
+        for col in range(3, last_col + 1):
+            self._apply_cell_style(ws.cell(row, col, ""), is_header=True)
+        row += 1
+
+        for action in actions:
+            ws.cell(row, 1, action)
+            ws.cell(row, 2, "")
+            self._apply_cell_style(ws.cell(row, 1), align=WRAP_LEFT)
+            self._apply_cell_style(ws.cell(row, 2), align=CENTER)
+
+            for col_idx, rule in enumerate(rules, start=3):
+                expected = self._clean(rule.get("expected"))
+                mark = "x" if expected == action else ""
+                self._apply_cell_style(ws.cell(row, col_idx, mark), align=CENTER)
+            row += 1
+
+        # Sheet phụ giúp debug/mapping từ rule_id sang coverage_refs.
+        detail_ws = wb.create_sheet("Rules_Detail")
+        detail_headers = [
+            "Rule No",
+            "Rule ID",
+            "Type",
+            "Coverage Refs",
+            "Conditions",
+            "Expected",
+            "Optimization Note",
+        ]
+        for col, header in enumerate(detail_headers, start=1):
+            self._apply_cell_style(detail_ws.cell(1, col, header), is_header=True)
+
+        for idx, rule in enumerate(rules, start=1):
+            conditions_text = "; ".join(
+                f"{self._clean(c.get('field'))}={self._clean(c.get('state'))}"
+                for c in rule.get("conditions", [])
+                if isinstance(c, dict)
+            )
+            values = [
+                idx,
+                self._clean(rule.get("id")),
+                self._clean(rule.get("type")),
+                ", ".join(str(x) for x in rule.get("coverage_refs", []) if str(x).strip()),
+                conditions_text,
+                self._clean(rule.get("expected")),
+                self._clean(rule.get("optimization_note")),
+            ]
+            for col, value in enumerate(values, start=1):
+                align = CENTER if col in {1, 2, 3} else WRAP_LEFT
+                self._apply_cell_style(detail_ws.cell(idx + 1, col, value), align=align)
+
+        ws.freeze_panes = "C6"
+        detail_ws.freeze_panes = "A2"
+
+        ws.column_dimensions["A"].width = 38
+        ws.column_dimensions["B"].width = 12
+        for col in range(3, last_col + 1):
+            ws.column_dimensions[get_column_letter(col)].width = 8
+
+        detail_widths = {
+            "A": 10,
+            "B": 16,
+            "C": 18,
+            "D": 35,
+            "E": 55,
+            "F": 40,
+            "G": 45,
+        }
+        for col, width in detail_widths.items():
+            detail_ws.column_dimensions[col].width = width
+
+        output = Path(output_path)
+        output.parent.mkdir(parents=True, exist_ok=True)
+        wb.save(output)
+        return output
+
+
+def export_step2_to_excel(data: Dict[str, Any], output_path: str | Path) -> Path:
+    exporter = Step2DecisionTableExcelExporter()
+    return exporter.export_step2_to_excel(data, output_path)

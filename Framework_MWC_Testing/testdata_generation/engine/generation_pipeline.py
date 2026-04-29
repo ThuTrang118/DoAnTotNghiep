@@ -6,29 +6,40 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
-from testdata_generation.engine.exporters import DataExporter, export_step1_to_excel
+from testdata_generation.engine.exporters import (
+    DataExporter,
+    export_step1_to_excel,
+    export_step2_to_excel,
+)
 from testdata_generation.engine.feature_item_schema import (
     build_default_testcase_id,
     normalize_feature_name,
 )
 from testdata_generation.engine.llm_output_parser import LLMOutputParser
 from testdata_generation.engine.prompt_loader import PromptLoader
-from testdata_generation.engine.validators import ConditionsValidator, FinalDTValidator
+from testdata_generation.engine.validators import (
+    ConditionsValidator,
+    Step2DecisionTableValidator,
+    Step3FinalValidator,
+)
 
 
 class GenerationPipeline:
     """
-    Pipeline sinh dữ liệu kiểm thử tự động theo mô hình 2 bước:
+    Pipeline sinh dữ liệu kiểm thử tự động theo mô hình 3 bước:
 
     Step 1:
         AI phân tích EP + BVA -> coverage_items
 
     Step 2:
-        AI phân tích Decision Table -> testcases cuối
+        AI phân tích Decision Table -> decision_rules trung gian
+
+    Step 3:
+        AI map decision_rules + Step1 -> final testcases
 
     Nguyên tắc production:
     - Fail fast: sai ở bước nào dừng ngay ở bước đó
-    - Không export processed data nếu Step 2 chưa pass
+    - Không export processed data nếu Step 3 chưa pass
     - Luôn lưu raw output để debug
     - Luôn lưu invalid json nếu parse được nhưng validate fail
     """
@@ -62,12 +73,29 @@ class GenerationPipeline:
         "coverage_refs",
         "not found in Step 1",
         "no happy path",
+        "happy_path",
+        "single-fault",
+        "single_fault",
+        "boundary",
+        "missing decision rule",
+        "expected",
+    )
+
+    STEP3_SEVERE_WARNING_MARKERS = (
+        "unused coverage",
+        "missing coverage",
+        "coverage_refs",
+        "not found in Step 1",
+        "not found in Step 2",
+        "no happy path",
         "happy path",
         "single-fault",
         "boundary",
         "missing testcase",
         "expected",
     )
+
+    EMPTY_LLM_OUTPUT_MARKER = "[[EMPTY_LLM_OUTPUT]]"
 
     def __init__(self, llm_client, base_dir: Path, verbose: bool = True) -> None:
         self.llm_client = llm_client
@@ -81,7 +109,8 @@ class GenerationPipeline:
         self.prompt_loader = PromptLoader(input_dir=self.base_dir / "input")
 
         self.step1_validator = ConditionsValidator()
-        self.step2_validator = FinalDTValidator()
+        self.step2_validator = Step2DecisionTableValidator()
+        self.step3_validator = Step3FinalValidator()
 
     # ==========================================================================
     # LOGGING
@@ -105,10 +134,81 @@ class GenerationPipeline:
         run_dir.mkdir(parents=True, exist_ok=True)
         return run_dir
 
+    def _resolve_existing_run_dir(self, run_name: str) -> Path:
+        if not isinstance(run_name, str) or not run_name.strip():
+            raise RuntimeError("Run name is required for this step.")
+
+        run_name = run_name.strip().strip('\"').strip("'")
+        run_dir = Path(run_name)
+
+        if not run_dir.is_absolute():
+            run_dir = self.output_root / run_name
+
+        run_dir = run_dir.resolve()
+
+        if not run_dir.exists():
+            raise FileNotFoundError(f"Run directory not found: {run_dir}")
+        if not run_dir.is_dir():
+            raise RuntimeError(f"Run path is not a directory: {run_dir}")
+
+        return run_dir
+
+    def _load_run_json(self, run_dir: Path, filename: str) -> Dict[str, Any]:
+        path = run_dir / filename
+        if not path.exists():
+            raise FileNotFoundError(f"Required run artifact not found: {path}")
+        if not path.is_file():
+            raise RuntimeError(f"Run artifact path is not a file: {path}")
+
+        with path.open("r", encoding="utf-8") as f:
+            data = __import__("json").load(f)
+
+        if not isinstance(data, dict):
+            raise RuntimeError(f"{filename} must contain a JSON object: {path}")
+
+        return data
+
+    def _prepare_loaded_step1_data(self, step1_data: Dict[str, Any], feature: str) -> Dict[str, Any]:
+        feature_key = normalize_feature_name(feature)
+        loaded_feature = normalize_feature_name(str(step1_data.get("feature", feature_key)))
+        if loaded_feature != feature_key:
+            raise RuntimeError(
+                f"Feature mismatch: command feature='{feature_key}' but step1.json feature='{loaded_feature}'."
+            )
+
+        step1_data = self._force_step1_feature(step1_data, feature_key)
+        step1_data = self._normalize_step1_data(step1_data)
+        step1_data = self._remove_legacy_step1_counts(step1_data)
+        step1_data = self._rebuild_step1_summary(step1_data)
+
+        self._hard_check_step1_structure(step1_data)
+        self.step1_validator.validate_or_raise(step1_data)
+        return step1_data
+
+    def _prepare_loaded_step2_data(self, dt_data: Dict[str, Any], feature: str, step1_data: Dict[str, Any]) -> Dict[str, Any]:
+        feature_key = normalize_feature_name(feature)
+        loaded_feature = normalize_feature_name(str(dt_data.get("feature", feature_key)))
+        if loaded_feature != feature_key:
+            raise RuntimeError(
+                f"Feature mismatch: command feature='{feature_key}' but step2_dt.json feature='{loaded_feature}'."
+            )
+
+        dt_data = self._force_step2_feature(dt_data, feature_key)
+        dt_data = self._normalize_step2_data(dt_data)
+        dt_data = self._rebuild_step2_summary(dt_data)
+
+        self._hard_check_step2_structure(dt_data)
+        self.step2_validator.validate_or_raise(dt_data, step1_data)
+        return dt_data
+
     # ==========================================================================
     # PUBLIC API
     # ==========================================================================
     def generate(self, feature: str, formats: List[str]) -> Tuple[str, List[str]]:
+        """Backward-compatible alias: chạy liền mạch cả 3 step."""
+        return self.generate_all(feature, formats)
+
+    def generate_all(self, feature: str, formats: List[str]) -> Tuple[str, List[str]]:
         total_start = time.perf_counter()
 
         feature_name = normalize_feature_name(feature)
@@ -123,18 +223,102 @@ class GenerationPipeline:
         self._log(f"Thư mục processed data: {processed_feature_dir}")
         self._log(f"Định dạng export yêu cầu: {formats}")
 
-        # Step 1: fail ngay nếu sai
         step1_data = self._generate_step1(feature_name, exporter)
+        dt_data = self._generate_step2_decision_table(feature_name, step1_data, exporter)
+        final_json_path, final_data = self._generate_step3_final(
+            feature_name,
+            step1_data,
+            dt_data,
+            exporter,
+        )
 
-        # Step 2: fail ngay nếu sai
-        final_json_path, step2_data = self._generate_step2(feature_name, step1_data, exporter)
-
-        # Chỉ export khi Step 2 đã pass hoàn toàn
-        processed_files = self._export_processed_files(feature_name, step2_data, formats, exporter)
+        processed_files = self._export_processed_files(feature_name, final_data, formats, exporter)
 
         total_elapsed = time.perf_counter() - total_start
         self._log(f"Hoàn tất pipeline trong {self._format_seconds(total_elapsed)}")
 
+        return str(final_json_path), processed_files
+
+    def generate_step1(self, feature: str) -> str:
+        """Chạy riêng Step 1 và tạo run mới."""
+        total_start = time.perf_counter()
+
+        feature_name = normalize_feature_name(feature)
+        if not feature_name:
+            raise RuntimeError("Feature is empty.")
+
+        run_dir = self._build_run_output_dir(feature_name)
+        exporter = DataExporter(run_dir=run_dir)
+
+        self._log(f"Bắt đầu STEP 1 cho feature: '{feature_name}'")
+        self._log(f"Thư mục run artifacts: {run_dir}")
+
+        self._generate_step1(feature_name, exporter)
+
+        total_elapsed = time.perf_counter() - total_start
+        self._log(f"STEP 1 standalone hoàn tất trong {self._format_seconds(total_elapsed)}")
+        return str(run_dir)
+
+    def generate_step2(self, feature: str, run_name: str) -> str:
+        """Chạy riêng Step 2 bằng step1.json trong run được chỉ định."""
+        total_start = time.perf_counter()
+
+        feature_name = normalize_feature_name(feature)
+        run_dir = self._resolve_existing_run_dir(run_name)
+        exporter = DataExporter(run_dir=run_dir)
+
+        self._log(f"Bắt đầu STEP 2 cho feature: '{feature_name}'")
+        self._log(f"Run được chỉ định: {run_dir}")
+
+        step1_data_raw = self._load_run_json(run_dir, "step1.json")
+        step1_data = self._prepare_loaded_step1_data(step1_data_raw, feature_name)
+
+        # Ghi lại step1.json đã normalize để đảm bảo summary/count sạch cho các bước sau.
+        step1_json_path = exporter.write_raw_json(step1_data, filename="step1.json")
+        self._export_step1_excel_safely(step1_json_path)
+
+        dt_data = self._generate_step2_decision_table(feature_name, step1_data, exporter)
+
+        total_elapsed = time.perf_counter() - total_start
+        self._log(f"STEP 2 standalone hoàn tất trong {self._format_seconds(total_elapsed)}")
+        return str(run_dir / "step2_dt.json")
+
+    def generate_step3(self, feature: str, run_name: str, formats: List[str]) -> Tuple[str, List[str]]:
+        """Chạy riêng Step 3 bằng step1.json và step2_dt.json trong run được chỉ định."""
+        total_start = time.perf_counter()
+
+        feature_name = normalize_feature_name(feature)
+        self._validate_generate_inputs(feature_name, formats)
+
+        run_dir = self._resolve_existing_run_dir(run_name)
+        exporter = DataExporter(run_dir=run_dir)
+
+        self._log(f"Bắt đầu STEP 3 cho feature: '{feature_name}'")
+        self._log(f"Run được chỉ định: {run_dir}")
+        self._log(f"Định dạng export yêu cầu: {formats}")
+
+        step1_data_raw = self._load_run_json(run_dir, "step1.json")
+        step1_data = self._prepare_loaded_step1_data(step1_data_raw, feature_name)
+
+        dt_data_raw = self._load_run_json(run_dir, "step2_dt.json")
+        dt_data = self._prepare_loaded_step2_data(dt_data_raw, feature_name, step1_data)
+
+        # Ghi lại các artifact đã normalize để đảm bảo các file trong run đồng bộ.
+        step1_json_path = exporter.write_raw_json(step1_data, filename="step1.json")
+        self._export_step1_excel_safely(step1_json_path)
+        exporter.write_raw_json(dt_data, filename="step2_dt.json")
+        self._export_step2_excel_safely(dt_data, exporter)
+
+        final_json_path, final_data = self._generate_step3_final(
+            feature_name,
+            step1_data,
+            dt_data,
+            exporter,
+        )
+        processed_files = self._export_processed_files(feature_name, final_data, formats, exporter)
+
+        total_elapsed = time.perf_counter() - total_start
+        self._log(f"STEP 3 standalone hoàn tất trong {self._format_seconds(total_elapsed)}")
         return str(final_json_path), processed_files
 
     # ==========================================================================
@@ -248,6 +432,12 @@ class GenerationPipeline:
         return raw if raw in allowed else str(value or "").strip()
 
     @staticmethod
+    def _normalize_step2_rule_type(value: Any) -> str:
+        raw = str(value or "").strip().lower()
+        allowed = {"happy_path", "single_fault", "boundary", "business_rule"}
+        return raw if raw in allowed else str(value or "").strip()
+
+    @staticmethod
     def _dedupe_string_list(values: Any) -> List[str]:
         if not isinstance(values, list):
             return []
@@ -298,12 +488,36 @@ class GenerationPipeline:
     # ==========================================================================
     def _save_raw_output(self, exporter: DataExporter, filename: str, raw_output: Any) -> Path:
         path = exporter._get_run_file_path(filename)
-        path.write_text("" if raw_output is None else str(raw_output), encoding="utf-8")
+
+        if raw_output is None:
+            text = self.EMPTY_LLM_OUTPUT_MARKER
+        else:
+            text = str(raw_output)
+            if not text.strip():
+                text = self.EMPTY_LLM_OUTPUT_MARKER
+
+        path.write_text(text, encoding="utf-8")
         return path
+
+    def _raise_if_llm_output_empty(self, raw_output: Any, step_name: str, raw_txt_path: Path) -> None:
+        if raw_output is None or not str(raw_output).strip():
+            raise RuntimeError(
+                f"{step_name} LLM returned empty output. "
+                f"Raw output marker saved at: {raw_txt_path}"
+            )
 
     # ==========================================================================
     # STEP 1 NORMALIZATION / HARD CHECK
     # ==========================================================================
+    def _remove_legacy_step1_counts(self, step1_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Xoá các field đếm cũ dễ gây mâu thuẫn với coverage_summary.
+        Step 2 và validator chỉ nên nhìn 1 nguồn đếm duy nhất: coverage_summary.
+        """
+        if "coverage_items_count" in step1_data:
+            step1_data.pop("coverage_items_count", None)
+        return step1_data
+
     def _rebuild_step1_summary(self, step1_data: Dict[str, Any]) -> Dict[str, Any]:
         items = step1_data.get("coverage_items", [])
         ep_count = 0
@@ -364,7 +578,6 @@ class GenerationPipeline:
             else:
                 normalized["boundary"] = None
 
-            # Đồng bộ EP/BVA bắt buộc
             if normalized["technique"] == "EP":
                 normalized["boundary"] = None
 
@@ -428,21 +641,103 @@ class GenerationPipeline:
     # ==========================================================================
     # STEP 2 NORMALIZATION / HARD CHECK
     # ==========================================================================
-    def _force_step2_feature(self, step2_data: Dict[str, Any], feature_key: str) -> Dict[str, Any]:
-        step2_data["feature"] = feature_key
-        return step2_data
+    def _force_step2_feature(self, dt_data: Dict[str, Any], feature_key: str) -> Dict[str, Any]:
+        dt_data["feature"] = feature_key
+        return dt_data
 
-    def _rebuild_step2_summary(self, step2_data: Dict[str, Any]) -> Dict[str, Any]:
-        testcases = step2_data.get("testcases", [])
+    def _rebuild_step2_summary(self, dt_data: Dict[str, Any]) -> Dict[str, Any]:
+        rules = dt_data.get("decision_rules", [])
+        total = len(rules) if isinstance(rules, list) else 0
+        dt_data["decision_summary"] = {"total_rules": total}
+        return dt_data
+
+    def _normalize_step2_data(self, dt_data: Dict[str, Any]) -> Dict[str, Any]:
+        rules = dt_data.get("decision_rules")
+        if not isinstance(rules, list):
+            dt_data["decision_rules"] = []
+            return dt_data
+
+        normalized_rules: List[Dict[str, Any]] = []
+
+        for rule in rules:
+            if not isinstance(rule, dict):
+                continue
+
+            normalized = dict(rule)
+            normalized["id"] = self._clean_text(normalized.get("id"))
+            normalized["type"] = self._normalize_step2_rule_type(normalized.get("type"))
+            normalized["coverage_refs"] = self._dedupe_string_list(normalized.get("coverage_refs"))
+            normalized["conditions"] = self._dedupe_conditions(normalized.get("conditions"))
+            normalized["expected"] = self._clean_text(normalized.get("expected"))
+            normalized["optimization_note"] = self._clean_text(normalized.get("optimization_note"))
+
+            normalized_rules.append(normalized)
+
+        dt_data["decision_rules"] = normalized_rules
+        return dt_data
+
+    def _hard_check_step2_structure(self, dt_data: Dict[str, Any]) -> None:
+        if not isinstance(dt_data, dict):
+            raise RuntimeError("Step2 DT output must be a JSON object.")
+
+        if not self._clean_text(dt_data.get("feature")):
+            raise RuntimeError("Step2 missing 'feature'.")
+
+        if not self._clean_text(dt_data.get("description")):
+            raise RuntimeError("Step2 missing 'description'.")
+
+        rules = dt_data.get("decision_rules")
+        if not isinstance(rules, list) or not rules:
+            raise RuntimeError("Step2 must contain non-empty 'decision_rules'.")
+
+        ids = set()
+        for idx, rule in enumerate(rules, start=1):
+            if not isinstance(rule, dict):
+                raise RuntimeError(f"Step2 decision_rules[{idx}] must be an object.")
+
+            rule_id = self._clean_text(rule.get("id"))
+            if not rule_id:
+                raise RuntimeError(f"Step2 decision_rules[{idx}] missing 'id'.")
+            if rule_id in ids:
+                raise RuntimeError(f"Step2 duplicate decision rule id: '{rule_id}'.")
+            ids.add(rule_id)
+
+            if not self._clean_text(rule.get("type")):
+                raise RuntimeError(f"Step2 decision_rules[{idx}] missing 'type'.")
+
+            coverage_refs = rule.get("coverage_refs")
+            if not isinstance(coverage_refs, list) or not coverage_refs:
+                raise RuntimeError(
+                    f"Step2 decision_rules[{idx}] must have non-empty 'coverage_refs'."
+                )
+
+            conditions = rule.get("conditions")
+            if not isinstance(conditions, list) or not conditions:
+                raise RuntimeError(
+                    f"Step2 decision_rules[{idx}] must have non-empty 'conditions'."
+                )
+
+            if not self._clean_text(rule.get("expected")):
+                raise RuntimeError(f"Step2 decision_rules[{idx}] missing 'expected'.")
+
+    # ==========================================================================
+    # STEP 3 NORMALIZATION / HARD CHECK
+    # ==========================================================================
+    def _force_step3_feature(self, step3_data: Dict[str, Any], feature_key: str) -> Dict[str, Any]:
+        step3_data["feature"] = feature_key
+        return step3_data
+
+    def _rebuild_step3_summary(self, step3_data: Dict[str, Any]) -> Dict[str, Any]:
+        testcases = step3_data.get("testcases", [])
         total = len(testcases) if isinstance(testcases, list) else 0
-        step2_data["testcase_summary"] = {"total_testcases": total}
-        return step2_data
+        step3_data["testcase_summary"] = {"total_testcases": total}
+        return step3_data
 
-    def _normalize_step2_data(self, feature: str, step2_data: Dict[str, Any]) -> Dict[str, Any]:
-        testcases = step2_data.get("testcases")
+    def _normalize_step3_data(self, feature: str, step3_data: Dict[str, Any]) -> Dict[str, Any]:
+        testcases = step3_data.get("testcases")
         if not isinstance(testcases, list):
-            step2_data["testcases"] = []
-            return step2_data
+            step3_data["testcases"] = []
+            return step3_data
 
         normalized_testcases: List[Dict[str, Any]] = []
 
@@ -479,74 +774,80 @@ class GenerationPipeline:
             if not isinstance(decision_basis, dict):
                 decision_basis = {}
 
-            decision_basis["conditions"] = self._dedupe_conditions(decision_basis.get("conditions"))
+            conditions = decision_basis.get("conditions")
+            decision_basis["conditions"] = self._dedupe_conditions(conditions)
             decision_basis["optimization_note"] = self._clean_text(decision_basis.get("optimization_note"))
+            decision_basis["rule_id"] = self._clean_text(decision_basis.get("rule_id"))
             normalized["decision_basis"] = decision_basis
 
             normalized_testcases.append(normalized)
 
-        step2_data["testcases"] = normalized_testcases
-        return step2_data
+        step3_data["testcases"] = normalized_testcases
+        return step3_data
 
-    def _hard_check_step2_structure(self, step2_data: Dict[str, Any]) -> None:
-        if not isinstance(step2_data, dict):
-            raise RuntimeError("Step2 output must be a JSON object.")
+    def _hard_check_step3_structure(self, step3_data: Dict[str, Any]) -> None:
+        if not isinstance(step3_data, dict):
+            raise RuntimeError("Step3 output must be a JSON object.")
 
-        if not self._clean_text(step2_data.get("feature")):
-            raise RuntimeError("Step2 missing 'feature'.")
+        if not self._clean_text(step3_data.get("feature")):
+            raise RuntimeError("Step3 missing 'feature'.")
 
-        if not self._clean_text(step2_data.get("description")):
-            raise RuntimeError("Step2 missing 'description'.")
+        if not self._clean_text(step3_data.get("description")):
+            raise RuntimeError("Step3 missing 'description'.")
 
-        testcases = step2_data.get("testcases")
+        testcases = step3_data.get("testcases")
         if not isinstance(testcases, list) or not testcases:
-            raise RuntimeError("Step2 must contain non-empty 'testcases'.")
+            raise RuntimeError("Step3 must contain non-empty 'testcases'.")
 
         ids = set()
         for idx, tc in enumerate(testcases, start=1):
             if not isinstance(tc, dict):
-                raise RuntimeError(f"Step2 testcases[{idx}] must be an object.")
+                raise RuntimeError(f"Step3 testcases[{idx}] must be an object.")
 
             tc_id = self._clean_text(tc.get("id"))
             if not tc_id:
-                raise RuntimeError(f"Step2 testcases[{idx}] missing 'id'.")
+                raise RuntimeError(f"Step3 testcases[{idx}] missing 'id'.")
             if tc_id in ids:
-                raise RuntimeError(f"Step2 duplicate testcase id: '{tc_id}'.")
+                raise RuntimeError(f"Step3 duplicate testcase id: '{tc_id}'.")
             ids.add(tc_id)
 
             for key in ("name", "description", "objective", "expected"):
                 if not self._clean_text(tc.get(key)):
-                    raise RuntimeError(f"Step2 testcases[{idx}] missing '{key}'.")
+                    raise RuntimeError(f"Step3 testcases[{idx}] missing '{key}'.")
 
             coverage_refs = tc.get("coverage_refs")
             if not isinstance(coverage_refs, list) or not coverage_refs:
-                raise RuntimeError(f"Step2 testcases[{idx}] must have non-empty 'coverage_refs'.")
+                raise RuntimeError(f"Step3 testcases[{idx}] must have non-empty 'coverage_refs'.")
 
             inputs = tc.get("inputs")
             if not isinstance(inputs, dict) or not inputs:
-                raise RuntimeError(f"Step2 testcases[{idx}] must have non-empty 'inputs'.")
+                raise RuntimeError(f"Step3 testcases[{idx}] must have non-empty 'inputs'.")
 
             decision_basis = tc.get("decision_basis")
             if not isinstance(decision_basis, dict):
-                raise RuntimeError(f"Step2 testcases[{idx}] missing 'decision_basis'.")
+                raise RuntimeError(f"Step3 testcases[{idx}] missing 'decision_basis'.")
+
+            rule_id = decision_basis.get("rule_id")
+            if not isinstance(rule_id, str) or not rule_id.strip():
+                raise RuntimeError(f"Step3 testcases[{idx}] decision_basis.rule_id must be non-empty.")
 
             conditions = decision_basis.get("conditions")
             if not isinstance(conditions, list) or not conditions:
                 raise RuntimeError(
-                    f"Step2 testcases[{idx}] decision_basis.conditions must be non-empty."
+                    f"Step3 testcases[{idx}] decision_basis.conditions must be non-empty."
                 )
 
-    def _raise_if_step2_warnings_are_severe(self, warnings: List[str]) -> None:
+    def _raise_if_step3_warnings_are_severe(self, warnings: List[str]) -> None:
         severe = [
             w for w in warnings
-            if any(marker.lower() in w.lower() for marker in self.STEP2_SEVERE_WARNING_MARKERS)
+            if any(marker.lower() in w.lower() for marker in self.STEP3_SEVERE_WARNING_MARKERS)
         ]
         if severe:
             raise RuntimeError(
-                "Step2 validation produced severe warnings:\n- " + "\n- ".join(severe)
+                "Step3 validation produced severe warnings:\n- " + "\n- ".join(severe)
             )
 
-    def _ensure_all_step1_coverage_used(self, step2_data: Dict[str, Any], step1_data: Dict[str, Any]) -> None:
+    def _ensure_all_step1_coverage_used(self, step3_data: Dict[str, Any], step1_data: Dict[str, Any]) -> None:
         step1_ids = {
             str(item.get("id")).strip()
             for item in step1_data.get("coverage_items", [])
@@ -554,7 +855,7 @@ class GenerationPipeline:
         }
 
         used_ids = set()
-        for tc in step2_data.get("testcases", []):
+        for tc in step3_data.get("testcases", []):
             if not isinstance(tc, dict):
                 continue
             for ref in tc.get("coverage_refs", []):
@@ -565,7 +866,7 @@ class GenerationPipeline:
         missing = sorted(step1_ids - used_ids)
         if missing:
             raise RuntimeError(
-                "Step2 is missing coverage from Step1:\n- " + "\n- ".join(missing)
+                "Step3 is missing coverage from Step1:\n- " + "\n- ".join(missing)
             )
 
     # ==========================================================================
@@ -584,6 +885,7 @@ class GenerationPipeline:
         llm_start = time.perf_counter()
         raw_output = self.llm_client.generate(step1_prompt)
         raw_txt_path = self._save_raw_output(exporter, "step1_raw.txt", raw_output)
+        self._raise_if_llm_output_empty(raw_output, "Step1", raw_txt_path)
         llm_elapsed = time.perf_counter() - llm_start
         self._log(f"STEP 1: AI trả kết quả sau {self._format_seconds(llm_elapsed)}")
         self._log(f"STEP 1: lưu raw output tại {raw_txt_path}")
@@ -602,6 +904,7 @@ class GenerationPipeline:
         self._log("STEP 1: normalize + rebuild summary ...")
         step1_data = self._force_step1_feature(step1_data, feature_key)
         step1_data = self._normalize_step1_data(step1_data)
+        step1_data = self._remove_legacy_step1_counts(step1_data)
         step1_data = self._rebuild_step1_summary(step1_data)
 
         self._log("STEP 1: hard-check structure ...")
@@ -639,24 +942,27 @@ class GenerationPipeline:
         return step1_data
 
     # ==========================================================================
-    # STEP 2
+    # STEP 2: DECISION TABLE TRUNG GIAN
     # ==========================================================================
-    def _generate_step2(
+    def _generate_step2_decision_table(
         self,
         feature: str,
         step1_data: Dict[str, Any],
         exporter: DataExporter,
-    ) -> Tuple[Path, Dict[str, Any]]:
+    ) -> Dict[str, Any]:
         step_start = time.perf_counter()
 
-        self._log("STEP 2: build prompt")
+        self._log("STEP 2: build prompt cho Decision Table trung gian")
         step2_prompt = self.prompt_loader.build_step2_prompt(feature, step1_data)
+        feature_key = normalize_feature_name(step1_data.get("feature", feature))
+        self._log(f"STEP 2: feature chuẩn hóa = '{feature_key}'")
         self._log(f"STEP 2: độ dài prompt = {len(step2_prompt):,} ký tự")
 
-        self._log("STEP 2: gọi AI để phân tích Decision Table ...")
+        self._log("STEP 2: gọi AI để sinh decision_rules ...")
         llm_start = time.perf_counter()
         raw_output = self.llm_client.generate(step2_prompt)
-        raw_txt_path = self._save_raw_output(exporter, "final_raw.txt", raw_output)
+        raw_txt_path = self._save_raw_output(exporter, "step2_dt_raw.txt", raw_output)
+        self._raise_if_llm_output_empty(raw_output, "Step2 DT", raw_txt_path)
         llm_elapsed = time.perf_counter() - llm_start
         self._log(f"STEP 2: AI trả kết quả sau {self._format_seconds(llm_elapsed)}")
         self._log(f"STEP 2: lưu raw output tại {raw_txt_path}")
@@ -665,53 +971,126 @@ class GenerationPipeline:
         parsed = self.parser.parse_json(raw_output)
         if not parsed.ok:
             raise RuntimeError(
-                f"Step2 parse error: {parsed.error}. Raw output saved at: {raw_txt_path}"
+                f"Step2 DT parse error: {parsed.error}. Raw output saved at: {raw_txt_path}"
             )
 
-        step2_data = parsed.data
-        if not isinstance(step2_data, dict):
-            raise RuntimeError("Step2 output must be a JSON object.")
-
-        feature_key = normalize_feature_name(step1_data.get("feature", feature))
+        dt_data = parsed.data
+        if not isinstance(dt_data, dict):
+            raise RuntimeError("Step2 DT output must be a JSON object.")
 
         self._log("STEP 2: normalize + rebuild summary ...")
-        step2_data = self._force_step2_feature(step2_data, feature_key)
-        step2_data = self._normalize_step2_data(feature_key, step2_data)
-        step2_data = self._rebuild_step2_summary(step2_data)
+        dt_data = self._force_step2_feature(dt_data, feature_key)
+        dt_data = self._normalize_step2_data(dt_data)
+        dt_data = self._rebuild_step2_summary(dt_data)
 
         self._log("STEP 2: hard-check structure ...")
         try:
-            self._hard_check_step2_structure(step2_data)
+            self._hard_check_step2_structure(dt_data)
         except Exception:
-            self._log("STEP 2: hard-check failed, ghi final_invalid.json")
-            exporter.write_raw_json(step2_data, filename="final_invalid.json")
+            self._log("STEP 2: hard-check failed, ghi step2_dt_invalid.json")
+            exporter.write_raw_json(dt_data, filename="step2_dt_invalid.json")
             raise
 
         try:
-            self._log("STEP 2: validate output ...")
-            result = self.step2_validator.validate_or_raise(step2_data, step1_data)
+            self._log("STEP 2: validate decision table ...")
+            result = self.step2_validator.validate_or_raise(dt_data, step1_data)
             if result.warnings:
                 self._log(f"STEP 2: có {len(result.warnings)} warning")
-                self._raise_if_step2_warnings_are_severe(result.warnings)
-
-            self._log("STEP 2: kiểm tra coverage trace đầy đủ ...")
-            self._ensure_all_step1_coverage_used(step2_data, step1_data)
+                severe = [
+                    w for w in result.warnings
+                    if any(marker.lower() in w.lower() for marker in self.STEP2_SEVERE_WARNING_MARKERS)
+                ]
+                if severe:
+                    raise RuntimeError(
+                        "Step2 validation produced severe warnings:\n- " + "\n- ".join(severe)
+                    )
         except Exception:
-            self._log("STEP 2: validate failed, ghi final_invalid.json")
-            exporter.write_raw_json(step2_data, filename="final_invalid.json")
+            self._log("STEP 2: validate failed, ghi step2_dt_invalid.json")
+            exporter.write_raw_json(dt_data, filename="step2_dt_invalid.json")
             raise
 
-        self._log("STEP 2: ghi final JSON ...")
-        final_json_path = exporter.write_raw_json(step2_data, filename="final.json")
-
-        testcases = step2_data.get("testcases", [])
-        self._log(f"STEP 2: số testcases = {len(testcases) if isinstance(testcases, list) else 0}")
-        self._log(f"STEP 2: lưu JSON tại {final_json_path}")
+        dt_json_path = exporter.write_raw_json(dt_data, filename="step2_dt.json")
+        self._export_step2_excel_safely(dt_data, exporter)
+        self._log(f"STEP 2: số decision_rules = {len(dt_data.get('decision_rules', []))}")
+        self._log(f"STEP 2: lưu JSON tại {dt_json_path}")
 
         step_elapsed = time.perf_counter() - step_start
         self._log(f"STEP 2: hoàn tất trong {self._format_seconds(step_elapsed)}")
+        return dt_data
 
-        return final_json_path, step2_data
+    # ==========================================================================
+    # STEP 3: FINAL TESTCASES
+    # ==========================================================================
+    def _generate_step3_final(
+        self,
+        feature: str,
+        step1_data: Dict[str, Any],
+        dt_data: Dict[str, Any],
+        exporter: DataExporter,
+    ) -> Tuple[Path, Dict[str, Any]]:
+        step_start = time.perf_counter()
+
+        self._log("STEP 3: build prompt cho final testcases")
+        step3_prompt = self.prompt_loader.build_step3_prompt(feature, step1_data, dt_data)
+        self._log(f"STEP 3: độ dài prompt = {len(step3_prompt):,} ký tự")
+
+        self._log("STEP 3: gọi AI để sinh final testcases ...")
+        llm_start = time.perf_counter()
+        raw_output = self.llm_client.generate(step3_prompt)
+        raw_txt_path = self._save_raw_output(exporter, "final_raw.txt", raw_output)
+        self._raise_if_llm_output_empty(raw_output, "Step3 final", raw_txt_path)
+        llm_elapsed = time.perf_counter() - llm_start
+        self._log(f"STEP 3: AI trả kết quả sau {self._format_seconds(llm_elapsed)}")
+        self._log(f"STEP 3: lưu raw output tại {raw_txt_path}")
+
+        self._log("STEP 3: parse JSON ...")
+        parsed = self.parser.parse_json(raw_output)
+        if not parsed.ok:
+            raise RuntimeError(
+                f"Step3 final parse error: {parsed.error}. Raw output saved at: {raw_txt_path}"
+            )
+
+        final_data = parsed.data
+        if not isinstance(final_data, dict):
+            raise RuntimeError("Step3 final output must be a JSON object.")
+
+        feature_key = normalize_feature_name(step1_data.get("feature", feature))
+
+        self._log("STEP 3: normalize + rebuild summary ...")
+        final_data = self._force_step3_feature(final_data, feature_key)
+        final_data = self._normalize_step3_data(feature_key, final_data)
+        final_data = self._rebuild_step3_summary(final_data)
+
+        self._log("STEP 3: hard-check structure ...")
+        try:
+            self._hard_check_step3_structure(final_data)
+        except Exception:
+            self._log("STEP 3: hard-check failed, ghi final_invalid.json")
+            exporter.write_raw_json(final_data, filename="final_invalid.json")
+            raise
+
+        try:
+            self._log("STEP 3: validate output ...")
+            result = self.step3_validator.validate_or_raise(final_data, step1_data, dt_data)
+            if result.warnings:
+                self._log(f"STEP 3: có {len(result.warnings)} warning")
+                self._raise_if_step3_warnings_are_severe(result.warnings)
+
+            self._log("STEP 3: kiểm tra coverage trace đầy đủ ...")
+            self._ensure_all_step1_coverage_used(final_data, step1_data)
+        except Exception:
+            self._log("STEP 3: validate failed, ghi final_invalid.json")
+            exporter.write_raw_json(final_data, filename="final_invalid.json")
+            raise
+
+        self._log("STEP 3: ghi final JSON ...")
+        final_json_path = exporter.write_raw_json(final_data, filename="final.json")
+        self._log(f"STEP 3: lưu JSON tại {final_json_path}")
+
+        step_elapsed = time.perf_counter() - step_start
+        self._log(f"STEP 3: hoàn tất trong {self._format_seconds(step_elapsed)}")
+
+        return final_json_path, final_data
 
     # ==========================================================================
     # EXPORT PROCESSED
@@ -719,16 +1098,16 @@ class GenerationPipeline:
     def _export_processed_files(
         self,
         feature: str,
-        step2_data: Dict[str, Any],
+        final_data: Dict[str, Any],
         formats: List[str],
         exporter: DataExporter,
     ) -> List[str]:
         export_start = time.perf_counter()
 
         self._log("EXPORT: bắt đầu export processed files ...")
-        testcases = step2_data.get("testcases")
+        testcases = final_data.get("testcases")
         if not isinstance(testcases, list) or not testcases:
-            raise RuntimeError("Step2 JSON is invalid: 'testcases' must be a non-empty list.")
+            raise RuntimeError("Final JSON is invalid: 'testcases' must be a non-empty list.")
 
         paths = exporter.export_feature_items(
             feature=feature,
@@ -742,6 +1121,18 @@ class GenerationPipeline:
             self._log(f"EXPORT: {p}")
 
         return paths
+
+
+    # ===========================================================================
+    # SAFE EXCEL EXPORT FOR STEP 2
+    # ===========================================================================
+    def _export_step2_excel_safely(self, dt_data: Dict[str, Any], exporter: DataExporter) -> None:
+        try:
+            excel_path = exporter._get_run_file_path("step2_dt.xlsx")
+            export_step2_to_excel(dt_data, excel_path)
+            self._log(f"STEP 2: đã export Excel {excel_path}")
+        except Exception as exc:
+            self._log(f"Warning: Step2 Excel export failed: {exc}")
 
     # ==========================================================================
     # SAFE EXCEL EXPORT FOR STEP 1

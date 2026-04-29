@@ -1,0 +1,152 @@
+{
+  "decision_rules": [
+    {
+      "type": "happy_path",
+      "conditions": [],
+      "coverage_refs": [],
+      "id": "",
+      "expected": "",
+      "optimization_note": ""
+    },
+    {
+      "type": "single_fault",
+      "conditions": [],
+      "coverage_refs": [],
+      "id": "",
+      "expected": "",
+      "optimization_note": ""
+    },
+    {
+      "type": "single_fault",
+      "conditions": [],
+      "coverage_refs": [],
+      "id": "",
+      "expected": "",
+      "optimization_note": ""
+    },
+    {
+      "type": "single_fault",
+      "conditions": [],
+      "coverage_refs": [],
+      "id": "",
+      "expected": "",
+      "optimization_note": ""
+    },
+    {
+      "type": "single_fault",
+      "conditions": [],
+      "coverage_refs": [],
+      "id": "",
+      "expected": "",
+      "optimization_note": ""
+    },
+    {
+      "type": "single_fault",
+      "conditions": [],
+      "coverage_refs": [],
+      "id": "",
+      "expected": "",
+      "optimization_note": ""
+    },
+    {
+      "type": "single_fault",
+      "conditions": [],
+      "coverage_refs": [],
+      "id": "",
+      "expected": "",
+      "optimization_note": ""
+    },
+    {
+      "type": "single_fault",
+      "conditions": [],
+      "coverage_refs": [],
+      "id": "",
+      "expected": "",
+      "optimization_note": ""
+    },
+    {
+      "type": "single_fault",
+      "conditions": [],
+      "coverage_refs": [],
+      "id": "",
+      "expected": "",
+      "optimization_note": ""
+    },
+    {
+      "type": "single_fault",
+      "conditions": [],
+      "coverage_refs": [],
+      "id": "",
+      "expected": "",
+      "optimization_note": ""
+    },
+    {
+      "type": "single_fault",
+      "conditions": [],
+      "coverage_refs": [],
+      "id": "",
+      "expected": "",
+      "optimization_note": ""
+    },
+    {
+      "type": "single_fault",
+      "conditions": [],
+      "coverage_refs": [],
+      "id": "",
+      "expected": "",
+      "optimization_note": ""
+    },
+    {
+      "type": "single_fault",
+      "conditions": [],
+      "coverage_refs": [],
+      "id": "",
+      "expected": "",
+      "optimization_note": ""
+    },
+    {
+      "type": "single_fault",
+      "conditions": [],
+      "coverage_refs": [],
+      "id": "",
+      "expected": "",
+      "optimization_note": ""
+    },
+    {
+      "type": "happy_path",
+      "conditions": [],
+      "coverage_refs": [],
+      "id": "",
+      "expected": "",
+      "optimization_note": ""
+    },
+    {
+      "type": "happy_path",
+      "conditions": [],
+      "coverage_refs": [],
+      "id": "",
+      "expected": "",
+      "optimization_note": ""
+    },
+    {
+      "type": "happy_path",
+      "conditions": [],
+      "coverage_refs": [],
+      "id": "",
+      "expected": "",
+      "optimization_note": ""
+    },
+    {
+      "type": "happy_path",
+      "conditions": [],
+      "coverage_refs": [],
+      "id": "",
+      "expected": "",
+      "optimization_note": ""
+    }
+  ],
+  "feature": "register",
+  "decision_summary": {
+    "total_rules": 18
+  }
+}

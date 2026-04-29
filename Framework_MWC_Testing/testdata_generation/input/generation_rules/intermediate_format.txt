@@ -19,9 +19,4 @@
       "expected_class": "string"
     }
   ],
-  "coverage_summary": {
-    "EP_count": number,
-    "BVA_count": number,
-    "TOTAL": number
-  }
 }

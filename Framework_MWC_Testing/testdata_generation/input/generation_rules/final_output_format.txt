@@ -12,10 +12,11 @@
       "objective": "string",
       "coverage_refs": ["string"],
       "decision_basis": {
+        "rule_id": "string",
         "conditions": [
           {
             "field": "string",
-            "state": "string"
+            "state": "valid" | "invalid"
           }
         ],
         "optimization_note": "string"
@@ -26,3 +27,32 @@
     }
   ]
 }
+
+RÀNG BUỘC:
+1. Chỉ output 1 JSON object đúng format này.
+2. Không được copy schema mẫu vào kết quả cuối.
+3. Không được dùng placeholder như: "string", "number", "error", "invalid".
+4. feature, description, testcase_summary, testcases đều bắt buộc.
+5. total_testcases = số phần tử thực tế trong testcases.
+6. testcases không được rỗng.
+
+MỖI TESTCASE:
+1. id duy nhất.
+2. name, description, objective, expected không được rỗng.
+3. coverage_refs không được rỗng.
+4. decision_basis.rule_id không được rỗng.
+5. decision_basis.conditions không được rỗng.
+6. decision_basis.conditions[].state chỉ dùng: valid, invalid.
+7. inputs phải có đủ tất cả field của feature.
+8. priority chỉ dùng: High, Medium, Low.
+
+LOGIC:
+1. Mỗi decision_rule phải sinh ít nhất 1 testcase.
+2. coverage_refs phải khớp decision_rule nguồn.
+3. inputs phải khớp representative_value của coverage trong Step 1.
+4. Không được làm mất coverage từ Step 2.
+5. Invalid testcase chỉ có 1 lỗi chính nếu rule là single_fault.
+
+OUTPUT:
+Chỉ JSON.
+Không text ngoài JSON.

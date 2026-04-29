@@ -1,17 +1,16 @@
 from __future__ import annotations
 
 import argparse
-import sys
 import time
 from pathlib import Path
 from typing import Any, Dict, List
 
 import yaml
 
+from testdata_generation.engine.feature_item_schema import normalize_feature_name
 from testdata_generation.engine.generation_pipeline import GenerationPipeline
 from testdata_generation.engine.llm_client import OllamaLLMClient
 from testdata_generation.engine.prompt_loader import PromptLoader
-from testdata_generation.engine.feature_item_schema import normalize_feature_name
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -19,6 +18,7 @@ PROJECT_ROOT = BASE_DIR.parent
 CONFIG_PATH = PROJECT_ROOT / "app_config.yaml"
 
 SUPPORTED_FORMATS = ["csv", "json", "xlsx", "xls", "yaml", "yml", "xml", "db"]
+SUPPORTED_STEPS = {"all", "1", "2", "3"}
 
 
 def _log(message: str) -> None:
@@ -29,7 +29,12 @@ def _log(message: str) -> None:
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         prog="python -m testdata_generation.generate_ai_data",
-        description="Generate AI test data with 2-step pipeline: Step1 coverage (EP+BVA) -> Step2 final testcases (Decision Table).",
+        description=(
+            "Generate AI test data with 3-step pipeline: "
+            "Step1 EP+BVA -> coverage_items; "
+            "Step2 Decision Table intermediate -> decision_rules; "
+            "Step3 decision_rules + Step1 -> final_testcases."
+        ),
     )
     parser.add_argument(
         "--feature",
@@ -37,10 +42,28 @@ def _parse_args() -> argparse.Namespace:
         help="Feature name. Example: login, register, search",
     )
     parser.add_argument(
+        "--step",
+        default="all",
+        choices=sorted(SUPPORTED_STEPS),
+        help=(
+            "Step to run: all, 1, 2, or 3. "
+            "Default=all. "
+            "Step 2 and Step 3 require --run."
+        ),
+    )
+    parser.add_argument(
+        "--run",
+        default="",
+        help=(
+            "Run folder name or path for Step 2/Step 3. "
+            "Example: register_2026-04-29_10-30-00"
+        ),
+    )
+    parser.add_argument(
         "--formats",
         nargs="+",
         default=["json"],
-        help="Example: --formats json csv xlsx OR --formats all",
+        help="Example: --formats json csv xlsx OR --formats all. Used by step=all and step=3.",
     )
     parser.add_argument(
         "--quiet",
@@ -73,6 +96,13 @@ def _validate_feature_arg(feature: str) -> str:
     if not isinstance(feature, str) or not feature.strip():
         raise ValueError("Feature must not be empty.")
     return normalize_feature_name(feature)
+
+
+def _validate_run_arg(step: str, run_name: str) -> str:
+    run_name = str(run_name or "").strip()
+    if step in {"2", "3"} and not run_name:
+        raise ValueError(f"--run is required when --step {step}.")
+    return run_name
 
 
 def _load_config() -> Dict[str, Any]:
@@ -140,6 +170,16 @@ def _validate_prompt_sources(feature: str) -> None:
         _log(f" - {key} = {path}")
 
 
+def _print_success_header(title: str) -> None:
+    print("\n==================================================", flush=True)
+    print(title, flush=True)
+
+
+def _print_success_footer(total_elapsed: float) -> None:
+    print(f"TOTAL ELAPSED: {total_elapsed:.2f}s", flush=True)
+    print("==================================================", flush=True)
+
+
 def main() -> int:
     total_start = time.perf_counter()
     args = _parse_args()
@@ -148,11 +188,16 @@ def main() -> int:
 
     try:
         feature = _validate_feature_arg(args.feature)
+        step = str(args.step or "all").strip().lower()
+        run_name = _validate_run_arg(step, args.run)
     except ValueError as exc:
         _log(str(exc))
         return 2
 
     _log(f"Feature yêu cầu: {feature}")
+    _log(f"Step yêu cầu: {step}")
+    if run_name:
+        _log(f"Run chỉ định: {run_name}")
 
     try:
         formats = _normalize_formats(args.formats)
@@ -187,9 +232,62 @@ def main() -> int:
     )
 
     try:
-        final_json_path, processed_files = pipeline.generate(feature, formats)
+        if step == "all":
+            final_json_path, processed_files = pipeline.generate_all(feature, formats)
+
+            total_elapsed = time.perf_counter() - total_start
+            _print_success_header("GENERATE TEST DATA SUCCESS")
+            print(f"Feature: {feature}", flush=True)
+            print("Mode: all steps", flush=True)
+            print("Final JSON:", final_json_path, flush=True)
+            print("Processed files:", flush=True)
+            for f in processed_files:
+                print(" -", f, flush=True)
+            _print_success_footer(total_elapsed)
+            return 0
+
+        if step == "1":
+            run_dir = pipeline.generate_step1(feature)
+
+            total_elapsed = time.perf_counter() - total_start
+            _print_success_header("GENERATE STEP 1 SUCCESS")
+            print(f"Feature: {feature}", flush=True)
+            print("Run directory:", run_dir, flush=True)
+            print("Step1 JSON:", str(Path(run_dir) / "step1.json"), flush=True)
+            print("Step1 Excel:", str(Path(run_dir) / "step1.xlsx"), flush=True)
+            _print_success_footer(total_elapsed)
+            return 0
+
+        if step == "2":
+            step2_json_path = pipeline.generate_step2(feature, run_name)
+
+            total_elapsed = time.perf_counter() - total_start
+            _print_success_header("GENERATE STEP 2 SUCCESS")
+            print(f"Feature: {feature}", flush=True)
+            print("Run:", run_name, flush=True)
+            print("Step2 JSON:", step2_json_path, flush=True)
+            _print_success_footer(total_elapsed)
+            return 0
+
+        if step == "3":
+            final_json_path, processed_files = pipeline.generate_step3(feature, run_name, formats)
+
+            total_elapsed = time.perf_counter() - total_start
+            _print_success_header("GENERATE STEP 3 SUCCESS")
+            print(f"Feature: {feature}", flush=True)
+            print("Run:", run_name, flush=True)
+            print("Final JSON:", final_json_path, flush=True)
+            print("Processed files:", flush=True)
+            for f in processed_files:
+                print(" -", f, flush=True)
+            _print_success_footer(total_elapsed)
+            return 0
+
+        _log(f"Unsupported step: {step}")
+        return 2
+
     except FileNotFoundError as exc:
-        _log(f"Required input file not found: {exc}")
+        _log(f"Required input/run file not found: {exc}")
         return 2
     except ValueError as exc:
         _log(f"Validation failed: {exc}")
@@ -197,20 +295,6 @@ def main() -> int:
     except Exception as exc:
         _log(f"Generation failed: {exc}")
         return 1
-
-    total_elapsed = time.perf_counter() - total_start
-
-    print("\n==================================================", flush=True)
-    print("GENERATE TEST DATA SUCCESS", flush=True)
-    print(f"Feature: {feature}", flush=True)
-    print("Final JSON:", final_json_path, flush=True)
-    print("Processed files:", flush=True)
-    for f in processed_files:
-        print(" -", f, flush=True)
-    print(f"TOTAL ELAPSED: {total_elapsed:.2f}s", flush=True)
-    print("==================================================", flush=True)
-
-    return 0
 
 
 if __name__ == "__main__":

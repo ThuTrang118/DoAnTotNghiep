@@ -1,36 +1,27 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from sys import prefix
 from typing import Any, Dict, List, Optional, Set, Tuple
-import warnings
-from xml.parsers.expat import errors
 
 from testdata_generation.engine.feature_item_schema import (
     get_feature_item_fields,
     normalize_feature_name,
 )
 
-
 _ALLOWED_TECHNIQUES = {"EP", "BVA"}
 _ALLOWED_VALIDITY = {"valid", "invalid"}
 _ALLOWED_BOUNDARY_KINDS = {"range", "exact"}
 _ALLOWED_BOUNDARY_POINTS = {
-    "MIN-1",
-    "MIN",
-    "MIN+1",
-    "MAX-1",
-    "MAX",
-    "MAX+1",
-    "N-1",
-    "N",
-    "N+1",
+    "MIN-1", "MIN", "MIN+1",
+    "MAX-1", "MAX", "MAX+1",
+    "N-1", "N", "N+1",
 }
 _ALLOWED_PRIORITIES = {"High", "Medium", "Low"}
+_ALLOWED_RULE_TYPES = {"happy_path", "single_fault", "boundary", "business_rule"}
 
 _EXACT_POINTS = {"N-1", "N", "N+1"}
 _RANGE_POINTS = {"MIN-1", "MIN", "MIN+1", "MAX-1", "MAX", "MAX+1"}
-_PLACEHOLDER_VALUES = {"string", "valid", "invalid", "error", "success"}
+_PLACEHOLDER_VALUES = {"string", "valid", "invalid", "error", "success", "number"}
 
 
 @dataclass
@@ -55,10 +46,6 @@ class _ValidationCommon:
     @staticmethod
     def _normalize_scalar(value: Any) -> str:
         return "" if value is None else str(value).strip()
-
-    @staticmethod
-    def _is_non_empty_string(value: Any) -> bool:
-        return isinstance(value, str) and bool(value.strip())
 
     @staticmethod
     def _validate_non_empty_string(value: Any, field_name: str, errors: List[str]) -> None:
@@ -171,6 +158,30 @@ class _ValidationCommon:
         return feature, coverage_map
 
     @staticmethod
+    def _check_atomic_text(value: Any) -> bool:
+        if not isinstance(value, str):
+            return True
+        lowered = value.lower()
+        separators = [" hoặc ", " và ", " and/or ", " / "]
+        return not any(sep in lowered for sep in separators)
+
+    @staticmethod
+    def _normalize_condition_list(values: Any) -> List[Dict[str, str]]:
+        if not isinstance(values, list):
+            return []
+
+        out: List[Dict[str, str]] = []
+        for item in values:
+            if not isinstance(item, dict):
+                continue
+            field = str(item.get("field", "")).strip()
+            state = str(item.get("state", "")).strip()
+            if not field or not state:
+                continue
+            out.append({"field": field, "state": state})
+        return out
+
+    @staticmethod
     def _validate_step1_boundary(
         prefix: str,
         boundary: Any,
@@ -222,18 +233,10 @@ class _ValidationCommon:
             float(reference) if isinstance(reference, (int, float)) else None,
         )
 
-    @staticmethod
-    def _check_atomic_text(value: Any) -> bool:
-        if not isinstance(value, str):
-            return True
-        lowered = value.lower()
-        separators = [" hoặc ", " and/or ", " / "]
-        return not any(sep in lowered for sep in separators)
-
 
 class ConditionsValidator(_ValidationCommon):
     """
-    Validate Step 1 JSON output against intermediate_format.txt
+    Validate Step 1 JSON output.
     """
 
     def _feature_specific_step1_rules(
@@ -335,9 +338,7 @@ class ConditionsValidator(_ValidationCommon):
                 seen_ids.add(item_id)
 
             if not isinstance(field_name, str) or field_name not in expected_fields:
-                errors.append(
-                    f"{prefix}.field must be one of {expected_fields}, got '{field_name}'."
-                )
+                errors.append(f"{prefix}.field must be one of {expected_fields}, got '{field_name}'.")
                 continue
 
             covered_fields.add(field_name)
@@ -356,18 +357,14 @@ class ConditionsValidator(_ValidationCommon):
                 warnings.append(f"{prefix}.rule may be over-grouped: '{rule}'.")
 
             if technique not in _ALLOWED_TECHNIQUES:
-                errors.append(
-                    f"{prefix}.technique must be one of {sorted(_ALLOWED_TECHNIQUES)}, got '{technique}'."
-                )
+                errors.append(f"{prefix}.technique must be one of {sorted(_ALLOWED_TECHNIQUES)}, got '{technique}'.")
             elif technique == "EP":
                 ep_count += 1
             elif technique == "BVA":
                 bva_count += 1
 
             if validity not in _ALLOWED_VALIDITY:
-                errors.append(
-                    f"{prefix}.validity must be one of {sorted(_ALLOWED_VALIDITY)}, got '{validity}'."
-                )
+                errors.append(f"{prefix}.validity must be one of {sorted(_ALLOWED_VALIDITY)}, got '{validity}'.")
             else:
                 if validity == "valid":
                     valid_by_field[field_name] += 1
@@ -376,9 +373,7 @@ class ConditionsValidator(_ValidationCommon):
 
             if technique == "EP":
                 if partition_type not in {"valid", "invalid"}:
-                    errors.append(
-                        f"{prefix}.partition_type must be 'valid' or 'invalid' when technique='EP'."
-                    )
+                    errors.append(f"{prefix}.partition_type must be 'valid' or 'invalid' when technique='EP'.")
                 elif validity in _ALLOWED_VALIDITY and partition_type != validity:
                     errors.append(f"{prefix}.partition_type must equal validity when technique='EP'.")
 
@@ -414,9 +409,7 @@ class ConditionsValidator(_ValidationCommon):
         if isinstance(declared_bva, int) and declared_bva != bva_count:
             errors.append(f"coverage_summary.BVA_count={declared_bva} but actual BVA items={bva_count}.")
         if isinstance(declared_total, int) and declared_total != len(coverage_items):
-            errors.append(
-                f"coverage_summary.TOTAL={declared_total} but actual coverage_items={len(coverage_items)}."
-            )
+            errors.append(f"coverage_summary.TOTAL={declared_total} but actual coverage_items={len(coverage_items)}.")
         if (
             isinstance(declared_ep, int)
             and isinstance(declared_bva, int)
@@ -438,16 +431,12 @@ class ConditionsValidator(_ValidationCommon):
         for field, points in per_field_exact_points.items():
             if points and points != _EXACT_POINTS:
                 missing = sorted(_EXACT_POINTS - points)
-                errors.append(
-                    f"Field '{field}' uses BVA exact but does not include full exact boundary set. Missing: {missing}."
-                )
+                errors.append(f"Field '{field}' uses BVA exact but does not include full exact boundary set. Missing: {missing}.")
 
         for field, points in per_field_range_points.items():
             if points and points != _RANGE_POINTS:
                 missing = sorted(_RANGE_POINTS - points)
-                errors.append(
-                    f"Field '{field}' uses BVA range but does not include full range boundary set. Missing: {missing}."
-                )
+                errors.append(f"Field '{field}' uses BVA range but does not include full range boundary set. Missing: {missing}.")
 
         self._feature_specific_step1_rules(
             feature,
@@ -465,9 +454,201 @@ class ConditionsValidator(_ValidationCommon):
         return result
 
 
-class FinalDTValidator(_ValidationCommon):
+class DecisionTableValidator(_ValidationCommon):
     """
-    Validate Step 2 JSON output against final_output_format.txt
+    Validate Step 2 decision_rules JSON.
+    """
+
+    def validate(
+        self,
+        dt_data: Dict[str, Any],
+        step1_data: Optional[Dict[str, Any]] = None,
+    ) -> ValidationResult:
+        top_level_error = self._validate_top_level_object(dt_data)
+        if top_level_error is not None:
+            return top_level_error
+
+        errors: List[str] = []
+        warnings: List[str] = []
+
+        feature, expected_fields = self._load_feature_and_expected_fields(dt_data, errors)
+        if feature is None:
+            return ValidationResult(ok=False, errors=errors, warnings=warnings)
+
+        self._validate_non_empty_string(dt_data.get("description"), "description", errors)
+
+        decision_summary = self._validate_required_dict(dt_data, "decision_summary", errors)
+        decision_rules = self._validate_required_list(
+            dt_data,
+            "decision_rules",
+            errors,
+            message="Missing or invalid 'decision_rules'. It must be a list.",
+        )
+
+        if decision_summary is None or decision_rules is None:
+            return ValidationResult(ok=False, errors=errors, warnings=warnings)
+
+        if not decision_rules:
+            errors.append("decision_rules must not be empty.")
+            return ValidationResult(ok=False, errors=errors, warnings=warnings)
+
+        step1_feature, coverage_map = self._load_step1_coverage_reference(step1_data, errors)
+        if step1_feature is not None and step1_feature != feature:
+            errors.append(
+                f"Feature mismatch: Step 2 feature='{feature}' but Step 1 feature='{step1_feature}'."
+            )
+
+        declared_total_rules = decision_summary.get("total_rules")
+        if not isinstance(declared_total_rules, int) or declared_total_rules < 0:
+            errors.append("decision_summary.total_rules must be a non-negative integer.")
+        elif declared_total_rules != len(decision_rules):
+            errors.append(
+                f"decision_summary.total_rules={declared_total_rules} but actual decision_rules={len(decision_rules)}."
+            )
+
+        seen_rule_ids: Set[str] = set()
+        all_coverage_refs_used: Set[str] = set()
+        has_happy_path = False
+
+        for idx, rule in enumerate(decision_rules):
+            prefix = f"decision_rules[{idx}]"
+
+            if not isinstance(rule, dict):
+                errors.append(f"{prefix} must be an object.")
+                continue
+
+            rule_id = rule.get("id")
+            rule_type = rule.get("type")
+            coverage_refs = rule.get("coverage_refs")
+            conditions = rule.get("conditions")
+            expected = rule.get("expected")
+            optimization_note = rule.get("optimization_note")
+
+            if not isinstance(rule_id, str) or not rule_id.strip():
+                errors.append(f"{prefix}.id is missing or invalid.")
+            elif rule_id in seen_rule_ids:
+                errors.append(f"Duplicate decision rule id: '{rule_id}'.")
+            else:
+                seen_rule_ids.add(rule_id)
+
+            if rule_type not in _ALLOWED_RULE_TYPES:
+                errors.append(f"{prefix}.type must be one of {sorted(_ALLOWED_RULE_TYPES)}, got '{rule_type}'.")
+
+            self._validate_non_empty_string(expected, f"{prefix}.expected", errors)
+            if self._is_placeholder(expected):
+                errors.append(f"{prefix}.expected must not be placeholder '{expected}'.")
+
+            if not isinstance(optimization_note, str):
+                errors.append(f"{prefix}.optimization_note must be a string.")
+
+            invalid_refs = 0
+            valid_refs = 0
+            invalid_fields: Set[str] = set()
+
+            if not isinstance(coverage_refs, list) or not coverage_refs:
+                errors.append(f"{prefix}.coverage_refs must be a non-empty list.")
+            else:
+                seen_local_refs: Set[str] = set()
+                for ref in coverage_refs:
+                    if not isinstance(ref, str) or not ref.strip():
+                        errors.append(f"{prefix}.coverage_refs contains invalid coverage id.")
+                        continue
+
+                    if ref in seen_local_refs:
+                        errors.append(f"{prefix}.coverage_refs contains duplicate id '{ref}'.")
+                        continue
+                    seen_local_refs.add(ref)
+
+                    all_coverage_refs_used.add(ref)
+
+                    if coverage_map and ref not in coverage_map:
+                        errors.append(f"{prefix}.coverage_refs contains unknown Step 1 coverage id '{ref}'.")
+                        continue
+
+                    cov = coverage_map.get(ref)
+                    if cov:
+                        if cov.get("validity") == "invalid":
+                            invalid_refs += 1
+                            field = cov.get("field")
+                            if isinstance(field, str):
+                                invalid_fields.add(field)
+                        elif cov.get("validity") == "valid":
+                            valid_refs += 1
+
+                if invalid_refs == 0 and valid_refs > 0 and rule_type == "happy_path":
+                    has_happy_path = True
+
+                if rule_type == "single_fault":
+                    if invalid_refs != 1:
+                        errors.append(f"{prefix} type='single_fault' must contain exactly 1 invalid coverage.")
+                    if len(invalid_fields) != 1:
+                        errors.append(f"{prefix} type='single_fault' must contain invalid coverage on exactly 1 field.")
+
+            if not isinstance(conditions, list) or not conditions:
+                errors.append(f"{prefix}.conditions must be a non-empty list.")
+            else:
+                seen_conditions: Set[Tuple[str, str]] = set()
+                invalid_condition_count = 0
+
+                for cond_idx, cond in enumerate(conditions):
+                    cond_prefix = f"{prefix}.conditions[{cond_idx}]"
+
+                    if not isinstance(cond, dict):
+                        errors.append(f"{cond_prefix} must be an object.")
+                        continue
+
+                    cond_field = cond.get("field")
+                    cond_state = cond.get("state")
+
+                    if not isinstance(cond_field, str) or cond_field not in expected_fields:
+                        errors.append(f"{cond_prefix}.field must be one of {expected_fields}, got '{cond_field}'.")
+
+                    if cond_state not in {"valid", "invalid"}:
+                        errors.append(f"{cond_prefix}.state must be 'valid' or 'invalid', got '{cond_state}'.")
+                    elif cond_state == "invalid":
+                        invalid_condition_count += 1
+
+                    if (
+                        isinstance(cond_field, str)
+                        and isinstance(cond_state, str)
+                        and cond_field.strip()
+                        and cond_state.strip()
+                    ):
+                        key = (cond_field.strip(), cond_state.strip())
+                        if key in seen_conditions:
+                            errors.append(f"{cond_prefix} duplicates condition {key}.")
+                        seen_conditions.add(key)
+
+                if rule_type == "happy_path" and invalid_condition_count != 0:
+                    errors.append(f"{prefix} type='happy_path' must not contain invalid condition.")
+                if rule_type == "single_fault" and invalid_condition_count != 1:
+                    errors.append(f"{prefix} type='single_fault' must contain exactly 1 invalid condition.")
+
+        if coverage_map:
+            missing_coverage = sorted(set(coverage_map.keys()) - all_coverage_refs_used)
+            if missing_coverage:
+                errors.append(
+                    f"Some Step 1 coverage items are not referenced by any decision rule: {missing_coverage}."
+                )
+
+        if coverage_map and not has_happy_path:
+            errors.append("Step 2 must contain at least one happy_path decision rule using only valid coverage.")
+
+        return ValidationResult(ok=not errors, errors=errors, warnings=warnings)
+
+    def validate_or_raise(
+        self,
+        dt_data: Dict[str, Any],
+        step1_data: Optional[Dict[str, Any]] = None,
+    ) -> ValidationResult:
+        result = self.validate(dt_data, step1_data=step1_data)
+        result.raise_if_invalid("Step 2 decision table validation failed")
+        return result
+
+
+class FinalTestcaseValidator(_ValidationCommon):
+    """
+    Validate Step 3 final testcase JSON.
     """
 
     def _build_step1_field_validity_index(
@@ -485,10 +666,41 @@ class FinalDTValidator(_ValidationCommon):
                 out[field][validity].append(cov_id)
         return out
 
+    def _build_dt_rule_index(
+        self,
+        dt_data: Optional[Dict[str, Any]],
+        errors: List[str],
+    ) -> Dict[str, Dict[str, Any]]:
+        if dt_data is None:
+            return {}
+
+        if not isinstance(dt_data, dict):
+            errors.append("Step 2 DT data must be a JSON object.")
+            return {}
+
+        dt_feature = dt_data.get("feature")
+        if dt_feature is not None and (not isinstance(dt_feature, str) or not dt_feature.strip()):
+            errors.append("Step 2 DT data has invalid 'feature'.")
+
+        decision_rules = dt_data.get("decision_rules")
+        if not isinstance(decision_rules, list):
+            errors.append("Step 2 DT data is missing valid 'decision_rules'.")
+            return {}
+
+        out: Dict[str, Dict[str, Any]] = {}
+        for rule in decision_rules:
+            if not isinstance(rule, dict):
+                continue
+            rule_id = rule.get("id")
+            if isinstance(rule_id, str) and rule_id.strip():
+                out[rule_id] = rule
+        return out
+
     def validate(
         self,
         final_data: Dict[str, Any],
         step1_data: Optional[Dict[str, Any]] = None,
+        dt_data: Optional[Dict[str, Any]] = None,
     ) -> ValidationResult:
         top_level_error = self._validate_top_level_object(final_data)
         if top_level_error is not None:
@@ -521,8 +733,18 @@ class FinalDTValidator(_ValidationCommon):
         step1_feature, coverage_map = self._load_step1_coverage_reference(step1_data, errors)
         if step1_feature is not None and step1_feature != feature:
             errors.append(
-                f"Feature mismatch: Step 2 feature='{feature}' but Step 1 feature='{step1_feature}'."
+                f"Feature mismatch: Step 3 feature='{feature}' but Step 1 feature='{step1_feature}'."
             )
+
+        dt_rule_map = self._build_dt_rule_index(dt_data, errors)
+        if isinstance(dt_data, dict):
+            dt_feature = dt_data.get("feature")
+            if isinstance(dt_feature, str) and dt_feature.strip():
+                dt_feature = normalize_feature_name(dt_feature)
+                if dt_feature != feature:
+                    errors.append(
+                        f"Feature mismatch: Step 3 feature='{feature}' but Step 2 feature='{dt_feature}'."
+                    )
 
         declared_total_testcases = testcase_summary.get("total_testcases")
         if not isinstance(declared_total_testcases, int) or declared_total_testcases < 0:
@@ -534,6 +756,7 @@ class FinalDTValidator(_ValidationCommon):
 
         seen_testcase_ids: Set[str] = set()
         all_coverage_refs_used: Set[str] = set()
+        all_rule_ids_used: Set[str] = set()
         has_happy_path = False
         step1_field_index = self._build_step1_field_validity_index(coverage_map)
 
@@ -630,8 +853,36 @@ class FinalDTValidator(_ValidationCommon):
             if not isinstance(decision_basis, dict):
                 errors.append(f"{prefix}.decision_basis must be an object.")
             else:
+                rule_id = decision_basis.get("rule_id")
                 conditions = decision_basis.get("conditions")
                 optimization_note = decision_basis.get("optimization_note")
+
+                if not isinstance(rule_id, str) or not rule_id.strip():
+                    errors.append(f"{prefix}.decision_basis.rule_id must be non-empty.")
+                else:
+                    all_rule_ids_used.add(rule_id)
+                    if dt_rule_map and rule_id not in dt_rule_map:
+                        errors.append(f"{prefix}.decision_basis.rule_id '{rule_id}' not found in Step 2 DT.")
+                    elif dt_rule_map:
+                        dt_rule = dt_rule_map[rule_id]
+
+                        dt_refs = dt_rule.get("coverage_refs", [])
+                        if isinstance(dt_refs, list):
+                            tc_refs = [r for r in coverage_refs if isinstance(r, str)] if isinstance(coverage_refs, list) else []
+                            rule_refs = [r for r in dt_refs if isinstance(r, str)]
+                            if tc_refs != rule_refs:
+                                errors.append(f"{prefix}.coverage_refs must match Step 2 decision rule '{rule_id}'.")
+
+                        dt_expected = dt_rule.get("expected")
+                        if isinstance(dt_expected, str) and isinstance(expected, str) and dt_expected.strip() != expected.strip():
+                            errors.append(f"{prefix}.expected must match Step 2 decision rule '{rule_id}'.")
+
+                        dt_conditions = self._normalize_condition_list(dt_rule.get("conditions"))
+                        tc_conditions = self._normalize_condition_list(conditions)
+                        if tc_conditions != dt_conditions:
+                            errors.append(
+                                f"{prefix}.decision_basis.conditions must match Step 2 decision rule '{rule_id}'."
+                            )
 
                 if not isinstance(conditions, list) or not conditions:
                     errors.append(f"{prefix}.decision_basis.conditions must be a non-empty list.")
@@ -647,12 +898,10 @@ class FinalDTValidator(_ValidationCommon):
                         cond_state = cond.get("state")
 
                         if not isinstance(cond_field, str) or cond_field not in expected_fields:
-                            errors.append(
-                                f"{cond_prefix}.field must be one of {expected_fields}, got '{cond_field}'."
-                            )
+                            errors.append(f"{cond_prefix}.field must be one of {expected_fields}, got '{cond_field}'.")
 
-                        if not isinstance(cond_state, str) or not cond_state.strip():
-                            errors.append(f"{cond_prefix}.state is missing or empty.")
+                        if cond_state not in {"valid", "invalid"}:
+                            errors.append(f"{cond_prefix}.state must be 'valid' or 'invalid', got '{cond_state}'.")
 
                         if (
                             isinstance(cond_field, str)
@@ -668,8 +917,6 @@ class FinalDTValidator(_ValidationCommon):
                 if not isinstance(optimization_note, str):
                     errors.append(f"{prefix}.decision_basis.optimization_note must be a string.")
 
-            # soft cross-check:
-            # invalid testcase should still contain valid values for other fields
             if coverage_map and isinstance(inputs, dict) and invalid_refs == 1:
                 for field in expected_fields:
                     if field in invalid_fields:
@@ -694,8 +941,15 @@ class FinalDTValidator(_ValidationCommon):
                     f"Some Step 1 coverage items are not referenced by any testcase: {missing_coverage}."
                 )
 
+        if dt_rule_map:
+            missing_rules = sorted(set(dt_rule_map.keys()) - all_rule_ids_used)
+            if missing_rules:
+                errors.append(
+                    f"Some Step 2 decision rules are not referenced by any testcase: {missing_rules}."
+                )
+
         if coverage_map and not has_happy_path:
-            errors.append("Step 2 must contain at least one happy path testcase using only valid coverage.")
+            errors.append("Step 3 must contain at least one happy path testcase using only valid coverage.")
 
         return ValidationResult(ok=not errors, errors=errors, warnings=warnings)
 
@@ -703,11 +957,16 @@ class FinalDTValidator(_ValidationCommon):
         self,
         final_data: Dict[str, Any],
         step1_data: Optional[Dict[str, Any]] = None,
+        dt_data: Optional[Dict[str, Any]] = None,
     ) -> ValidationResult:
-        result = self.validate(final_data, step1_data=step1_data)
-        result.raise_if_invalid("Step 2 final output validation failed")
+        result = self.validate(final_data, step1_data=step1_data, dt_data=dt_data)
+        result.raise_if_invalid("Step 3 final output validation failed")
         return result
 
 
+# Backward compatibility
 CoverageValidator = ConditionsValidator
-FinalItemsValidator = FinalDTValidator
+FinalDTValidator = FinalTestcaseValidator
+FinalItemsValidator = FinalTestcaseValidator
+Step2DecisionTableValidator = DecisionTableValidator
+Step3FinalValidator = FinalTestcaseValidator

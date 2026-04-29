@@ -1,0 +1,107 @@
+{
+  "feature": "string",
+  "description": "string",
+  "decision_summary": {
+    "total_rules": number
+  },
+  "decision_rules": [
+    {
+      "id": "string",
+      "type": "happy_path | single_fault | boundary | business_rule",
+      "coverage_refs": ["string"],
+      "conditions": [
+        {
+          "field": "string",
+          "state": "valid | invalid"
+        }
+      ],
+      "expected": "string",
+      "optimization_note": "string"
+    }
+  ]
+}
+
+==================================================
+RÀNG BUỘC TOP LEVEL
+==================================================
+
+1. Chỉ 1 JSON object.
+2. Không copy schema mẫu.
+3. Không placeholder.
+4. Các field top-level bắt buộc:
+- feature
+- description
+- decision_summary
+- decision_rules
+
+5. total_rules = số rule thực tế
+
+==================================================
+RÀNG BUỘC RULE
+==================================================
+
+1. id:
+- duy nhất
+- không rỗng
+
+2. type:
+chỉ được là:
+- happy_path
+- single_fault
+- boundary
+- business_rule
+
+3. coverage_refs:
+- list không rỗng
+- chỉ chứa ID có thật từ Step 1
+- không trùng trong cùng rule
+
+4. conditions:
+- list không rỗng
+- mỗi phần tử có:
+  field
+  state
+
+5. state chỉ được:
+- valid
+- invalid
+
+6. Trong 1 rule:
+- 1 field chỉ xuất hiện 1 lần
+
+7. expected:
+- string không rỗng
+- là expected outcome
+
+8. optimization_note:
+- string
+- có thể rỗng
+
+==================================================
+RÀNG BUỘC LOGIC
+==================================================
+
+1. Có ít nhất 1 happy_path
+
+2. happy_path:
+- toàn bộ conditions valid
+
+3. single_fault:
+- đúng 1 field invalid chính
+
+4. boundary:
+- dùng coverage BVA
+
+5. business_rule:
+- dùng cho logic đặc biệt
+
+6. Mỗi coverage_item Step 1 phải xuất hiện ít nhất 1 lần trong toàn bộ rules
+
+7. Không tạo rule trùng nhau
+
+==================================================
+OUTPUT
+==================================================
+
+Chỉ JSON.
+Không text ngoài JSON.

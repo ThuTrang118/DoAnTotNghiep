@@ -78,6 +78,9 @@ class OllamaLLMClient:
         """
         mode = str(kwargs.pop("endpoint_mode", self.endpoint_mode)).strip().lower()
 
+        if not isinstance(prompt, str) or not prompt.strip():
+            raise ValueError("Prompt must be a non-empty string.")
+
         if mode == "auto":
             try:
                 return self._generate_via_generate(prompt, **kwargs)
@@ -122,7 +125,6 @@ class OllamaLLMClient:
         if seed is not None:
             options["seed"] = seed
 
-        # Cho phép truyền options bổ sung
         extra_options = kwargs.pop("options", None)
         if isinstance(extra_options, dict):
             options.update(extra_options)
@@ -133,32 +135,69 @@ class OllamaLLMClient:
         return bool(kwargs.pop("json_mode", self.json_mode))
 
     def _effective_timeout(self, **kwargs: Any) -> int:
-        return int(kwargs.pop("timeout_sec", self.timeout_sec))
+        timeout_sec = int(kwargs.pop("timeout_sec", self.timeout_sec))
+        if timeout_sec <= 0:
+            raise ValueError("timeout_sec must be > 0.")
+        return timeout_sec
 
     def _effective_model(self, **kwargs: Any) -> str:
-        return str(kwargs.pop("model", self.model)).strip()
+        model = str(kwargs.pop("model", self.model)).strip()
+        if not model:
+            raise ValueError("model must be non-empty.")
+        return model
+
+    @staticmethod
+    def _safe_json_dumps(data: Any) -> str:
+        try:
+            return json.dumps(data, ensure_ascii=False)
+        except Exception:
+            return str(data)
+
+    @staticmethod
+    def _truncate(text: str, limit: int = 500) -> str:
+        text = str(text or "")
+        if len(text) <= limit:
+            return text
+        return text[:limit] + "...<truncated>"
+
+    def _raise_if_empty_text(
+        self,
+        text: Any,
+        endpoint_name: str,
+        status_code: int,
+        response_body: Any,
+    ) -> None:
+        if text is None or not str(text).strip():
+            body_preview = self._truncate(self._safe_json_dumps(response_body))
+            raise RuntimeError(
+                f"Ollama returned empty text from {endpoint_name} "
+                f"(status_code={status_code}). Response body: {body_preview}"
+            )
 
     def _generate_via_generate(self, prompt: str, **kwargs: Any) -> str:
         url = f"{self.base_url}/api/generate"
         payload = self._build_generate_payload(prompt, **kwargs)
-        timeout_sec = self._effective_timeout()
+        timeout_sec = self._effective_timeout(**kwargs)
 
         resp = requests.post(url, json=payload, timeout=timeout_sec)
         resp.raise_for_status()
 
         data = resp.json()
 
-        # Ollama /api/generate thường trả response trong field "response"
         text = data.get("response", "")
-        if text is None:
-            text = ""
+        self._raise_if_empty_text(
+            text=text,
+            endpoint_name="/api/generate",
+            status_code=resp.status_code,
+            response_body=data,
+        )
 
         return str(text)
 
     def _generate_via_chat(self, prompt: str, **kwargs: Any) -> str:
         url = f"{self.base_url}/api/chat"
         payload = self._build_chat_payload(prompt, **kwargs)
-        timeout_sec = self._effective_timeout()
+        timeout_sec = self._effective_timeout(**kwargs)
 
         resp = requests.post(url, json=payload, timeout=timeout_sec)
         resp.raise_for_status()
@@ -167,8 +206,12 @@ class OllamaLLMClient:
 
         message = data.get("message", {}) or {}
         text = message.get("content", "")
-        if text is None:
-            text = ""
+        self._raise_if_empty_text(
+            text=text,
+            endpoint_name="/api/chat",
+            status_code=resp.status_code,
+            response_body=data,
+        )
 
         return str(text)
 
@@ -184,7 +227,6 @@ class OllamaLLMClient:
             "options": options,
         }
 
-        # Chỉ bật nếu thật sự muốn
         if json_mode:
             payload["format"] = "json"
 

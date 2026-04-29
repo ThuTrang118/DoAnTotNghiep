@@ -1,0 +1,168 @@
+```json
+{
+  "decision_rules": [
+    {
+      "type": "happy_path",
+      "conditions": {
+        "Phone": "valid",
+        "Password": "valid",
+        "ConfirmPassword": "valid"
+      },
+      "coverage_refs": [11, 13, 22]
+    },
+    {
+      "type": "single_fault",
+      "conditions": {
+        "Phone": "invalid (must start with 0)",
+        "Password": "valid",
+        "ConfirmPassword": "valid"
+      },
+      "coverage_refs": [1, 13, 22]
+    },
+    {
+      "type": "single_fault",
+      "conditions": {
+        "Phone": "invalid (must contain only digits)",
+        "Password": "valid",
+        "ConfirmPassword": "valid"
+      },
+      "coverage_refs": [2, 13, 22]
+    },
+    {
+      "type": "single_fault",
+      "conditions": {
+        "Phone": "invalid (must not contain special characters)",
+        "Password": "valid",
+        "Confirm错误": "valid"
+      },
+      "coverage_refs": [3, 13, 22]
+    },
+    {
+      "type": "single_fault",
+      "conditions": {
+        "Phone": "invalid (must not contain whitespace)",
+        "Password": "valid",
+        "ConfirmPassword": "valid"
+      },
+      "coverage_refs": [4, 13, 22]
+    },
+    {
+      "type": "single_fault",
+      "conditions": {
+        "Phone": "invalid (must not contain whitespace)",
+        "Password": "valid",
+        "ConfirmPassword": "valid"
+      },
+      "coverage_refs": [5, 13, 22]
+    },
+    {
+      "type": "single_fault",
+      "conditions": {
+        "Phone": "invalid (must not contain whitespace)",
+        "Password": "valid",
+        "ConfirmPassword": "valid"
+      },
+      "coverage_refs": [6, 13, 22]
+    },
+    {
+      "type": "single_fault",
+      "conditions": {
+        "Phone": "invalid (must contain only digits)",
+        "Password": "valid",
+        "ConfirmPassword": "valid"
+      },
+      "coverage_refs": [8, 13, 22]
+    },
+    {
+      "type": "single_fault",
+      "conditions": {
+        "Phone": "invalid (must not contain special characters)",
+        "Password": "valid",
+        "ConfirmPassword": "valid"
+      },
+      "coverage_refs": [9, 13, 22]
+    },
+    {
+      "type": "single_fault",
+      "conditions": {
+        "Phone": "invalid (must not contain whitespace)",
+        "Password": "valid",
+        "ConfirmPassword": "valid"
+      },
+      "coverage_refs": [10, 13, 22]
+    },
+    {
+      "type": "single_fault",
+      "conditions": {
+        "Phone": "valid",
+        "Password": "invalid (length <8)",
+        "ConfirmPassword": "valid"
+      },
+      "coverage_refs": [11, 12, 22]
+    },
+    {
+      "type": "single_fault",
+      "conditions": {
+        "Phone": "valid",
+        "Password": "invalid (length >20)",
+        "ConfirmPassword": "valid"
+      },
+      "coverage_refs": [11, 17, 22]
+    },
+    {
+      "type": "single_fault",
+      "conditions": {
+        "Phone": "valid",
+        "Password": "invalid (empty)",
+        "ConfirmPassword": "valid"
+      },
+      "coverage_refs": [11, 18, 22]
+    },
+    {
+      "type": "single_fault",
+      "conditions": {
+        "Phone": "valid",
+        "Password": "valid",
+        "ConfirmPassword": "invalid (empty)"
+      },
+      "coverage_refs": [11, 13, 7]
+    },
+    {
+      "type": "happy_path",
+      "conditions": {
+        "Phone": "valid",
+        "Password": "valid",
+        "ConfirmPassword": "valid"
+      },
+      "coverage_refs": [11, 14, 22]
+    },
+    {
+      "type": "happy_path",
+      "conditions": {
+        "Phone": "valid",
+        "Password": "valid",
+        "ConfirmPassword": "valid"
+      },
+      "coverage_refs": [11, 15, 22]
+    },
+    {
+      "type": "happy_path",
+      "conditions": {
+        "Phone": "valid",
+        "Password": "valid",
+        "ConfirmPassword": "valid"
+      },
+      "coverage_refs": [11, 16, 22]
+    },
+    {
+      "type": "happy_path",
+      "conditions": {
+        "Phone": "valid",
+        "Password": "valid",
+        "ConfirmPassword": "valid"
+      },
+      "coverage_refs": [11, 19, 22]
+    }
+  ]
+}
+```
