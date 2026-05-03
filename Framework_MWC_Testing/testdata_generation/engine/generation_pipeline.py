@@ -6,11 +6,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
-from testdata_generation.engine.exporters import (
-    DataExporter,
-    export_step1_to_excel,
-    export_step2_to_excel,
-)
+from testdata_generation.engine.exporters import DataExporter, export_step1_to_excel, export_step2_to_excel
 from testdata_generation.engine.feature_item_schema import (
     build_default_testcase_id,
     normalize_feature_name,
@@ -178,7 +174,6 @@ class GenerationPipeline:
 
         step1_data = self._force_step1_feature(step1_data, feature_key)
         step1_data = self._normalize_step1_data(step1_data)
-        step1_data = self._remove_legacy_step1_counts(step1_data)
         step1_data = self._rebuild_step1_summary(step1_data)
 
         self._hard_check_step1_structure(step1_data)
@@ -200,6 +195,42 @@ class GenerationPipeline:
         self._hard_check_step2_structure(dt_data)
         self.step2_validator.validate_or_raise(dt_data, step1_data)
         return dt_data
+
+
+    def _compact_step1_for_step2(self, step1_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Rút gọn Step 1 trước khi đưa vào prompt Step 2.
+
+        Lý do:
+        - Step 2 chỉ cần field/ràng buộc/kết quả lỗi để lập Decision Table.
+        - Không cần toàn bộ boundary metadata chi tiết.
+        - Prompt ngắn hơn giúp qwen3 tránh lỗi chỉ trả thinking nhưng response rỗng.
+        """
+        compact_items: List[Dict[str, Any]] = []
+        items = step1_data.get("coverage_items", [])
+
+        if isinstance(items, list):
+            for item in items:
+                if not isinstance(item, dict):
+                    continue
+                compact_items.append(
+                    {
+                        "id": self._clean_text(item.get("id")),
+                        "field": self._clean_text(item.get("field")),
+                        "technique": self._clean_text(item.get("technique")),
+                        "validity": self._clean_text(item.get("validity")),
+                        "rule": self._clean_text(item.get("rule")),
+                        "description": self._clean_text(item.get("description")),
+                        "expected_class": self._clean_text(item.get("expected_class")),
+                    }
+                )
+
+        return {
+            "feature": self._clean_text(step1_data.get("feature")),
+            "description": self._clean_text(step1_data.get("description")),
+            "coverage_summary": step1_data.get("coverage_summary", {}),
+            "coverage_items": compact_items,
+        }
 
     # ==========================================================================
     # PUBLIC API
@@ -509,14 +540,6 @@ class GenerationPipeline:
     # ==========================================================================
     # STEP 1 NORMALIZATION / HARD CHECK
     # ==========================================================================
-    def _remove_legacy_step1_counts(self, step1_data: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Xoá các field đếm cũ dễ gây mâu thuẫn với coverage_summary.
-        Step 2 và validator chỉ nên nhìn 1 nguồn đếm duy nhất: coverage_summary.
-        """
-        if "coverage_items_count" in step1_data:
-            step1_data.pop("coverage_items_count", None)
-        return step1_data
 
     def _rebuild_step1_summary(self, step1_data: Dict[str, Any]) -> Dict[str, Any]:
         items = step1_data.get("coverage_items", [])
@@ -646,34 +669,95 @@ class GenerationPipeline:
         return dt_data
 
     def _rebuild_step2_summary(self, dt_data: Dict[str, Any]) -> Dict[str, Any]:
+        conditions = dt_data.get("conditions", [])
+        actions = dt_data.get("actions", [])
         rules = dt_data.get("decision_rules", [])
-        total = len(rules) if isinstance(rules, list) else 0
-        dt_data["decision_summary"] = {"total_rules": total}
+
+        condition_count = len(conditions) if isinstance(conditions, list) else 0
+        action_count = len(actions) if isinstance(actions, list) else 0
+        reduced_rule_count = len(rules) if isinstance(rules, list) else 0
+        full_combination_count = 2 ** condition_count if condition_count > 0 else 0
+
+        dt_data["decision_summary"] = {
+            "condition_count": condition_count,
+            "action_count": action_count,
+            "full_combination_count": full_combination_count,
+            "reduced_rule_count": reduced_rule_count,
+        }
         return dt_data
 
+    @staticmethod
+    def _normalize_dt_state(value: Any) -> str:
+        raw = str(value or "").strip().upper()
+        return raw if raw in {"Y", "N", "-"} else str(value or "").strip()
+
     def _normalize_step2_data(self, dt_data: Dict[str, Any]) -> Dict[str, Any]:
-        rules = dt_data.get("decision_rules")
-        if not isinstance(rules, list):
-            dt_data["decision_rules"] = []
-            return dt_data
+        # Normalize conditions
+        raw_conditions = dt_data.get("conditions")
+        conditions: List[Dict[str, Any]] = []
+        if isinstance(raw_conditions, list):
+            for cond in raw_conditions:
+                if not isinstance(cond, dict):
+                    continue
+                normalized = dict(cond)
+                normalized["id"] = self._clean_text(normalized.get("id"))
+                normalized["name"] = self._clean_text(normalized.get("name"))
+                source_fields = normalized.get("source_fields")
+                if not isinstance(source_fields, list):
+                    source_fields = []
+                normalized["source_fields"] = [
+                    self._clean_text(x) for x in source_fields if self._clean_text(x)
+                ]
+                normalized["values"] = ["Y", "N"]
+                normalized["meaning_when_y"] = self._clean_text(normalized.get("meaning_when_y"))
+                normalized["meaning_when_n"] = self._clean_text(normalized.get("meaning_when_n"))
+                conditions.append(normalized)
+        dt_data["conditions"] = conditions
 
-        normalized_rules: List[Dict[str, Any]] = []
+        # Normalize actions
+        raw_actions = dt_data.get("actions")
+        actions: List[Dict[str, Any]] = []
+        if isinstance(raw_actions, list):
+            for action in raw_actions:
+                if not isinstance(action, dict):
+                    continue
+                normalized = dict(action)
+                normalized["id"] = self._clean_text(normalized.get("id"))
+                normalized["name"] = self._clean_text(normalized.get("name"))
+                normalized["expected"] = self._clean_text(normalized.get("expected"))
+                actions.append(normalized)
+        dt_data["actions"] = actions
 
-        for rule in rules:
-            if not isinstance(rule, dict):
-                continue
+        # Normalize decision_rules
+        raw_rules = dt_data.get("decision_rules")
+        rules: List[Dict[str, Any]] = []
+        if isinstance(raw_rules, list):
+            for rule in raw_rules:
+                if not isinstance(rule, dict):
+                    continue
 
-            normalized = dict(rule)
-            normalized["id"] = self._clean_text(normalized.get("id"))
-            normalized["type"] = self._normalize_step2_rule_type(normalized.get("type"))
-            normalized["coverage_refs"] = self._dedupe_string_list(normalized.get("coverage_refs"))
-            normalized["conditions"] = self._dedupe_conditions(normalized.get("conditions"))
-            normalized["expected"] = self._clean_text(normalized.get("expected"))
-            normalized["optimization_note"] = self._clean_text(normalized.get("optimization_note"))
+                normalized = dict(rule)
+                normalized["id"] = self._clean_text(normalized.get("id"))
+                normalized["type"] = self._normalize_step2_rule_type(normalized.get("type"))
 
-            normalized_rules.append(normalized)
+                states = normalized.get("condition_states")
+                if not isinstance(states, dict):
+                    states = {}
+                normalized["condition_states"] = {
+                    self._clean_text(k): self._normalize_dt_state(v)
+                    for k, v in states.items()
+                    if self._clean_text(k)
+                }
 
-        dt_data["decision_rules"] = normalized_rules
+                action_refs = normalized.get("action_refs")
+                normalized["action_refs"] = self._dedupe_string_list(action_refs)
+                normalized["expected"] = self._clean_text(normalized.get("expected"))
+                normalized["reduction_note"] = self._clean_text(
+                    normalized.get("reduction_note") or normalized.get("optimization_note")
+                )
+                rules.append(normalized)
+
+        dt_data["decision_rules"] = rules
         return dt_data
 
     def _hard_check_step2_structure(self, dt_data: Dict[str, Any]) -> None:
@@ -686,36 +770,66 @@ class GenerationPipeline:
         if not self._clean_text(dt_data.get("description")):
             raise RuntimeError("Step2 missing 'description'.")
 
+        conditions = dt_data.get("conditions")
+        if not isinstance(conditions, list) or not conditions:
+            raise RuntimeError("Step2 must contain non-empty 'conditions'.")
+
+        actions = dt_data.get("actions")
+        if not isinstance(actions, list) or not actions:
+            raise RuntimeError("Step2 must contain non-empty 'actions'.")
+
         rules = dt_data.get("decision_rules")
         if not isinstance(rules, list) or not rules:
             raise RuntimeError("Step2 must contain non-empty 'decision_rules'.")
 
-        ids = set()
+        condition_ids = set()
+        for idx, cond in enumerate(conditions, start=1):
+            if not isinstance(cond, dict):
+                raise RuntimeError(f"Step2 conditions[{idx}] must be an object.")
+            cid = self._clean_text(cond.get("id"))
+            if not cid:
+                raise RuntimeError(f"Step2 conditions[{idx}] missing 'id'.")
+            if cid in condition_ids:
+                raise RuntimeError(f"Step2 duplicate condition id: '{cid}'.")
+            condition_ids.add(cid)
+            if not self._clean_text(cond.get("name")):
+                raise RuntimeError(f"Step2 conditions[{idx}] missing 'name'.")
+
+        action_ids = set()
+        for idx, action in enumerate(actions, start=1):
+            if not isinstance(action, dict):
+                raise RuntimeError(f"Step2 actions[{idx}] must be an object.")
+            aid = self._clean_text(action.get("id"))
+            if not aid:
+                raise RuntimeError(f"Step2 actions[{idx}] missing 'id'.")
+            if aid in action_ids:
+                raise RuntimeError(f"Step2 duplicate action id: '{aid}'.")
+            action_ids.add(aid)
+            if not self._clean_text(action.get("expected")):
+                raise RuntimeError(f"Step2 actions[{idx}] missing 'expected'.")
+
+        rule_ids = set()
         for idx, rule in enumerate(rules, start=1):
             if not isinstance(rule, dict):
                 raise RuntimeError(f"Step2 decision_rules[{idx}] must be an object.")
 
-            rule_id = self._clean_text(rule.get("id"))
-            if not rule_id:
+            rid = self._clean_text(rule.get("id"))
+            if not rid:
                 raise RuntimeError(f"Step2 decision_rules[{idx}] missing 'id'.")
-            if rule_id in ids:
-                raise RuntimeError(f"Step2 duplicate decision rule id: '{rule_id}'.")
-            ids.add(rule_id)
+            if rid in rule_ids:
+                raise RuntimeError(f"Step2 duplicate decision rule id: '{rid}'.")
+            rule_ids.add(rid)
 
             if not self._clean_text(rule.get("type")):
                 raise RuntimeError(f"Step2 decision_rules[{idx}] missing 'type'.")
 
-            coverage_refs = rule.get("coverage_refs")
-            if not isinstance(coverage_refs, list) or not coverage_refs:
-                raise RuntimeError(
-                    f"Step2 decision_rules[{idx}] must have non-empty 'coverage_refs'."
-                )
+            states = rule.get("condition_states")
+            if not isinstance(states, dict) or not states:
+                raise RuntimeError(f"Step2 decision_rules[{idx}] must have non-empty 'condition_states'.")
 
-            conditions = rule.get("conditions")
-            if not isinstance(conditions, list) or not conditions:
-                raise RuntimeError(
-                    f"Step2 decision_rules[{idx}] must have non-empty 'conditions'."
-                )
+            action_refs = rule.get("action_refs")
+            if not isinstance(action_refs, list) or not action_refs:
+                raise RuntimeError(f"Step2 decision_rules[{idx}] must have non-empty 'action_refs'.")
 
             if not self._clean_text(rule.get("expected")):
                 raise RuntimeError(f"Step2 decision_rules[{idx}] missing 'expected'.")
@@ -774,10 +888,20 @@ class GenerationPipeline:
             if not isinstance(decision_basis, dict):
                 decision_basis = {}
 
-            conditions = decision_basis.get("conditions")
-            decision_basis["conditions"] = self._dedupe_conditions(conditions)
-            decision_basis["optimization_note"] = self._clean_text(decision_basis.get("optimization_note"))
             decision_basis["rule_id"] = self._clean_text(decision_basis.get("rule_id"))
+
+            states = decision_basis.get("condition_states")
+            if not isinstance(states, dict):
+                states = {}
+            decision_basis["condition_states"] = {
+                self._clean_text(k): self._normalize_dt_state(v)
+                for k, v in states.items()
+                if self._clean_text(k)
+            }
+
+            decision_basis["reduction_note"] = self._clean_text(
+                decision_basis.get("reduction_note") or decision_basis.get("optimization_note")
+            )
             normalized["decision_basis"] = decision_basis
 
             normalized_testcases.append(normalized)
@@ -831,10 +955,10 @@ class GenerationPipeline:
             if not isinstance(rule_id, str) or not rule_id.strip():
                 raise RuntimeError(f"Step3 testcases[{idx}] decision_basis.rule_id must be non-empty.")
 
-            conditions = decision_basis.get("conditions")
-            if not isinstance(conditions, list) or not conditions:
+            condition_states = decision_basis.get("condition_states")
+            if not isinstance(condition_states, dict) or not condition_states:
                 raise RuntimeError(
-                    f"Step3 testcases[{idx}] decision_basis.conditions must be non-empty."
+                    f"Step3 testcases[{idx}] decision_basis.condition_states must be non-empty."
                 )
 
     def _raise_if_step3_warnings_are_severe(self, warnings: List[str]) -> None:
@@ -904,7 +1028,6 @@ class GenerationPipeline:
         self._log("STEP 1: normalize + rebuild summary ...")
         step1_data = self._force_step1_feature(step1_data, feature_key)
         step1_data = self._normalize_step1_data(step1_data)
-        step1_data = self._remove_legacy_step1_counts(step1_data)
         step1_data = self._rebuild_step1_summary(step1_data)
 
         self._log("STEP 1: hard-check structure ...")
@@ -953,7 +1076,8 @@ class GenerationPipeline:
         step_start = time.perf_counter()
 
         self._log("STEP 2: build prompt cho Decision Table trung gian")
-        step2_prompt = self.prompt_loader.build_step2_prompt(feature, step1_data)
+        step2_context = self._compact_step1_for_step2(step1_data)
+        step2_prompt = self.prompt_loader.build_step2_prompt(feature, step2_context)
         feature_key = normalize_feature_name(step1_data.get("feature", feature))
         self._log(f"STEP 2: feature chuẩn hóa = '{feature_key}'")
         self._log(f"STEP 2: độ dài prompt = {len(step2_prompt):,} ký tự")
@@ -1122,10 +1246,9 @@ class GenerationPipeline:
 
         return paths
 
-
-    # ===========================================================================
+    # ==========================================================================
     # SAFE EXCEL EXPORT FOR STEP 2
-    # ===========================================================================
+    # ==========================================================================
     def _export_step2_excel_safely(self, dt_data: Dict[str, Any], exporter: DataExporter) -> None:
         try:
             excel_path = exporter._get_run_file_path("step2_dt.xlsx")

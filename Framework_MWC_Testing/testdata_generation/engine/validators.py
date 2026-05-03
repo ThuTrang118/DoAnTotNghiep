@@ -456,7 +456,15 @@ class ConditionsValidator(_ValidationCommon):
 
 class DecisionTableValidator(_ValidationCommon):
     """
-    Validate Step 2 decision_rules JSON.
+    Validate Step 2 Decision Table theo schema mới:
+    - conditions[]
+    - actions[]
+    - decision_rules[].condition_states
+    - decision_rules[].action_refs
+    - decision_rules[].reduction_note
+
+    Không validate theo coverage_refs của Step 1 ở Step 2.
+    Step 2 chỉ là bảng quyết định logic; việc map coverage để tạo test data nằm ở Step 3.
     """
 
     def validate(
@@ -471,168 +479,179 @@ class DecisionTableValidator(_ValidationCommon):
         errors: List[str] = []
         warnings: List[str] = []
 
-        feature, expected_fields = self._load_feature_and_expected_fields(dt_data, errors)
+        feature, _ = self._load_feature_and_expected_fields(dt_data, errors)
         if feature is None:
             return ValidationResult(ok=False, errors=errors, warnings=warnings)
 
         self._validate_non_empty_string(dt_data.get("description"), "description", errors)
 
         decision_summary = self._validate_required_dict(dt_data, "decision_summary", errors)
-        decision_rules = self._validate_required_list(
-            dt_data,
-            "decision_rules",
-            errors,
-            message="Missing or invalid 'decision_rules'. It must be a list.",
-        )
+        conditions = self._validate_required_list(dt_data, "conditions", errors)
+        actions = self._validate_required_list(dt_data, "actions", errors)
+        decision_rules = self._validate_required_list(dt_data, "decision_rules", errors)
 
-        if decision_summary is None or decision_rules is None:
+        if decision_summary is None or conditions is None or actions is None or decision_rules is None:
             return ValidationResult(ok=False, errors=errors, warnings=warnings)
 
+        if not conditions:
+            errors.append("conditions must not be empty.")
+        if not actions:
+            errors.append("actions must not be empty.")
         if not decision_rules:
             errors.append("decision_rules must not be empty.")
+        if errors:
             return ValidationResult(ok=False, errors=errors, warnings=warnings)
 
-        step1_feature, coverage_map = self._load_step1_coverage_reference(step1_data, errors)
-        if step1_feature is not None and step1_feature != feature:
-            errors.append(
-                f"Feature mismatch: Step 2 feature='{feature}' but Step 1 feature='{step1_feature}'."
-            )
+        # Validate conditions
+        condition_ids: List[str] = []
+        seen_condition_ids: Set[str] = set()
+        for idx, cond in enumerate(conditions):
+            prefix = f"conditions[{idx}]"
+            if not isinstance(cond, dict):
+                errors.append(f"{prefix} must be an object.")
+                continue
 
-        declared_total_rules = decision_summary.get("total_rules")
-        if not isinstance(declared_total_rules, int) or declared_total_rules < 0:
-            errors.append("decision_summary.total_rules must be a non-negative integer.")
-        elif declared_total_rules != len(decision_rules):
-            errors.append(
-                f"decision_summary.total_rules={declared_total_rules} but actual decision_rules={len(decision_rules)}."
-            )
+            cid = cond.get("id")
+            if not isinstance(cid, str) or not cid.strip():
+                errors.append(f"{prefix}.id is missing or invalid.")
+                continue
+            cid = cid.strip()
+            if cid in seen_condition_ids:
+                errors.append(f"Duplicate condition id: {cid}")
+            seen_condition_ids.add(cid)
+            condition_ids.append(cid)
 
+            self._validate_non_empty_string(cond.get("name"), f"{prefix}.name", errors)
+            self._validate_non_empty_string(cond.get("meaning_when_y"), f"{prefix}.meaning_when_y", errors)
+            self._validate_non_empty_string(cond.get("meaning_when_n"), f"{prefix}.meaning_when_n", errors)
+
+            values = cond.get("values")
+            if not isinstance(values, list) or "Y" not in values or "N" not in values:
+                errors.append(f"{prefix}.values must contain Y and N.")
+
+        condition_id_set = set(condition_ids)
+
+        # Validate actions
+        action_ids: List[str] = []
+        action_expected: Dict[str, str] = {}
+        seen_action_ids: Set[str] = set()
+        for idx, action in enumerate(actions):
+            prefix = f"actions[{idx}]"
+            if not isinstance(action, dict):
+                errors.append(f"{prefix} must be an object.")
+                continue
+
+            aid = action.get("id")
+            if not isinstance(aid, str) or not aid.strip():
+                errors.append(f"{prefix}.id is missing or invalid.")
+                continue
+            aid = aid.strip()
+            if aid in seen_action_ids:
+                errors.append(f"Duplicate action id: {aid}")
+            seen_action_ids.add(aid)
+            action_ids.append(aid)
+
+            self._validate_non_empty_string(action.get("name"), f"{prefix}.name", errors)
+            self._validate_non_empty_string(action.get("expected"), f"{prefix}.expected", errors)
+            action_expected[aid] = str(action.get("expected", "")).strip()
+
+        action_id_set = set(action_ids)
+
+        # Validate summary rebuilt by pipeline
+        expected_summary = {
+            "condition_count": len(condition_ids),
+            "action_count": len(action_ids),
+            "full_combination_count": 2 ** len(condition_ids) if condition_ids else 0,
+            "reduced_rule_count": len(decision_rules),
+        }
+        for key, expected_value in expected_summary.items():
+            actual = decision_summary.get(key)
+            if not isinstance(actual, int) or actual != expected_value:
+                errors.append(
+                    f"decision_summary.{key} must be {expected_value}, got {actual}."
+                )
+
+        # Validate rules
         seen_rule_ids: Set[str] = set()
-        all_coverage_refs_used: Set[str] = set()
-        has_happy_path = False
+        happy_path_count = 0
 
         for idx, rule in enumerate(decision_rules):
             prefix = f"decision_rules[{idx}]"
-
             if not isinstance(rule, dict):
                 errors.append(f"{prefix} must be an object.")
                 continue
 
             rule_id = rule.get("id")
             rule_type = rule.get("type")
-            coverage_refs = rule.get("coverage_refs")
-            conditions = rule.get("conditions")
+            condition_states = rule.get("condition_states")
+            action_refs = rule.get("action_refs")
             expected = rule.get("expected")
-            optimization_note = rule.get("optimization_note")
+            reduction_note = rule.get("reduction_note")
 
             if not isinstance(rule_id, str) or not rule_id.strip():
                 errors.append(f"{prefix}.id is missing or invalid.")
             elif rule_id in seen_rule_ids:
-                errors.append(f"Duplicate decision rule id: '{rule_id}'.")
+                errors.append(f"Duplicate decision rule id: {rule_id}")
             else:
                 seen_rule_ids.add(rule_id)
 
             if rule_type not in _ALLOWED_RULE_TYPES:
                 errors.append(f"{prefix}.type must be one of {sorted(_ALLOWED_RULE_TYPES)}, got '{rule_type}'.")
 
-            self._validate_non_empty_string(expected, f"{prefix}.expected", errors)
-            if self._is_placeholder(expected):
-                errors.append(f"{prefix}.expected must not be placeholder '{expected}'.")
+            if not isinstance(condition_states, dict) or not condition_states:
+                errors.append(f"{prefix}.condition_states must be non-empty object.")
+                continue
 
-            if not isinstance(optimization_note, str):
-                errors.append(f"{prefix}.optimization_note must be a string.")
+            state_keys = set(str(k).strip() for k in condition_states.keys())
+            missing_conditions = sorted(condition_id_set - state_keys)
+            extra_conditions = sorted(state_keys - condition_id_set)
+            if missing_conditions:
+                errors.append(f"{prefix}.condition_states missing conditions: {missing_conditions}.")
+            if extra_conditions:
+                errors.append(f"{prefix}.condition_states contains unknown conditions: {extra_conditions}.")
 
-            invalid_refs = 0
-            valid_refs = 0
-            invalid_fields: Set[str] = set()
+            n_count = 0
+            y_count = 0
+            for cid in condition_ids:
+                state = condition_states.get(cid)
+                if state not in {"Y", "N", "-"}:
+                    errors.append(f"{prefix}.condition_states[{cid}] must be Y/N/-." )
+                if state == "N":
+                    n_count += 1
+                elif state == "Y":
+                    y_count += 1
 
-            if not isinstance(coverage_refs, list) or not coverage_refs:
-                errors.append(f"{prefix}.coverage_refs must be a non-empty list.")
+            if rule_type == "happy_path":
+                happy_path_count += 1
+                if any(condition_states.get(cid) != "Y" for cid in condition_ids):
+                    errors.append(f"{prefix} happy_path must have all condition_states = Y.")
+
+            if rule_type == "single_fault" and n_count != 1:
+                errors.append(f"{prefix} single_fault must contain exactly one N.")
+
+            if not isinstance(action_refs, list) or not action_refs:
+                errors.append(f"{prefix}.action_refs must be non-empty list.")
             else:
-                seen_local_refs: Set[str] = set()
-                for ref in coverage_refs:
+                for ref in action_refs:
                     if not isinstance(ref, str) or not ref.strip():
-                        errors.append(f"{prefix}.coverage_refs contains invalid coverage id.")
-                        continue
+                        errors.append(f"{prefix}.action_refs contains invalid action id.")
+                    elif ref.strip() not in action_id_set:
+                        errors.append(f"{prefix}.action_refs references unknown action id '{ref}'.")
 
-                    if ref in seen_local_refs:
-                        errors.append(f"{prefix}.coverage_refs contains duplicate id '{ref}'.")
-                        continue
-                    seen_local_refs.add(ref)
+            self._validate_non_empty_string(expected, f"{prefix}.expected", errors)
+            if isinstance(action_refs, list) and action_refs:
+                first_ref = str(action_refs[0]).strip()
+                expected_from_action = action_expected.get(first_ref, "")
+                if expected_from_action and isinstance(expected, str) and expected.strip() != expected_from_action:
+                    warnings.append(
+                        f"{prefix}.expected differs from actions[{first_ref}].expected."
+                    )
 
-                    all_coverage_refs_used.add(ref)
+            if not isinstance(reduction_note, str) or not reduction_note.strip():
+                errors.append(f"{prefix}.reduction_note must be non-empty string.")
 
-                    if coverage_map and ref not in coverage_map:
-                        errors.append(f"{prefix}.coverage_refs contains unknown Step 1 coverage id '{ref}'.")
-                        continue
-
-                    cov = coverage_map.get(ref)
-                    if cov:
-                        if cov.get("validity") == "invalid":
-                            invalid_refs += 1
-                            field = cov.get("field")
-                            if isinstance(field, str):
-                                invalid_fields.add(field)
-                        elif cov.get("validity") == "valid":
-                            valid_refs += 1
-
-                if invalid_refs == 0 and valid_refs > 0 and rule_type == "happy_path":
-                    has_happy_path = True
-
-                if rule_type == "single_fault":
-                    if invalid_refs != 1:
-                        errors.append(f"{prefix} type='single_fault' must contain exactly 1 invalid coverage.")
-                    if len(invalid_fields) != 1:
-                        errors.append(f"{prefix} type='single_fault' must contain invalid coverage on exactly 1 field.")
-
-            if not isinstance(conditions, list) or not conditions:
-                errors.append(f"{prefix}.conditions must be a non-empty list.")
-            else:
-                seen_conditions: Set[Tuple[str, str]] = set()
-                invalid_condition_count = 0
-
-                for cond_idx, cond in enumerate(conditions):
-                    cond_prefix = f"{prefix}.conditions[{cond_idx}]"
-
-                    if not isinstance(cond, dict):
-                        errors.append(f"{cond_prefix} must be an object.")
-                        continue
-
-                    cond_field = cond.get("field")
-                    cond_state = cond.get("state")
-
-                    if not isinstance(cond_field, str) or cond_field not in expected_fields:
-                        errors.append(f"{cond_prefix}.field must be one of {expected_fields}, got '{cond_field}'.")
-
-                    if cond_state not in {"valid", "invalid"}:
-                        errors.append(f"{cond_prefix}.state must be 'valid' or 'invalid', got '{cond_state}'.")
-                    elif cond_state == "invalid":
-                        invalid_condition_count += 1
-
-                    if (
-                        isinstance(cond_field, str)
-                        and isinstance(cond_state, str)
-                        and cond_field.strip()
-                        and cond_state.strip()
-                    ):
-                        key = (cond_field.strip(), cond_state.strip())
-                        if key in seen_conditions:
-                            errors.append(f"{cond_prefix} duplicates condition {key}.")
-                        seen_conditions.add(key)
-
-                if rule_type == "happy_path" and invalid_condition_count != 0:
-                    errors.append(f"{prefix} type='happy_path' must not contain invalid condition.")
-                if rule_type == "single_fault" and invalid_condition_count != 1:
-                    errors.append(f"{prefix} type='single_fault' must contain exactly 1 invalid condition.")
-
-        if coverage_map:
-            missing_coverage = sorted(set(coverage_map.keys()) - all_coverage_refs_used)
-            if missing_coverage:
-                errors.append(
-                    f"Some Step 1 coverage items are not referenced by any decision rule: {missing_coverage}."
-                )
-
-        if coverage_map and not has_happy_path:
-            errors.append("Step 2 must contain at least one happy_path decision rule using only valid coverage.")
+        if happy_path_count != 1:
+            errors.append(f"Step2 must contain exactly 1 happy_path rule, got {happy_path_count}.")
 
         return ValidationResult(ok=not errors, errors=errors, warnings=warnings)
 

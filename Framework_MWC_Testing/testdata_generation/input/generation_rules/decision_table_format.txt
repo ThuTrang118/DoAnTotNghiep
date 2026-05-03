@@ -2,106 +2,53 @@
   "feature": "string",
   "description": "string",
   "decision_summary": {
-    "total_rules": number
+    "condition_count": 0,
+    "action_count": 0,
+    "full_combination_count": 0,
+    "reduced_rule_count": 0
   },
+  "conditions": [
+    {
+      "id": "C1",
+      "name": "mô tả điều kiện bằng tiếng Việt",
+      "source_fields": ["TênField"],
+      "values": ["Y", "N"],
+      "meaning_when_y": "ý nghĩa khi Y bằng tiếng Việt",
+      "meaning_when_n": "ý nghĩa khi N bằng tiếng Việt"
+    }
+  ],
+  "actions": [
+    {
+      "id": "A1",
+      "name": "tên kết quả/hành động bằng tiếng Việt",
+      "expected": "kết quả mong đợi bằng tiếng Việt"
+    }
+  ],
   "decision_rules": [
     {
-      "id": "string",
-      "type": "happy_path | single_fault | boundary | business_rule",
-      "coverage_refs": ["string"],
-      "conditions": [
-        {
-          "field": "string",
-          "state": "valid | invalid"
-        }
-      ],
-      "expected": "string",
-      "optimization_note": "string"
+      "id": "DT_001",
+      "type": "happy_path",
+      "condition_states": {
+        "C1": "Y"
+      },
+      "action_refs": ["A1"],
+      "expected": "kết quả mong đợi bằng tiếng Việt",
+      "reduction_note": "ghi chú rút gọn bằng tiếng Việt"
     }
   ]
 }
 
-==================================================
-RÀNG BUỘC TOP LEVEL
-==================================================
-
-1. Chỉ 1 JSON object.
-2. Không copy schema mẫu.
-3. Không placeholder.
-4. Các field top-level bắt buộc:
-- feature
-- description
-- decision_summary
-- decision_rules
-
-5. total_rules = số rule thực tế
-
-==================================================
-RÀNG BUỘC RULE
-==================================================
-
-1. id:
-- duy nhất
-- không rỗng
-
-2. type:
-chỉ được là:
-- happy_path
-- single_fault
-- boundary
-- business_rule
-
-3. coverage_refs:
-- list không rỗng
-- chỉ chứa ID có thật từ Step 1
-- không trùng trong cùng rule
-
-4. conditions:
-- list không rỗng
-- mỗi phần tử có:
-  field
-  state
-
-5. state chỉ được:
-- valid
-- invalid
-
-6. Trong 1 rule:
-- 1 field chỉ xuất hiện 1 lần
-
-7. expected:
-- string không rỗng
-- là expected outcome
-
-8. optimization_note:
-- string
-- có thể rỗng
-
-==================================================
-RÀNG BUỘC LOGIC
-==================================================
-
-1. Có ít nhất 1 happy_path
-
-2. happy_path:
-- toàn bộ conditions valid
-
-3. single_fault:
-- đúng 1 field invalid chính
-
-4. boundary:
-- dùng coverage BVA
-
-5. business_rule:
-- dùng cho logic đặc biệt
-
-6. Mỗi coverage_item Step 1 phải xuất hiện ít nhất 1 lần trong toàn bộ rules
-
-7. Không tạo rule trùng nhau
-
-==================================================
-OUTPUT
-==================================================
-
-Chỉ JSON.
-Không text ngoài JSON.
+RÀNG BUỘC:
+1. Chỉ output 1 JSON object.
+2. Không markdown, không ```json, không giải thích, không text ngoài JSON.
+3. Không copy placeholder string/number.
+4. conditions/actions/decision_rules không rỗng.
+5. condition id dạng C1, C2...; action id dạng A1, A2...; rule id dạng DT_001, DT_002...
+6. decision_rules chỉ dùng condition_states, action_refs, expected, reduction_note.
+7. Không dùng condition, conditions, action, action_id, coverage_refs, optimization_note trong decision_rules.
+8. condition_states phải chứa đủ condition id và chỉ dùng Y, N, -.
+9. action_refs phải tham chiếu action id có thật.
+10. Có đúng 1 happy_path và tất cả condition_states của happy_path là Y.
+11. single_fault có đúng 1 condition = N.
+12. expected không rỗng và phải khớp action được tham chiếu.
+13. Tất cả mô tả phải là tiếng Việt.
