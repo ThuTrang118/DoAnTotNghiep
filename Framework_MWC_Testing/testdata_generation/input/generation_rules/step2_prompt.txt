@@ -1,148 +1,124 @@
 VAI TRÒ:
-Sinh Decision Table (bảng quyết định) từ đặc tả chức năng.
+Sinh STEP 2 Decision Table trung gian từ Step 1 EP + BVA cho mọi chức năng nhập liệu.
 
 ĐẦU VÀO:
-- Mô tả chức năng
-- Step 1 EP + BVA: chỉ dùng để biết field/ràng buộc/kết quả lỗi
+1. FEATURE SPECIFICATION.
+2. STEP 1 COVERAGE OUTPUT đã khóa.
 
 MỤC TIÊU:
-Sinh bảng quyết định logic, KHÔNG sinh test data cụ thể.
+Tạo bảng quyết định đúng quy trình bài giảng:
+Conditions → Values → Actions → Combinations → Simplify/Reduce.
+Step 2 CHỈ sinh logic bảng quyết định, KHÔNG sinh testcase, KHÔNG sinh test data cụ thể.
 
 ==================================================
-LÝ THUYẾT BẮT BUỘC
+LUẬT BẮT BUỘC
 ==================================================
-
-Decision Table dùng để mô hình hóa:
-- Condition: điều kiện đầu vào ảnh hưởng tới kết quả
-- Values: Y/N/-
-- Action: phản hồi/kết quả hệ thống
-- Rule: tổ hợp condition dẫn tới action
-
-Quy ước:
-- Y = điều kiện đúng / được thỏa mãn
-- N = điều kiện sai / không được thỏa mãn
-- - = điều kiện không ảnh hưởng tới kết quả
-
-Phải xây dựng theo đúng quy trình:
-1. Xác định condition
-2. Xác định action
-3. Tạo tổ hợp rule
-4. Gán action cho từng rule
-5. Rút gọn bằng dấu "-" khi condition không ảnh hưởng
+1. Không sửa, không đổi, không đánh số lại coverage_items của Step 1.
+2. coverage_refs chỉ được dùng id có thật trong Step 1.
+3. Mỗi invalid coverage_item trong Step 1 phải xuất hiện trong ít nhất 1 decision_rule.coverage_refs.
+4. Không được bỏ coverage_refs trong bất kỳ decision_rule nào.
+5. Không được gộp các lỗi khác bản chất chỉ vì cùng expected message.
+6. Required/empty của từng field phải là decision_rule riêng.
+7. BVA invalid phải được trace riêng hoặc nằm trong rule riêng đúng nguyên nhân.
+8. BVA valid có thể đặt trong happy_path hoặc boundary_valid rule để Step 3 còn dùng được dữ liệu biên hợp lệ.
+9. Có đúng 1 happy_path.
+10. Không tạo rule trùng condition_states + action_refs + coverage_refs.
 
 ==================================================
-QUY TẮC CONDITION
+CẤM CONDITION TỔNG QUÁT
 ==================================================
+Tuyệt đối KHÔNG tạo condition kiểu:
+- Tất cả dữ liệu hợp lệ?
+- Tất cả trường được nhập?
+- Tất cả điều kiện hợp lệ?
+- Tất cả ràng buộc được đáp ứng?
+- <Field> hợp lệ? nếu field đó có nhiều lỗi khác bản chất trong Step 1.
 
-1. Condition phải là câu hỏi Yes/No.
-2. Condition phải viết bằng tiếng Việt.
-3. Condition chỉ mô tả logic quyết định, không mô tả dữ liệu cụ thể.
-4. Không tạo condition từ từng giá trị BVA.
-5. Không tạo condition tổng hợp như "tất cả dữ liệu hợp lệ?".
-6. Không tạo condition trùng nghĩa.
-7. Nếu nhiều ràng buộc của cùng field cho cùng một lỗi chung, gộp thành "<field> hợp lệ?".
-8. Nếu các lỗi của cùng field có kết quả khác nhau, được tách thành các condition khác nhau theo nhóm kết quả.
-
-Mẫu condition tiếng Việt:
-- "Username được nhập?"
-- "Phone hợp lệ?"
-- "Password hợp lệ?"
-- "ConfirmPassword khớp với Password?"
-
-==================================================
-QUY TẮC ACTION
-==================================================
-
-1. Action là kết quả/phản hồi của hệ thống.
-2. Action phải viết bằng tiếng Việt.
-3. expected phải là thông báo/kết quả cụ thể theo đặc tả.
-4. Không tự thêm action không có trong đặc tả.
+Condition phải là điều kiện atomic, ví dụ:
+- Username được nhập?
+- Username không trùng?
+- Phone được nhập?
+- Phone đúng độ dài?
+- Phone bắt đầu bằng 0?
+- Phone chỉ chứa số?
+- Password được nhập?
+- Password đúng độ dài?
+- ConfirmPassword được nhập?
+- ConfirmPassword khớp với Password?
 
 ==================================================
-QUY TẮC RULE
+CÁCH TẠO CONDITIONS
 ==================================================
+1. Tạo condition từ các rule atomic trong Step 1.
+2. Nếu một field có nhiều invalid coverage khác bản chất thì phải tách nhiều condition.
+3. Mỗi condition có id C1, C2, C3...
+4. values luôn là ["Y", "N"].
+5. meaning_when_y mô tả trạng thái đạt điều kiện.
+6. meaning_when_n mô tả trạng thái vi phạm điều kiện.
+7. Condition liên quan nhau nên đặt gần nhau.
 
-Mỗi rule bắt buộc có:
+==================================================
+CÁCH TẠO ACTIONS
+==================================================
+1. Action là kết quả/hành động hệ thống.
+2. expected phải lấy đúng từ Step 1 expected_class hoặc đặc tả.
+3. Nếu cùng expected thì có thể dùng chung action.
+4. Không được dùng expected tự nghĩ nếu Step 1 đã có expected_class.
+
+==================================================
+CÁCH TẠO DECISION_RULES
+==================================================
+Mỗi decision_rule phải có đủ:
 - id
 - type
 - condition_states
 - action_refs
 - expected
+- coverage_refs
 - reduction_note
 
-Không dùng field khác để thay thế.
+Type chỉ dùng:
+- happy_path
+- single_fault
+- boundary_valid
+- business_rule
 
-Type hợp lệ:
-- happy_path: tất cả condition = Y
-- single_fault: đúng 1 condition = N
-- business_rule: dùng khi nhiều condition cùng tạo ra một quy tắc nghiệp vụ
-
-Bắt buộc:
-- Có đúng 1 happy_path.
-- Mỗi single_fault có đúng 1 N.
-- condition_states phải chứa đủ tất cả condition id.
-- action_refs là list, ví dụ ["A1"].
-- expected phải khớp với action được tham chiếu.
-- reduction_note phải viết tiếng Việt.
-
-Được dùng dấu "-" khi condition không ảnh hưởng đến action.
-
-==================================================
-CẤM OUTPUT SAI SCHEMA
-==================================================
-
-CẤM dùng trong decision_rules:
-- "condition": "C1=N"
-- "conditions": { ... }
-- "action": "A1"
-- "action_id": "A1"
-- "coverage_refs"
-- "optimization_note"
-
-BẮT BUỘC dùng:
-- "condition_states": {"C1":"Y"}
-- "action_refs": ["A1"]
-- "reduction_note"
+Quy tắc:
+1. happy_path: tất cả condition_states = "Y", action là thành công/hợp lệ.
+2. single_fault: chỉ có 1 nguyên nhân lỗi chính. Các condition không ảnh hưởng có thể là "-".
+3. boundary_valid: dùng cho các coverage BVA valid nếu cần trace riêng.
+4. business_rule: dùng cho rule quan hệ nghiệp vụ giữa nhiều field.
+5. condition_states phải chứa đủ tất cả condition id.
+6. Giá trị condition_states chỉ được là "Y", "N", "-".
+7. action_refs phải tham chiếu action id có thật.
+8. expected phải khớp expected của action được tham chiếu.
+9. coverage_refs phải là danh sách id Step 1 liên quan trực tiếp đến rule.
+10. Mỗi invalid coverage_item Step 1 phải được trace ít nhất một lần.
 
 ==================================================
-NGÔN NGỮ
+RÚT GỌN BẢNG QUYẾT ĐỊNH
 ==================================================
-
-Tất cả mô tả phải viết bằng tiếng Việt:
-- description
-- conditions[].name
-- conditions[].meaning_when_y
-- conditions[].meaning_when_n
-- actions[].name
-- actions[].expected
-- decision_rules[].expected
-- decision_rules[].reduction_note
-
-Được giữ nguyên tên field kỹ thuật nếu field gốc là tiếng Anh.
-
-CẤM dùng tiếng Anh trong mô tả:
-- is valid
-- is non-empty
-- matches
-- invalid
-- valid data
-- please fill
-- happy path
+Được dùng "-" khi condition đó không ảnh hưởng đến kết quả của rule.
+Không được dùng "-" nếu làm mất nguyên nhân lỗi chính.
+Không được gộp rule nếu coverage_refs khác bản chất lỗi.
+Không được tạo rule trùng.
 
 ==================================================
-OUTPUT BẮT BUỘC
+KIỂM TRA TRƯỚC OUTPUT
 ==================================================
+Trước khi trả JSON, tự kiểm tra:
+1. Top-level có phải JSON object không?
+2. Mọi decision_rule có coverage_refs chưa?
+3. Mọi coverage_refs có tồn tại trong Step 1 không?
+4. Mọi invalid coverage_item Step 1 đã được dùng chưa?
+5. Có condition tổng quát bị cấm không?
+6. Có rule trùng không?
+7. decision_summary.reduced_rule_count có bằng số rule thật không?
+8. condition_count/action_count có đúng số phần tử thật không?
 
-Chỉ trả về DUY NHẤT 1 JSON object.
-JSON phải bắt đầu bằng { và kết thúc bằng }.
-
-CẤM TUYỆT ĐỐI:
-- markdown
-- ```json
-- giải thích ngoài JSON
-- bảng text
-- tiêu đề ngoài JSON
-- <think>
-- </think>
-
-Nếu không chắc chắn, vẫn phải trả về JSON đúng schema.
+OUTPUT:
+Chỉ trả về 1 JSON object hợp lệ theo OUTPUT SCHEMA.
+Không markdown.
+Không comment.
+Không giải thích.
+Không text ngoài JSON.

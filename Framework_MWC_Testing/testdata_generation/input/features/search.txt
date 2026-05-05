@@ -1,40 +1,56 @@
-Chức năng: Tìm kiếm sản phẩm
+CHỨC NĂNG: TÌM KIẾM
 
-Mô tả:
-- Chức năng tìm kiếm sản phẩm cho phép người dùng nhập từ khóa vào ô tìm kiếm để tìm các sản phẩm đang được bán trên website MWC.
-- Hệ thống sẽ tìm kiếm sản phẩm dựa trên thông tin sản phẩm trong cơ sở dữ liệu như tên sản phẩm, mã sản phẩm hoặc thuộc tính sản phẩm.
-- Sau khi người dùng nhập từ khóa và nhấn Enter, hệ thống sẽ hiển thị danh sách các sản phẩm có chứa từ khóa tìm kiếm trong thông tin sản phẩm.
-- Nếu không có sản phẩm phù hợp, hệ thống sẽ hiển thị trang kết quả rỗng.
-- Định nghĩa từ khóa tìm kiếm hợp lệ
+==================================================================================
+MÔ TẢ
+==================================================================================
+Chức năng tìm kiếm sản phẩm cho phép người dùng nhập từ khóa vào ô tìm kiếm để tìm các sản phẩm đang được bán trên website MWC - website bán giày.
 
-Key được xem là hợp lệ khi từ khóa thuộc một trong các loại thông tin sản phẩm sau:
-- Tên sản phẩm
-    Ví dụ: giày, sandal, cao gót, sneaker, boot...
-- Một phần tên sản phẩm
-    Ví dụ: thể thao, nữ, nam...
-- Mã sản phẩm
-    Ví dụ: MWC A403, MWC 5888...
-- Thuộc tính sản phẩm
-    Màu sắc: đen, trắng, be...
-- Loại giày: cao gót, sandal, sneaker...
+Hệ thống sẽ tìm kiếm sản phẩm dựa trên thông tin trong cơ sở dữ liệu như:
+tên sản phẩm, mã sản phẩm hoặc thuộc tính sản phẩm.
 
-Ràng buộc dữ liệu:
-1. Ô tìm kiếm là bắt buộc
+Sau khi người dùng nhập từ khóa và nhấn Enter:
+- Nếu có sản phẩm phù hợp → hiển thị danh sách sản phẩm
+- Nếu không có sản phẩm → hiển thị trang kết quả rỗng
+
+==================================================================================
+INPUT: gồm 1 field
+==================================================================================
+1. Keyword: bắt buộc
+
+==================================================================================
+CONSTRAINT
+==================================================================================
+
+Keyword: gồm 5 yêu cầu
+
+1. Bắt buộc nhập
+
 2. Không phân biệt chữ hoa và chữ thường
-3. Key có thể là:
-    Tên sản phẩm
-    Một phần tên sản phẩm
-    Mã sản phẩm
-    Màu sắc sản phẩm
-    Loại sản phẩm
-4. Nếu từ khóa không tồn tại hoặc nhập ký tự đặc biệt → kết quả rỗng
 
-Kết quả mong đợi:
-1. Nếu ô tìm kiếm rỗng
--> Vui lòng điền vào trường này
-2. Nếu từ khóa hợp lệ và tồn tại sản phẩm
--> Hiển thị danh sách sản phẩm theo từ khóa tìm kiếm
-3. Nếu từ khóa không tồn tại
--> Trang kết quả rỗng
-4. Nếu nhập ký tự đặc biệt
--> Trang kết quả rỗng
+3. Có thể thuộc một trong các loại thông tin sản phẩm:
+   - Tên sản phẩm (VD: giày, sandal, sneaker)
+   - Một phần tên sản phẩm (VD: thể thao, nữ, nam)
+   - Mã sản phẩm (VD: MWC A403, MWC 5888)
+   - Màu sắc (VD: đen, trắng, be)
+   - Loại sản phẩm (VD: cao gót, sandal, sneaker)
+
+4. Không được chứa ký tự đặc biệt
+   (VD: !@#$%^&*...)
+
+5. Có thể tồn tại hoặc không tồn tại trong hệ thống
+
+==================================================================================
+EXPECTED
+==================================================================================
+
+1. Nếu Keyword rỗng
+→ Expected = "Vui lòng điền vào trường này"
+
+2. Nếu Keyword hợp lệ và tồn tại trong hệ thống
+→ Expected = Keyword
+
+3. Nếu Keyword hợp lệ nhưng không tồn tại trong hệ thống
+→ Expected = "Không tìm thấy sản phẩm"
+
+4. Nếu Keyword chứa ký tự đặc biệt
+→ Expected = "Không tìm thấy sản phẩm"

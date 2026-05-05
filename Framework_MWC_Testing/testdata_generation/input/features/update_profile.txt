@@ -1,0 +1,125 @@
+CHỨC NĂNG: CẬP NHẬT THÔNG TIN CÁ NHÂN
+
+==================================================================================
+MÔ TẢ
+==================================================================================
+Chức năng cập nhật thông tin cá nhân cho phép người dùng chỉnh sửa thông tin
+tài khoản và địa chỉ nhận hàng.
+
+Người dùng nhập hoặc thay đổi thông tin và nhấn nút "Lưu".
+
+Hệ thống kiểm tra dữ liệu đầu vào theo các ràng buộc của từng field.
+Nếu dữ liệu hợp lệ, hệ thống cập nhật thành công.
+Nếu dữ liệu không hợp lệ, hệ thống hiển thị thông báo lỗi tương ứng.
+
+==================================================================================
+INPUT: gồm 11 field
+==================================================================================
+1. FullName: không bắt buộc
+2. Email: không bắt buộc
+3. Phone: bắt buộc
+4. Gender: không bắt buộc
+5. Day: không bắt buộc
+6. Month: không bắt buộc
+7. Year: không bắt buộc
+8. Province: không bắt buộc
+9. District: không bắt buộc
+10. Ward: không bắt buộc
+11. Address: không bắt buộc
+
+==================================================================================
+CONSTRAINT
+==================================================================================
+
+FullName: gồm 1 yêu cầu
+1. Có thể rỗng hoặc có giá trị hợp lệ
+
+Phone: gồm 6 yêu cầu
+1. Bắt buộc nhập
+2. Đúng 10 ký tự (N = 10)
+3. Bắt đầu bằng số 0
+4. Chỉ chứa số (0-9)
+5. Không chứa chữ hoặc ký tự đặc biệt
+6. Không chứa khoảng trắng
+
+Email: gồm 3 yêu cầu
+1. Có thể rỗng
+2. Nếu nhập phải đúng định dạng email (HTML5)
+3. Phải có đuôi "@gmail.com"
+
+Lưu ý:
+- Trường Email sử dụng validation HTML5 của trình duyệt
+- Không có thông báo lỗi cố định
+- Khi sai định dạng:
+  + Field bị đánh dấu invalid
+  + Trình duyệt hiển thị thông báo mặc định
+
+Gender: gồm 2 yêu cầu
+1. Có thể rỗng
+2. Nếu chọn phải thuộc tập {Nam, Nữ, Khác}
+
+Day: gồm 3 yêu cầu
+1. Có thể rỗng
+2. Nếu chọn phải nằm trong khoảng từ 1 đến 31
+3. Phải tạo thành ngày hợp lệ với Month và Year
+   (VD: không tồn tại 30/02, 31/04)
+
+Month: gồm 2 yêu cầu
+1. Có thể rỗng
+2. Nếu chọn phải nằm trong khoảng từ 1 đến 12
+
+Year: gồm 2 yêu cầu
+1. Có thể rỗng
+2. Nếu chọn phải ≤ năm hiện tại
+
+Province: gồm 2 yêu cầu
+1. Có thể rỗng
+2. Nếu chọn phải thuộc danh sách tỉnh/thành của hệ thống
+
+District: gồm 3 yêu cầu
+1. Có thể rỗng
+2. Nếu chọn phải thuộc danh sách quận/huyện
+3. Phải thuộc Province đã chọn
+
+Ward: gồm 3 yêu cầu
+1. Có thể rỗng
+2. Nếu chọn phải thuộc danh sách xã/phường
+3. Phải thuộc District đã chọn
+
+Address: gồm 2 yêu cầu
+1. Có thể rỗng
+2. Nếu nhập là địa chỉ chi tiết tại Việt Nam (số nhà, đường,...)
+
+==================================================================================
+LƯU Ý LOGIC UI (QUAN TRỌNG)
+==================================================================================
+- Người dùng chọn địa chỉ theo thứ tự:
+  Province → District → Ward
+
+- Nếu chưa chọn Province:
+  → Không hiển thị District
+
+- Nếu chưa chọn District:
+  → Không hiển thị Ward
+
+⇒ Không tồn tại test case "chọn sai thứ tự"
+⇒ Không cần Expected cho lỗi thứ tự
+
+==================================================================================
+EXPECTED
+==================================================================================
+
+1. Nếu Phone rỗng
+→ Expected = "Vui lòng điền vào trường này."
+
+2. Nếu Phone sai định dạng
+→ Expected = "Số điện thoại không hợp lệ"
+
+3. Nếu Email sai định dạng
+→ Expected = "HTML5 validation error (invalid email format)"
+
+4. Nếu District không thuộc Province hoặc Ward không thuộc District
+→ Expected = "Địa chỉ không hợp lệ"
+
+5. Nếu toàn bộ dữ liệu hợp lệ
+→ Expected = "Cập nhật tài khoản thành công"

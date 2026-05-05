@@ -971,96 +971,211 @@ def export_step1_to_excel(json_path: str | Path, output_path: str | Path) -> Pat
 # STEP 2 DECISION TABLE -> EXCEL EXPORTER
 # =============================================================================
 class Step2DecisionTableExcelExporter:
-    
+    """
+    Export Step 2 JSON ra Excel theo bố cục Decision Table trong bài giảng:
+    Causes | Values | Combinations...
+    Effects |        | X...
+
+    Chỉ đọc schema Step 2 hiện tại, không thay đổi dữ liệu JSON và không sinh thêm rule.
+    """
+
+    HEADER_BLUE = PatternFill(fill_type="solid", fgColor="00B0F0")
+    SECTION_BLUE = PatternFill(fill_type="solid", fgColor="CCFFFF")
+    WHITE_FILL = PatternFill(fill_type="solid", fgColor="FFFFFF")
+    BLACK_SIDE = Side(style="medium", color="000000")
+    THIN_BLACK_SIDE = Side(style="thin", color="000000")
+    BLACK_BORDER = Border(
+        left=BLACK_SIDE,
+        right=BLACK_SIDE,
+        top=BLACK_SIDE,
+        bottom=BLACK_SIDE,
+    )
+    THIN_BORDER = Border(
+        left=THIN_BLACK_SIDE,
+        right=THIN_BLACK_SIDE,
+        top=THIN_BLACK_SIDE,
+        bottom=THIN_BLACK_SIDE,
+    )
+
     def _clean(self, value: Any) -> str:
         return "" if value is None else str(value).strip()
 
     def _normalize_state(self, value: Any) -> str:
-        v = str(value).strip().upper()
-        if v in ["Y", "YES", "TRUE", "1"]:
+        raw = str(value or "").strip().upper()
+        if raw in {"Y", "YES", "TRUE", "1", "T"}:
             return "Y"
-        if v in ["N", "NO", "FALSE", "0"]:
+        if raw in {"N", "NO", "FALSE", "0", "F"}:
             return "N"
-        return "-"
+        if raw == "-":
+            return "-"
+        return ""
 
-    # ====== FIX 1: lấy conditions từ schema mới ======
-    def _extract_conditions(self, data: Dict[str, Any]) -> List[str]:
-        conditions = data.get("conditions", [])
-        return [c["id"] for c in conditions if isinstance(c, dict)]
+    def _extract_conditions(self, data: Dict[str, Any]) -> List[Dict[str, str]]:
+        out: List[Dict[str, str]] = []
+        raw_conditions = data.get("conditions", [])
+        if not isinstance(raw_conditions, list):
+            return out
 
-    # ====== FIX 2: lấy actions từ schema mới ======
-    def _extract_actions(self, data: Dict[str, Any]) -> List[str]:
-        actions = data.get("actions", [])
-        return [a["id"] for a in actions if isinstance(a, dict)]
+        for idx, cond in enumerate(raw_conditions, start=1):
+            if not isinstance(cond, dict):
+                continue
+            cid = self._clean(cond.get("id")) or f"C{idx}"
+            name = self._clean(cond.get("name")) or self._clean(cond.get("description")) or cid
+            values = cond.get("values")
+            if isinstance(values, list) and values:
+                value_text = ", ".join(self._clean(v) for v in values if self._clean(v))
+            else:
+                value_text = "Y, N"
+            out.append({"id": cid, "name": name, "values": value_text or "Y, N"})
+        return out
 
-    # ====== FIX 3: đọc condition_states ======
+    def _extract_actions(self, data: Dict[str, Any]) -> List[Dict[str, str]]:
+        out: List[Dict[str, str]] = []
+        raw_actions = data.get("actions", [])
+        if not isinstance(raw_actions, list):
+            return out
+
+        for idx, action in enumerate(raw_actions, start=1):
+            if not isinstance(action, dict):
+                continue
+            aid = self._clean(action.get("id")) or f"A{idx}"
+            name = self._clean(action.get("name")) or self._clean(action.get("description")) or aid
+            expected = self._clean(action.get("expected"))
+            label = name if not expected or expected == name else f"{name}: {expected}"
+            out.append({"id": aid, "label": label})
+        return out
+
+    def _extract_rules(self, data: Dict[str, Any]) -> List[Dict[str, Any]]:
+        rules = data.get("decision_rules", [])
+        return [rule for rule in rules if isinstance(rule, dict)] if isinstance(rules, list) else []
+
     def _get_condition_state(self, rule: Dict[str, Any], condition_id: str) -> str:
         states = rule.get("condition_states", {})
+        if not isinstance(states, dict):
+            states = rule.get("conditions", {})
+        if not isinstance(states, dict):
+            return ""
         return self._normalize_state(states.get(condition_id))
 
-    def export_step2_to_excel(self, data: Dict[str, Any], output_path: str | Path) -> Path:
+    def _get_action_refs(self, rule: Dict[str, Any]) -> List[str]:
+        refs = rule.get("action_refs")
+        if isinstance(refs, list):
+            return [self._clean(ref) for ref in refs if self._clean(ref)]
 
-        rules = data.get("decision_rules", [])
-        if not rules:
-            raise ValueError("decision_rules rỗng")
+        single_action = self._clean(rule.get("action"))
+        return [single_action] if single_action else []
+
+    @staticmethod
+    def _set_cell(ws, row: int, col: int, value: Any, fill=None, font=None, alignment=None, border=None) -> None:
+        cell = ws.cell(row=row, column=col, value=value)
+        if fill is not None:
+            cell.fill = fill
+        if font is not None:
+            cell.font = font
+        if alignment is not None:
+            cell.alignment = alignment
+        if border is not None:
+            cell.border = border
+
+    def _style_region(self, ws, min_row: int, max_row: int, min_col: int, max_col: int) -> None:
+        for row in ws.iter_rows(min_row=min_row, max_row=max_row, min_col=min_col, max_col=max_col):
+            for cell in row:
+                cell.border = self.THIN_BORDER
+                cell.alignment = WRAP_CENTER
+                if cell.fill.fill_type is None:
+                    cell.fill = self.WHITE_FILL
+
+    def _apply_outer_border(self, ws, min_row: int, max_row: int, min_col: int, max_col: int) -> None:
+        for row in range(min_row, max_row + 1):
+            for col in range(min_col, max_col + 1):
+                cell = ws.cell(row=row, column=col)
+                left = self.BLACK_SIDE if col == min_col else THIN_BLACK_SIDE
+                right = self.BLACK_SIDE if col == max_col else THIN_BLACK_SIDE
+                top = self.BLACK_SIDE if row == min_row else THIN_BLACK_SIDE
+                bottom = self.BLACK_SIDE if row == max_row else THIN_BLACK_SIDE
+                cell.border = Border(left=left, right=right, top=top, bottom=bottom)
+
+    def export_step2_to_excel(self, data: Dict[str, Any], output_path: str | Path) -> Path:
+        if not isinstance(data, dict):
+            raise ValueError("Step2 data must be a dict")
 
         conditions = self._extract_conditions(data)
         actions = self._extract_actions(data)
+        rules = self._extract_rules(data)
+
+        if not conditions:
+            raise ValueError("conditions rỗng")
+        if not actions:
+            raise ValueError("actions rỗng")
+        if not rules:
+            raise ValueError("decision_rules rỗng")
 
         wb = Workbook()
         ws = wb.active
         ws.title = "Decision_Table"
+        ws.sheet_view.showGridLines = False
 
         total_rules = len(rules)
-        last_col = 2 + total_rules
+        first_rule_col = 3
+        last_col = first_rule_col + total_rules - 1
 
-        # ===== HEADER =====
-        ws.cell(1, 1, "DECISION TABLE")
-        ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=last_col)
+        # Header theo mẫu slide: Causes | Values | Combinations
+        self._set_cell(ws, 1, first_rule_col, "Combinations", self.HEADER_BLUE, Font(bold=True, size=14), CENTER, self.BLACK_BORDER)
+        if last_col > first_rule_col:
+            ws.merge_cells(start_row=1, start_column=first_rule_col, end_row=1, end_column=last_col)
 
-        ws.cell(4, 3, "Các rule")
-        ws.merge_cells(start_row=4, start_column=3, end_row=4, end_column=last_col)
+        self._set_cell(ws, 2, 1, "Causes", self.SECTION_BLUE, Font(bold=True, size=14), LEFT, self.BLACK_BORDER)
+        self._set_cell(ws, 2, 2, "Values", self.SECTION_BLUE, Font(bold=True, size=14), LEFT, self.BLACK_BORDER)
+        for idx in range(total_rules):
+            self._set_cell(ws, 2, first_rule_col + idx, idx + 1, self.SECTION_BLUE, Font(bold=True, size=12), CENTER, self.BLACK_BORDER)
 
-        ws.cell(5, 1, "Condition")
-        ws.cell(5, 2, "Value")
-
-        for i in range(total_rules):
-            ws.cell(5, i + 3, f"R{i+1}")
-
-        # ===== CONDITIONS =====
-        row = 6
-        for c in conditions:
-            ws.cell(row, 1, c)
-            ws.cell(row, 2, "Y/N")
-
-            for col, rule in enumerate(rules, start=3):
-                state = self._get_condition_state(rule, c)
-                ws.cell(row, col, state)
-
+        row = 3
+        for cond in conditions:
+            self._set_cell(ws, row, 1, cond["name"], self.WHITE_FILL, Font(italic=True, size=12), WRAP_LEFT, self.BLACK_BORDER)
+            self._set_cell(ws, row, 2, cond["values"], self.WHITE_FILL, Font(italic=True, size=12), CENTER, self.BLACK_BORDER)
+            for col_idx, rule in enumerate(rules, start=first_rule_col):
+                self._set_cell(ws, row, col_idx, self._get_condition_state(rule, cond["id"]), self.WHITE_FILL, Font(size=12), CENTER, self.BLACK_BORDER)
             row += 1
 
-        # ===== ACTION HEADER =====
-        ws.cell(row, 1, "Action")
+        # Effects section
+        effects_header_row = row
+        self._set_cell(ws, effects_header_row, 1, "Effects", self.SECTION_BLUE, Font(bold=True, size=14), LEFT, self.BLACK_BORDER)
+        self._set_cell(ws, effects_header_row, 2, "", self.SECTION_BLUE, Font(bold=True, size=14), CENTER, self.BLACK_BORDER)
+        if last_col >= first_rule_col:
+            for col in range(first_rule_col, last_col + 1):
+                self._set_cell(ws, effects_header_row, col, "", self.SECTION_BLUE, Font(bold=True, size=14), CENTER, self.BLACK_BORDER)
+
         row += 1
-
-        # ===== FIX 4: map action_refs =====
         for action in actions:
-            ws.cell(row, 1, action)
-
-            for col, rule in enumerate(rules, start=3):
-                refs = rule.get("action_refs", [])
-                mark = "x" if action in refs else ""
-                ws.cell(row, col, mark)
-
+            self._set_cell(ws, row, 1, action["label"], self.WHITE_FILL, Font(italic=True, size=12), WRAP_LEFT, self.BLACK_BORDER)
+            self._set_cell(ws, row, 2, "", self.WHITE_FILL, Font(size=12), CENTER, self.BLACK_BORDER)
+            for col_idx, rule in enumerate(rules, start=first_rule_col):
+                refs = self._get_action_refs(rule)
+                mark = "X" if action["id"] in refs else ""
+                self._set_cell(ws, row, col_idx, mark, self.WHITE_FILL, Font(bold=True, size=12), CENTER, self.BLACK_BORDER)
             row += 1
 
-        # ===== SAVE =====
+        last_row = row - 1
+        self._style_region(ws, 1, last_row, 1, last_col)
+        self._apply_outer_border(ws, 1, last_row, 1, last_col)
+
+        ws.freeze_panes = "C3"
+        ws.column_dimensions["A"].width = 38
+        ws.column_dimensions["B"].width = 14
+        for col in range(first_rule_col, last_col + 1):
+            ws.column_dimensions[get_column_letter(col)].width = 7
+
+        for row_idx in range(1, last_row + 1):
+            ws.row_dimensions[row_idx].height = 24
+        ws.row_dimensions[1].height = 28
+        ws.row_dimensions[2].height = 28
+        ws.row_dimensions[effects_header_row].height = 28
+
         output = Path(output_path)
         output.parent.mkdir(parents=True, exist_ok=True)
         wb.save(output)
-
         return output
-    
+
 def export_step2_to_excel(data: Dict[str, Any], output_path: str | Path) -> Path:
     exporter = Step2DecisionTableExcelExporter()
     return exporter.export_step2_to_excel(data, output_path)

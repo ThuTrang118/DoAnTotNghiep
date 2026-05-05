@@ -1,50 +1,109 @@
-Chức năng: Đặt hàng
+CHỨC NĂNG: ĐẶT HÀNG
 
-Mô tả:
-- Chức năng đặt hàng cho phép khách hàng mua các sản phẩm đã thêm vào giỏ hàng trên website MWC.
-- Trang đặt hàng gồm hai phần chính:
-    1. Danh sách sản phẩm đặt hàng
-    2. Thông tin vận chuyển
-- Người dùng phải nhập thông tin nhận hàng gồm:
-    + Họ và tên
-    + Số điện thoại
-    + Địa chỉ nhận hàng
-- Địa chỉ chi tiết được chọn thông qua 3 combobox theo thứ tự bắt buộc:
-    1. Chọn Tỉnh
-    2. Chọn Quận/Huyện
-    3. Chọn Phường/Xã
-- Người dùng phải chọn Tỉnh trước thì mới chọn được Quận/Huyện.
-- Người dùng phải chọn Quận/Huyện trước thì mới chọn được Phường/Xã.
-- Quận/Huyện phải thuộc Tỉnh đã chọn.
-- Phường/Xã phải thuộc Quận/Huyện đã chọn.
-- Nếu người dùng thay đổi Tỉnh thì Quận/Huyện và Phường/Xã phải chọn lại từ đầu.
-- Nếu người dùng thay đổi Quận/Huyện thì Phường/Xã phải chọn lại.
-- Sau khi người dùng nhập đầy đủ thông tin và nhấn nút Đặt hàng, hệ thống sẽ kiểm tra dữ liệu đầu vào.
-- Nếu thông tin hợp lệ, hệ thống đặt hàng thành công.
-- Nếu thông tin không hợp lệ hoặc thiếu thông tin, hệ thống hiển thị thông báo lỗi tương ứng.
-- Giao diện trang đặt hàng tại địa chỉ: https://mwc.com.vn/cart
+==================================================================================
+MÔ TẢ
+==================================================================================
+Chức năng đặt hàng cho phép người dùng mua sản phẩm trên website bằng cách
+chọn sản phẩm, chọn phân loại (màu, size), nhập thông tin nhận hàng
+và xác nhận đặt hàng.
 
-Ràng buộc dữ liệu:
-1. Họ và tên là bắt buộc
-2. Số điện thoại là bắt buộc
-   - Phải gồm đúng 10 chữ số
-   - Phải bắt đầu bằng số 0
-   - Chỉ được chứa ký tự số
-   - Không được chứa ký tự chữ
-   - Không được chứa ký tự đặc biệt
-   - Không được chứa khoảng trắng
-3. Địa chỉ nhận hàng là bắt buộc
-4. Phải chọn đầy đủ Tỉnh, Quận/Huyện, Phường/Xã
-5. Quan hệ địa chỉ:
-   - Quận/Huyện phải thuộc Tỉnh đã chọn
-   - Phường/Xã phải thuộc Quận/Huyện đã chọn
+Người dùng phải chọn sản phẩm trước, sau đó chọn màu và size,
+sau đó nhập thông tin nhận hàng và nhấn "Đặt hàng".
 
-Kết quả mong đợi:
-1. Nếu thiếu bất kỳ thông tin nhận hàng nào (Họ tên, SĐT, Địa chỉ, Tỉnh, Quận/Huyện, Phường/Xã)
-   -> Bạn chưa nhập thông tin nhận hàng!
+Hệ thống kiểm tra dữ liệu đầu vào theo các ràng buộc của từng field.
+Nếu dữ liệu hợp lệ, hệ thống đặt hàng thành công.
+Nếu dữ liệu không hợp lệ, hệ thống hiển thị thông báo lỗi tương ứng.
 
-2. Nếu Số điện thoại không đúng định dạng
-   -> SĐT không đúng định dạng
+==================================================================================
+INPUT: gồm 9 field
+==================================================================================
+1. Keyword: bắt buộc
+2. Color: bắt buộc
+3. Size: bắt buộc
+4. FullName: bắt buộc
+5. Phone: bắt buộc
+6. Address: bắt buộc
+7. Province: bắt buộc
+8. District: bắt buộc
+9. Ward: bắt buộc
 
-3. Nếu tất cả thông tin hợp lệ
-   -> Đặt hàng thành công!
+==================================================================================
+CONSTRAINT
+==================================================================================
+
+Keyword:
+1. Giá trị cố định: "Giày Cao Gót MWC 4431"
+
+Color:
+1. Giá trị hợp lệ thuộc tập {bạc, đen}
+
+Size:
+1. Giá trị hợp lệ nằm trong khoảng từ 35 đến 39
+
+(Lưu ý)
+- Keyword, Color, Size là dữ liệu đã được chọn từ hệ thống
+- Không kiểm tra rỗng hoặc sai định dạng cho 3 field này
+
+----------------------------------------------------------------------------------
+
+FullName: gồm 1 yêu cầu
+1. Bắt buộc nhập
+
+Phone: gồm 6 yêu cầu
+1. Bắt buộc nhập
+2. Đúng 10 ký tự (N = 10)
+3. Bắt đầu bằng số 0
+4. Chỉ chứa số (0-9)
+5. Không chứa chữ hoặc ký tự đặc biệt
+6. Không chứa khoảng trắng
+
+Address: gồm 2 yêu cầu
+1. Bắt buộc nhập
+2. Là địa chỉ chi tiết tại Việt Nam (số nhà, đường, thôn/xóm, khu phố)
+
+Province: gồm 2 yêu cầu
+1. Bắt buộc chọn
+2. Thuộc danh sách tỉnh/thành của hệ thống
+
+District: gồm 3 yêu cầu
+1. Bắt buộc chọn
+2. Thuộc danh sách quận/huyện của hệ thống
+3. Phải thuộc Province đã chọn
+
+Ward: gồm 3 yêu cầu
+1. Bắt buộc chọn
+2. Thuộc danh sách xã/phường của hệ thống
+3. Phải thuộc District đã chọn
+
+==================================================================================
+LƯU Ý QUAN TRỌNG (LOGIC UI)
+==================================================================================
+- Người dùng phải chọn theo thứ tự:
+  Province → District → Ward
+
+- Nếu chưa chọn Province:
+  → Không hiển thị danh sách District
+
+- Nếu chưa chọn District:
+  → Không hiển thị danh sách Ward
+
+⇒ Vì vậy:
+- Không tồn tại test case "chọn sai thứ tự"
+- Không cần Expected cho lỗi thứ tự
+- Chỉ kiểm tra tính hợp lệ của dữ liệu đã được chọn
+
+==================================================================================
+EXPECTED
+==================================================================================
+
+1. Nếu bất kỳ field nào trong FullName, Phone, Address, Province, District, Ward rỗng
+→ Expected = "Bạn chưa nhập thông tin nhận hàng!"
+
+2. Nếu Phone sai định dạng
+→ Expected = "SĐT không đúng định dạng"
+
+3. Nếu District không thuộc Province hoặc Ward không thuộc District
+→ Expected = "Địa chỉ không hợp lệ"
+
+4. Nếu toàn bộ dữ liệu hợp lệ
+→ Expected = "Đặt hàng thành công!"

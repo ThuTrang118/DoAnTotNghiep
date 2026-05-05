@@ -4,7 +4,7 @@ import re
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Set, Tuple
 
 from testdata_generation.engine.exporters import DataExporter, export_step1_to_excel, export_step2_to_excel
 from testdata_generation.engine.feature_item_schema import (
@@ -465,7 +465,7 @@ class GenerationPipeline:
     @staticmethod
     def _normalize_step2_rule_type(value: Any) -> str:
         raw = str(value or "").strip().lower()
-        allowed = {"happy_path", "single_fault", "boundary", "business_rule"}
+        allowed = {"happy_path", "single_fault", "boundary", "boundary_valid", "business_rule"}
         return raw if raw in allowed else str(value or "").strip()
 
     @staticmethod
@@ -609,8 +609,142 @@ class GenerationPipeline:
 
             normalized_items.append(normalized)
 
-        step1_data["coverage_items"] = normalized_items
+        step1_data["coverage_items"] = self._ensure_required_empty_coverage(normalized_items)
         return step1_data
+
+
+    # --------------------------------------------------------------------------
+    # STEP 1 REQUIRED/EMPTY COVERAGE REPAIR
+    # --------------------------------------------------------------------------
+    REQUIRED_RULE_MARKERS = (
+        "bắt buộc",
+        "bat buoc",
+        "required",
+        "not empty",
+        "không được để trống",
+        "khong duoc de trong",
+        "không rỗng",
+        "khong rong",
+    )
+
+    EMPTY_EXPECTED_MARKERS = (
+        "điền",
+        "dien",
+        "trống",
+        "trong",
+        "rỗng",
+        "rong",
+        "required",
+        "empty",
+        "blank",
+    )
+
+    @classmethod
+    def _is_required_rule(cls, value: Any) -> bool:
+        text = str(value or "").strip().lower()
+        return any(marker in text for marker in cls.REQUIRED_RULE_MARKERS)
+
+    @staticmethod
+    def _is_empty_representative(value: Any) -> bool:
+        return value is None or str(value) == ""
+
+    @classmethod
+    def _looks_like_empty_expected(cls, value: Any) -> bool:
+        text = str(value or "").strip().lower()
+        return bool(text) and any(marker in text for marker in cls.EMPTY_EXPECTED_MARKERS)
+
+    @staticmethod
+    def _next_step1_coverage_id(items: List[Dict[str, Any]]) -> str:
+        numeric_ids: List[int] = []
+        for item in items:
+            raw_id = str(item.get("id", "")).strip()
+            if raw_id.isdigit():
+                numeric_ids.append(int(raw_id))
+        if numeric_ids:
+            return str(max(numeric_ids) + 1)
+
+        counter = len(items) + 1
+        existing = {str(item.get("id", "")).strip() for item in items}
+        while f"AUTO_{counter}" in existing:
+            counter += 1
+        return f"AUTO_{counter}"
+
+    def _find_required_empty_expected_class(self, items: List[Dict[str, Any]], field: str) -> str:
+        # Ưu tiên message rỗng đúng field, sau đó message rỗng của field khác.
+        for same_field_only in (True, False):
+            for item in items:
+                if same_field_only and self._clean_text(item.get("field")) != field:
+                    continue
+                if (
+                    self._clean_text(item.get("technique")).upper() == "EP"
+                    and self._clean_text(item.get("validity")).lower() == "invalid"
+                    and self._is_required_rule(item.get("rule"))
+                    and self._is_empty_representative(item.get("representative_value"))
+                ):
+                    expected = self._clean_text(item.get("expected_class"))
+                    if expected:
+                        return expected
+
+        # Nếu AI chỉ để message bắt buộc ở rule/expected khác, vẫn tận dụng đúng message đó.
+        for item in items:
+            if self._is_required_rule(item.get("rule")) and self._looks_like_empty_expected(item.get("expected_class")):
+                expected = self._clean_text(item.get("expected_class"))
+                if expected:
+                    return expected
+
+        return "Vui lòng điền vào trường này"
+
+    def _ensure_required_empty_coverage(self, items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """
+        Bổ sung coverage EP invalid cho trường bắt buộc nhưng bị thiếu case rỗng.
+
+        Đây là luật chung cho mọi feature/field: nếu một field có rule bắt buộc nhập
+        thì lớp rỗng là một phân vùng không hợp lệ riêng theo EP, không phụ thuộc
+        vào tên field cụ thể như Phone/Register.
+        """
+        if not items:
+            return items
+
+        required_fields: Set[str] = set()
+        has_empty_invalid: Set[str] = set()
+
+        for item in items:
+            field = self._clean_text(item.get("field"))
+            if not field:
+                continue
+
+            if self._is_required_rule(item.get("rule")) or self._is_required_rule(item.get("description")):
+                required_fields.add(field)
+
+            if (
+                self._clean_text(item.get("technique")).upper() == "EP"
+                and self._clean_text(item.get("validity")).lower() == "invalid"
+                and self._is_empty_representative(item.get("representative_value"))
+            ):
+                has_empty_invalid.add(field)
+
+        missing_fields = [field for field in sorted(required_fields) if field not in has_empty_invalid]
+        if not missing_fields:
+            return items
+
+        out = list(items)
+        for field in missing_fields:
+            out.append(
+                {
+                    "id": self._next_step1_coverage_id(out),
+                    "field": field,
+                    "technique": "EP",
+                    "description": f"{field} rỗng",
+                    "validity": "invalid",
+                    "partition_type": "invalid",
+                    "boundary": None,
+                    "representative_value": "",
+                    "rule": "Bắt buộc nhập",
+                    "expected_class": self._find_required_empty_expected_class(out, field),
+                }
+            )
+
+        return out
 
     def _hard_check_step1_structure(self, step1_data: Dict[str, Any]) -> None:
         if not isinstance(step1_data, dict):

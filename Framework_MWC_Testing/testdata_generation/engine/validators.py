@@ -17,7 +17,7 @@ _ALLOWED_BOUNDARY_POINTS = {
     "N-1", "N", "N+1",
 }
 _ALLOWED_PRIORITIES = {"High", "Medium", "Low"}
-_ALLOWED_RULE_TYPES = {"happy_path", "single_fault", "boundary", "business_rule"}
+_ALLOWED_RULE_TYPES = {"happy_path", "single_fault", "boundary", "boundary_valid", "business_rule"}
 
 _EXACT_POINTS = {"N-1", "N", "N+1"}
 _RANGE_POINTS = {"MIN-1", "MIN", "MIN+1", "MAX-1", "MAX", "MAX+1"}
@@ -239,6 +239,27 @@ class ConditionsValidator(_ValidationCommon):
     Validate Step 1 JSON output.
     """
 
+    REQUIRED_RULE_MARKERS = (
+        "bắt buộc",
+        "bat buoc",
+        "required",
+        "not empty",
+        "không được để trống",
+        "khong duoc de trong",
+        "không rỗng",
+        "khong rong",
+    )
+
+    @classmethod
+    def _is_required_rule(cls, value: Any) -> bool:
+        text = str(value or "").strip().lower()
+        return any(marker in text for marker in cls.REQUIRED_RULE_MARKERS)
+
+    @staticmethod
+    def _is_empty_representative(value: Any) -> bool:
+        return value is None or str(value) == ""
+
+
     def _feature_specific_step1_rules(
         self,
         feature: str,
@@ -311,6 +332,8 @@ class ConditionsValidator(_ValidationCommon):
         per_field_exact_points: Dict[str, Set[str]] = {f: set() for f in expected_fields}
         per_field_range_points: Dict[str, Set[str]] = {f: set() for f in expected_fields}
         per_field_bva_rules: Dict[str, Set[str]] = {f: set() for f in expected_fields}
+        required_fields: Set[str] = set()
+        empty_invalid_fields: Set[str] = set()
 
         for idx, item in enumerate(coverage_items):
             prefix = f"coverage_items[{idx}]"
@@ -347,6 +370,9 @@ class ConditionsValidator(_ValidationCommon):
             self._validate_non_empty_string(item_description, f"{prefix}.description", errors)
             self._validate_non_empty_string(expected_class, f"{prefix}.expected_class", errors)
 
+            if self._is_required_rule(rule) or self._is_required_rule(item_description):
+                required_fields.add(field_name)
+
             if self._is_placeholder(expected_class):
                 errors.append(f"{prefix}.expected_class must not be placeholder '{expected_class}'.")
 
@@ -370,6 +396,8 @@ class ConditionsValidator(_ValidationCommon):
                     valid_by_field[field_name] += 1
                 else:
                     invalid_by_field[field_name] += 1
+                    if technique == "EP" and self._is_empty_representative(representative_value):
+                        empty_invalid_fields.add(field_name)
 
             if technique == "EP":
                 if partition_type not in {"valid", "invalid"}:
@@ -427,6 +455,12 @@ class ConditionsValidator(_ValidationCommon):
                 errors.append(f"Field '{field}' has no valid coverage item.")
             if invalid_by_field[field] == 0:
                 errors.append(f"Field '{field}' has no invalid coverage item.")
+
+        for field in sorted(required_fields):
+            if field not in empty_invalid_fields:
+                errors.append(
+                    f"Field '{field}' is required but has no separate EP invalid coverage item for empty input."
+                )
 
         for field, points in per_field_exact_points.items():
             if points and points != _EXACT_POINTS:
