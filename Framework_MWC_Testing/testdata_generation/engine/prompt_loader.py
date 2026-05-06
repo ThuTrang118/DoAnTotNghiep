@@ -95,6 +95,24 @@ class PromptLoader:
         if not isinstance(coverage_summary, dict):
             raise ValueError("step1_data must contain 'coverage_summary' object.")
 
+
+    @staticmethod
+    def _assert_step1_compact_shape(step1_data: Any) -> None:
+        """Kiểm tra Step 1 compact dùng riêng cho Step 2 prompt."""
+        if not isinstance(step1_data, dict):
+            raise ValueError("step1_data must be a dict.")
+
+        if not isinstance(step1_data.get("feature"), str) or not step1_data.get("feature", "").strip():
+            raise ValueError("step1_data must contain non-empty 'feature'.")
+
+        fields = step1_data.get("fields")
+        if not isinstance(fields, list) or not fields:
+            raise ValueError("step1_data compact must contain non-empty 'fields'.")
+
+        business_outcomes = step1_data.get("business_outcomes")
+        if not isinstance(business_outcomes, list) or not business_outcomes:
+            raise ValueError("step1_data compact must contain non-empty 'business_outcomes'.")
+
     @staticmethod
     def _assert_dt_data_shape(dt_data: Any) -> None:
         if not isinstance(dt_data, dict):
@@ -193,41 +211,45 @@ class PromptLoader:
     # ==========================================================================
     # BUILD STEP 2 PROMPT (DT TRUNG GIAN)
     # ==========================================================================
-    def build_step2_prompt(self, feature: str, step1_data: Dict[str, Any]) -> str:
+    def build_step2_prompt(self, feature: str, step1_data: Dict[str, Any] | None = None) -> str:
+        """
+        Build Step 2 prompt ngắn gọn, đúng thứ tự đầu vào:
+        1. FEATURE SPECIFICATION
+        2. STEP 2 THEORY PROMPT
+        3. STEP 2 OUTPUT REQUIREMENT PROMPT
+        4. STEP 1 JSON COMPACT
+        """
         feature_name = normalize_feature_name(feature)
-        self._assert_step1_data_shape(step1_data)
 
-        prompt_template = self.load_step2_prompt_template()
         feature_spec = self.load_feature_description(feature_name)
+        prompt_template = self.load_step2_prompt_template()
         dt_schema = self.load_decision_table_format()
-        step1_json = self._json_dumps_compact(step1_data)
 
         parts = [
-            prompt_template,
+            "/no_think",
             "================================================================================",
             "FEATURE SPECIFICATION",
             "================================================================================",
             feature_spec,
             "================================================================================",
-            "STEP 1 COVERAGE OUTPUT (LOCKED INPUT - DO NOT CHANGE)",
+            "STEP 2 THEORY PROMPT",
             "================================================================================",
-            step1_json,
+            prompt_template,
             "================================================================================",
-            "OUTPUT SCHEMA",
+            "STEP 2 OUTPUT REQUIREMENT PROMPT",
             "================================================================================",
             dt_schema,
-            "================================================================================",
-            "OUTPUT CONTRACT",
-            "================================================================================",
-            "Chỉ trả về 1 JSON object hợp lệ theo OUTPUT SCHEMA.",
-            "Step 2 chỉ sinh Decision Table logic: conditions, actions, combinations.",
-            "Step 1 chỉ dùng để tham khảo field/ràng buộc, KHÔNG dùng để ép mỗi coverage_item thành một decision_rule.",
-            "Không sinh test data cụ thể.",
-            "Không markdown.",
-            "Không comment.",
-            "Không giải thích.",
-            "Không text ngoài JSON.",
         ]
+
+        if step1_data is not None:
+            self._assert_step1_compact_shape(step1_data)
+            parts.extend([
+                "================================================================================",
+                "STEP 1 JSON COMPACT FOR COVERAGE REFS",
+                "================================================================================",
+                self._json_dumps_compact(step1_data),
+            ])
+
         return "\n\n".join(parts).strip()
 
     # ==========================================================================
@@ -301,7 +323,7 @@ class PromptLoader:
     def preview_step1_prompt(self, feature: str) -> str:
         return self.build_step1_prompt(feature)
 
-    def preview_step2_prompt(self, feature: str, step1_data: Dict[str, Any]) -> str:
+    def preview_step2_prompt(self, feature: str, step1_data: Dict[str, Any] | None = None) -> str:
         return self.build_step2_prompt(feature, step1_data)
 
     def preview_step3_prompt(self, feature: str, step1_data: Dict[str, Any], dt_data: Dict[str, Any]) -> str:

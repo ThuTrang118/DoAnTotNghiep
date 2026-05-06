@@ -10,18 +10,18 @@
   "conditions": [
     {
       "id": "C1",
-      "name": "câu hỏi điều kiện atomic bằng tiếng Việt",
+      "name": "mô tả điều kiện bằng tiếng Việt",
       "source_fields": ["TênField"],
       "values": ["Y", "N"],
-      "meaning_when_y": "ý nghĩa khi điều kiện đúng",
-      "meaning_when_n": "ý nghĩa khi điều kiện sai"
+      "meaning_when_y": "ý nghĩa khi Y bằng tiếng Việt",
+      "meaning_when_n": "ý nghĩa khi N bằng tiếng Việt"
     }
   ],
   "actions": [
     {
       "id": "A1",
-      "name": "tên hành động/kết quả",
-      "expected": "kết quả mong đợi lấy từ Step 1 hoặc đặc tả"
+      "name": "tên kết quả/hành động bằng tiếng Việt",
+      "expected": "kết quả mong đợi bằng tiếng Việt"
     }
   ],
   "decision_rules": [
@@ -32,41 +32,25 @@
         "C1": "Y"
       },
       "action_refs": ["A1"],
-      "expected": "kết quả mong đợi",
-      "coverage_refs": ["1"],
-      "reduction_note": "ghi chú rút gọn"
+      "expected": "kết quả mong đợi bằng tiếng Việt",
+      "reduction_note": "ghi chú rút gọn bằng tiếng Việt"
     }
   ]
 }
 
-RÀNG BUỘC CỨNG:
+RÀNG BUỘC:
 1. Chỉ output 1 JSON object.
-2. Không markdown, không ```json, không giải thích.
-3. Không copy placeholder trong schema mẫu.
-4. feature, description, decision_summary, conditions, actions, decision_rules bắt buộc phải có.
-5. conditions/actions/decision_rules không được rỗng.
-6. condition id dạng C1, C2, C3...
-7. action id dạng A1, A2, A3...
-8. decision_rule id dạng DT_001, DT_002, DT_003...
-9. type chỉ dùng: happy_path, single_fault, boundary_valid, business_rule.
-10. condition_states phải chứa đủ tất cả condition id.
-11. condition_states chỉ dùng Y, N, -.
-12. action_refs phải tham chiếu action id có thật.
-13. expected không rỗng và phải khớp expected của action được tham chiếu.
-14. coverage_refs bắt buộc phải có trong mọi decision_rule.
-15. coverage_refs không được rỗng.
-16. coverage_refs chỉ được dùng id có thật từ Step 1.
-17. Mỗi invalid coverage_item ở Step 1 phải xuất hiện trong ít nhất 1 decision_rule.coverage_refs.
-18. Có đúng 1 happy_path.
-19. Tất cả condition_states của happy_path phải là Y.
-20. Không tạo condition tổng quát kiểu "tất cả dữ liệu hợp lệ", "tất cả điều kiện hợp lệ", "tất cả ràng buộc được đáp ứng".
-21. Không gộp toàn bộ lỗi của một field thành "<field> hợp lệ?" nếu field đó có nhiều invalid coverage khác bản chất.
-22. decision_summary.condition_count = số phần tử thật trong conditions.
-23. decision_summary.action_count = số phần tử thật trong actions.
-24. decision_summary.full_combination_count = 2^condition_count.
-25. decision_summary.reduced_rule_count = số phần tử thật trong decision_rules.
-26. Tất cả mô tả phải là tiếng Việt.
-
-OUTPUT:
-Chỉ JSON object.
-Không text ngoài JSON.
+2. Không markdown, không ```json, không giải thích, không text ngoài JSON.
+3. Không copy placeholder string/number.
+4. conditions/actions/decision_rules không rỗng.
+5. condition id dạng C1, C2...; action id dạng A1, A2...; rule id dạng DT_001, DT_002...
+6. decision_rules chỉ dùng condition_states, action_refs, expected, reduction_note.
+7. Không dùng condition, conditions, action, action_id, coverage_refs, optimization_note trong decision_rules.
+8. condition_states phải chứa đủ condition id và chỉ dùng Y, N, -.
+9. action_refs phải tham chiếu action id có thật.
+10. Có đúng 1 happy_path và tất cả condition_states của happy_path là Y.
+11. single_fault có đúng 1 condition = N; các condition còn lại phải là Y hoặc -.
+12. Nếu một rule có từ 2 condition = N trở lên thì type bắt buộc là business_rule, không được là single_fault.
+13. Bảng cuối cùng phải là bảng DT đã rút gọn hoàn chỉnh: nếu một rule tổng quát có dấu "-" đã bao phủ rule cụ thể cùng action/expected thì bỏ rule cụ thể.
+14. expected không rỗng và phải khớp action được tham chiếu.
+15. Tất cả mô tả phải là tiếng Việt.

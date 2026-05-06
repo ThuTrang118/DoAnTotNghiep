@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Set, Tuple
+import re
 
 from testdata_generation.engine.feature_item_schema import (
     get_feature_item_fields,
@@ -17,7 +18,7 @@ _ALLOWED_BOUNDARY_POINTS = {
     "N-1", "N", "N+1",
 }
 _ALLOWED_PRIORITIES = {"High", "Medium", "Low"}
-_ALLOWED_RULE_TYPES = {"happy_path", "single_fault", "boundary", "boundary_valid", "business_rule"}
+_ALLOWED_RULE_TYPES = {"happy_path", "single_fault", "boundary", "business_rule"}
 
 _EXACT_POINTS = {"N-1", "N", "N+1"}
 _RANGE_POINTS = {"MIN-1", "MIN", "MIN+1", "MAX-1", "MAX", "MAX+1"}
@@ -919,8 +920,8 @@ class FinalTestcaseValidator(_ValidationCommon):
                     elif dt_rule_map:
                         dt_rule = dt_rule_map[rule_id]
 
-                        dt_refs = dt_rule.get("coverage_refs", [])
-                        if isinstance(dt_refs, list):
+                        dt_refs = dt_rule.get("coverage_refs")
+                        if isinstance(dt_refs, list) and dt_refs:
                             tc_refs = [r for r in coverage_refs if isinstance(r, str)] if isinstance(coverage_refs, list) else []
                             rule_refs = [r for r in dt_refs if isinstance(r, str)]
                             if tc_refs != rule_refs:

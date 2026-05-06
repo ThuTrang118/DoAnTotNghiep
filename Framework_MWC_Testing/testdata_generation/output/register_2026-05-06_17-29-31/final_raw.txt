@@ -1,0 +1,640 @@
+
+
+</think>
+
+{
+  "feature": "register",
+  "description": "Chức năng đăng ký cho phép người dùng tạo tài khoản mới bằng cách nhập đầy đủ thông tin trên form đăng ký. Hệ thống kiểm tra dữ liệu đầu vào theo các ràng buộc của từng field và quan hệ giữa các field.",
+  "testcase_summary": {
+    "total_testcases": 23
+  },
+  "testcases": [
+    {
+      "id": "TC_001",
+      "name": "Username rỗng",
+      "description": "Kiểm tra trường Username rỗng",
+      "objective": "Xác nhận thông báo lỗi khi Username rỗng",
+      "coverage_refs": ["23"],
+      "decision_basis": {
+        "rule_id": "DT_002",
+        "condition_states": {
+          "C1": "N"
+        },
+        "reduction_note": "Chỉ cần Username rỗng để kích hoạt lỗi"
+      },
+      "inputs": {
+        "Username": "",
+        "Phone": "0123456789",
+        "Password": "1234567890",
+        "ConfirmPassword": "1234567890"
+      },
+      "expected": "Vui lòng điền vào trường này",
+      "priority": "High"
+    },
+    {
+      "id": "TC_002",
+      "name": "Phone rỗng",
+      "description": "Kiểm tra trường Phone rỗng",
+      "objective": "Xác nhận thông báo lỗi khi Phone rỗng",
+      "coverage_refs": ["23"],
+      "decision_basis": {
+        "rule_id": "DT_002",
+        "condition_states": {
+          "C1": "N"
+        },
+        "reduction_note": "Chỉ cần Username rỗng để kích hoạt lỗi"
+      },
+      "inputs": {
+        "Username": "testuser",
+        "Phone": "",
+        "Password": "1234567890",
+        "ConfirmPassword": "1234567890"
+      },
+      "expected": "Vui lòng điền vào trường này",
+      "priority": "High"
+    },
+    {
+      "id": "TC_003",
+      "name": "Password rỗng",
+      "description": "Kiểm tra trường Password rỗng",
+      "objective": "Xác nhận thông báo lỗi khi Password rỗng",
+      "coverage_refs": ["18"],
+      "decision_basis": {
+        "rule_id": "DT_002",
+        "condition_states": {
+          "C1": "N"
+        },
+        "reduction_note": "Chỉ cần Username rỗng để kích hoạt lỗi"
+      },
+      "inputs": {
+        "Username": "testuser",
+        "Phone": "0123456789",
+        "Password": "",
+        "ConfirmPassword": "1234567890"
+      },
+      "expected": "Vui lòng điền vào trường này",
+      "priority": "High"
+    },
+    {
+      "id": "TC_004",
+      "name": "ConfirmPassword rỗng",
+      "description": "Kiểm tra trường ConfirmPassword rỗng",
+      "objective": "Xác nhận thông báo lỗi khi ConfirmPassword rỗng",
+      "coverage_refs": ["20"],
+      "decision_basis": {
+        "rule_id": "DT_002",
+        "condition_states": {
+          "C1": "N"
+        },
+        "reduction_note": "Chỉ cần Username rỗng để kích hoạt lỗi"
+      },
+      "inputs": {
+        "Username": "testuser",
+        "Phone": "0123456789",
+        "Password": "1234567890",
+        "ConfirmPassword": ""
+      },
+      "expected": "Vui lòng điền vào trường này",
+      "priority": "High"
+    },
+    {
+      "id": "TC_005",
+      "name": "Phone không hợp lệ",
+      "description": "Kiểm tra trường Phone không hợp lệ",
+      "objective": "Xác nhận thông báo lỗi khi Phone không hợp lệ",
+      "coverage_refs": ["1"],
+      "decision_basis": {
+        "rule_id": "DT_003",
+        "condition_states": {
+          "C1": "Y",
+          "C2": "N"
+        },
+        "reduction_note": "Chỉ cần Phone không hợp lệ để kích hoạt lỗi"
+      },
+      "inputs": {
+        "Username": "testuser",
+        "Phone": "123456789",
+        "Password": "1234567890",
+        "ConfirmPassword": "1234567890"
+      },
+      "expected": "Số điện thoại không hợp lệ",
+      "priority": "High"
+    },
+    {
+      "id": "TC_006",
+      "name": "Password không hợp lệ",
+      "description": "Kiểm tra trường Password không hợp lệ",
+      "objective": "Xác nhận thông báo lỗi khi Password không hợp lệ",
+      "coverage_refs": ["17"],
+      "decision_basis": {
+        "rule_id": "DT_004",
+        "condition_states": {
+          "C1": "Y",
+          "C3": "N"
+        },
+        "reduction_note": "Chỉ cần Password không hợp lệ để kích hoạt lỗi"
+      },
+      "inputs": {
+        "Username": "testuser",
+        "Phone": "0123456789",
+        "Password": "123456789012",
+        "ConfirmPassword": "123456789012"
+      },
+      "expected": "Mật khẩu phải từ 8 đến 20 ký tự",
+      "priority": "High"
+    },
+    {
+      "id": "TC_007",
+      "name": "ConfirmPassword không khớp",
+      "description": "Kiểm tra trường ConfirmPassword không khớp với Password",
+      "objective": "Xác nhận thông báo lỗi khi ConfirmPassword không khớp",
+      "coverage_refs": ["21"],
+      "decision_basis": {
+        "rule_id": "DT_005",
+        "condition_states": {
+          "C1": "Y",
+          "C4": "N"
+        },
+        "reduction_note": "Chỉ cần ConfirmPassword không khớp để kích hoạt lỗi"
+      },
+      "inputs": {
+        "Username": "testuser",
+        "Phone": "0123456789",
+        "Password": "1234567890",
+        "ConfirmPassword": "12345678901"
+      },
+      "expected": "Mật khẩu không khớp",
+      "priority": "High"
+    },
+    {
+      "id": "TC_008",
+      "name": "Username đã tồn tại",
+      "description": "Kiểm tra trường Username đã tồn tại",
+      "objective": "Xác nhận thông báo lỗi khi Username đã tồn tại",
+      "coverage_refs": ["1"],
+      "decision_basis": {
+        "rule_id": "DT_006",
+        "condition_states": {
+          "C1": "Y",
+          "C5": "Y"
+        },
+        "reduction_note": "Chỉ cần Username tồn tại để kích hoạt lỗi"
+      },
+      "inputs": {
+        "Username": "existinguser",
+        "Phone": "0123456789",
+        "Password": "1234567890",
+        "ConfirmPassword": "1234567890"
+      },
+      "expected": "tài khoản đã tồn tại trong hệ thống",
+      "priority": "High"
+    },
+    {
+      "id": "TC_009",
+      "name": "Đăng ký thành công",
+      "description": "Kiểm tra trường hợp đăng ký thành công",
+      "objective": "Xác nhận thông báo đăng ký thành công",
+      "coverage_refs": ["22"],
+      "decision_basis": {
+        "rule_id": "DT_001",
+        "condition_states": {
+          "C1": "Y",
+          "C2": "Y",
+          "C3": "Y",
+          "C4": "Y",
+          "C5": "N"
+        },
+        "reduction_note": "Tất cả điều kiện đều thỏa mãn"
+      },
+      "inputs": {
+        "Username": "newuser",
+        "Phone": "0123456789",
+        "Password": "1234567890",
+        "ConfirmPassword": "1234567890"
+      },
+      "expected": "newuser",
+      "priority": "High"
+    },
+    {
+      "id": "TC_010",
+      "name": "Phone có 9 ký tự",
+      "description": "Kiểm tra trường Phone có 9 ký tự",
+      "objective": "Xác nhận thông báo lỗi khi Phone không hợp lệ",
+      "coverage_refs": ["1"],
+      "decision_basis": {
+        "rule_id": "DT_003",
+        "condition_states": {
+          "C1": "Y",
+          "C2": "N"
+        },
+        "reduction_note": "Chỉ cần Phone không hợp lệ để kích hoạt lỗi"
+      },
+      "inputs": {
+        "Username": "testuser",
+        "Phone": "123456789",
+        "Password": "1234567890",
+        "ConfirmPassword": "1234567890"
+      },
+      "expected": "Số điện thoại không hợp lệ",
+      "priority": "Medium"
+    },
+    {
+      "id": "TC_011",
+      "name": "Phone có 11 ký tự",
+      "description": "Kiểm tra trường Phone có 11 ký tự",
+      "objective": "Xác nhận thông báo lỗi khi Phone không hợp lệ",
+      "coverage_refs": ["1"],
+      "decision_basis": {
+        "rule_id": "DT_003",
+        "condition_states": {
+          "C1": "Y",
+          "C2": "N"
+        },
+        "reduction-note": "Chỉ cần Phone không hợp lệ để kích hoạt lỗi"
+      },
+      "inputs": {
+        "Username": "testuser",
+        "Phone": "01234567890",
+        "Password": "1234567890",
+        "ConfirmPassword": "1234567890"
+      },
+      "expected": "Số điện thoại không hợp lệ",
+      "priority": "Medium"
+    },
+    {
+      "id": "TC_012",
+      "name": "Password có 7 ký tự",
+      "description": "Kiểm tra trường Password có 7 ký tự",
+      "objective": "Xác nhận thông báo lỗi khi Password không hợp lệ",
+      "coverage_refs": ["17"],
+      "decision_basis": {
+        "rule_id": "DT_004",
+        "condition_states": {
+          "C1": "Y",
+          "C3": "N"
+        },
+        "reduction_note": "Chỉ cần Password không hợp lệ để kích hoạt lỗi"
+      },
+      "inputs": {
+        "Username": "testuser",
+        "Phone": "0123456789",
+        "Password": "1234567",
+        "ConfirmPassword": "1234567"
+      },
+      "expected": "Mật khẩu phải từ 8 đến 20 ký tự",
+      "priority": "Medium"
+    },
+    {
+      "id": "TC_013",
+      "name": "Password có 21 ký tự",
+      "description": "Kiểm tra trường Password có 21 ký tự",
+      "objective": "Xác nhận thông báo lỗi khi Password không hợp lệ",
+      "coverage_refs": ["17"],
+      "decision_basis": {
+        "rule_id": "DT_004",
+        "condition_states": {
+          "C1": "Y",
+          "C3": "N"
+        },
+        "reduction_note": "Chỉ cần Password không hợp lệ để kích hoạt lỗi"
+      },
+      "inputs": {
+        "Username": "testuser",
+        "Phone": "0123456789",
+        "Password": "123456789012345678901",
+        "ConfirmPassword": "123456789012345678901"
+      },
+      "expected": "Mật khẩu phải từ 8 đến 20 ký tự",
+      "priority": "Medium"
+    },
+    {
+      "id": "TC_014",
+      "name": "ConfirmPassword không khớp với Password",
+      "description": "Kiểm tra trường ConfirmPassword không khớp với Password",
+      "objective": "Xác nhận thông báo lỗi khi ConfirmPassword không khớp",
+      "coverage_refs": ["21"],
+      "decision_basis": {
+        "rule_id": "DT_005",
+        "condition_states": {
+          "C1": "Y",
+          "C4": "N"
+        },
+        "reduction_note": "Chỉ cần ConfirmPassword không khớp để kích hoạt lỗi"
+      },
+      "inputs": {
+        "Username": "testuser",
+        "Phone": "0123456789",
+        "Password": "1234567890",
+        "ConfirmPassword": "123456789"
+      },
+      "expected": "Mật khẩu không khớp",
+      "priority": "Medium"
+    },
+    {
+      "id": "TC_015",
+      "name": "Username có khoảng trắng",
+      "description": "Kiểm tra trường Username có khoảng trắng",
+      "objective": "Xác nhận thông báo lỗi khi Username rỗng",
+      "coverage_refs": ["23"],
+      "decision_basis": {
+        "rule_id": "DT_002",
+        "condition_states": {
+          "C1": "N"
+        },
+        "reduction_note": "Chỉ cần Username rỗng để kích hoạt lỗi"
+      },
+      "inputs": {
+        "Username": " testuser ",
+        "Phone": "0123456789",
+        "Password": "1234567890",
+        "ConfirmPassword": "1234567890"
+      },
+      "expected": "Vui lòng điền vào trường này",
+      "priority": "Medium"
+    },
+    {
+      "id": "TC_016",
+      "name": "Phone có ký tự đặc biệt",
+      "description": "Kiểm tra trường Phone có ký tự đặc biệt",
+      "objective": "Xác nhận thông báo lỗi khi Phone không hợp lệ",
+      "coverage_refs": ["1"],
+      "decision_basis": {
+        "rule_id": "DT_003",
+        "condition_states": {
+          "C1": "Y",
+          "C2": "N"
+        },
+        "reduction_note": "Chỉ cần Phone không hợp lệ để kích hoạt lỗi"
+      },
+      "inputs": {
+        "Username": "testuser",
+        "Phone": "0123456789@",
+        "Password": "1234567890",
+        "ConfirmPassword": "1234567890"
+      },
+      "expected": "Số điện thoại không hợp lệ",
+      "priority": "Medium"
+    },
+    {
+      "id": "TC_017",
+      "name": "Password có ký tự đặc biệt",
+      "description": "Kiểm tra trường Password có ký tự đặc biệt",
+      "objective": "Xác nhận thông báo lỗi khi Password không hợp lệ",
+      "coverage_refs": ["17"],
+      "decision_basis": {
+        "rule_id": "DT_004",
+        "condition_states": {
+          "C1": "Y",
+          "C3": "N"
+        },
+        "reduction_note": "Chỉ cần Password không hợp lệ để kích hoạt lỗi"
+      },
+      "inputs": {
+        "Username": "testuser",
+        "Phone": "0123456789",
+        "Password": "1234567890!@#",
+        "ConfirmPassword": "1234567890!@#"
+      },
+      "expected": "Mật khẩu phải từ 8 đến 20 ký tự",
+      "priority": "Medium"
+    },
+    {
+      "id": "TC_018",
+      "name": "ConfirmPassword có ký tự đặc biệt",
+      "description": "Kiểm tra trường ConfirmPassword có ký tự đặc biệt",
+      "objective": "Xác nhận thông báo lỗi khi ConfirmPassword không khớp",
+      "coverage_refs": ["21"],
+      "decision_basis": {
+        "rule_id": "DT_005",
+        "condition_states": {
+          "C1": "Y",
+          "C4": "N"
+        },
+        "reduction_note": "Chỉ cần ConfirmPassword không khớp để kích hoạt lỗi"
+      },
+      "inputs": {
+        "Username": "testuser",
+        "Phone": "0123456789",
+        "Password": "1234567890",
+        "ConfirmPassword": "1234567890!@#"
+      },
+      "expected": "Mật khẩu không khớp",
+      "priority": "Medium"
+    },
+    {
+      "id": "TC_019",
+      "name": "Username có ký tự đặc biệt",
+      "description": "Kiểm tra trường Username có ký tự đặc biệt",
+      "objective": "Xác nhận thông báo lỗi khi Username rỗng",
+      "coverage_refs": ["23"],
+      "decision_basis": {
+        "rule_id": "DT_002",
+        "condition_states": {
+          "C1": "N"
+        },
+        "reduction_note": "Chỉ cần Username rỗng để kích hoạt lỗi"
+      },
+      "inputs": {
+        "Username": "testuser!@#",
+        "Phone": "0123456789",
+        "Password": "1234567890",
+        "ConfirmPassword": "1234567890"
+      },
+      "expected": "Vui lòng điền vào trường này",
+      "priority": "Medium"
+    },
+    {
+      "id": "TC_020",
+      "name": "Phone có chữ cái",
+      "description": "Kiểm tra trường Phone có chữ cái",
+      "objective": "Xác nhận thông báo lỗi khi Phone không hợp lệ",
+      "coverage_refs": ["1"],
+      "decision_basis": {
+        "rule_id": "DT_003",
+        "condition_states": {
+          "C1": "Y",
+          "C2": "N"
+        },
+        "reduction_note": "Chỉ cần Phone không hợp lệ để kích hoạt lỗi"
+      },
+      "inputs": {
+        "Username": "testuser",
+        "Phone": "0123456789a",
+        "Password": "1234567890",
+        "ConfirmPassword": "1234567890"
+      },
+      "expected": "Số điện thoại không hợp lệ",
+      "priority": "Medium"
+    },
+    {
+      "id": "TC_021",
+      "name": "Password có chữ cái",
+      "description": "Kiểm tra trường Password có chữ cái",
+      "objective": "Xác nhận thông báo lỗi khi Password không hợp lệ",
+      "coverage_refs": ["17"],
+      "decision_basis": {
+        "rule_id": "DT_004",
+        "condition_states": {
+          "C1": "Y",
+          "C3": "N"
+        },
+        "reduction_note": "Chỉ cần Password không hợp lệ để kích hoạt lỗi"
+      },
+      "inputs": {
+        "Username": "testuser",
+        "Phone": "0123456789",
+        "Password": "test1234567890",
+        "ConfirmPassword": "test1234567890"
+      },
+      "expected": "Mật khẩu phải từ 8 đến 20 ký tự",
+      "priority": "Medium"
+    },
+    {
+      "id": "TC_022",
+      "name": "ConfirmPassword có chữ cái",
+      "description": "Kiểm tra trường ConfirmPassword có chữ cái",
+      "objective": "Xác nhận thông báo lỗi khi ConfirmPassword không khớp",
+      "coverage_refs": ["21"],
+      "decision_basis": {
+        "rule_id": "DT_005",
+        "condition_states": {
+          "C1": "Y",
+          "C4": "N"
+        },
+        "reduction_note": "Chỉ cần ConfirmPassword không khớp để kích hoạt lỗi"
+      },
+      "inputs": {
+        "Username": "testuser",
+        "Phone": "0123456789",
+        "Password": "1234567890",
+        "ConfirmPassword": "test1234567890"
+      },
+      "expected": "Mật khẩu không khớp",
+      "priority": "Medium"
+    },
+    {
+      "id": "TC_023",
+      "name": "Username có chữ cái",
+      "description": "Kiểm tra trường Username có chữ cái",
+      "objective": "Xác nhận thông báo lỗi khi Username rỗng",
+      "coverage_refs": ["23"],
+      "decision_basis": {
+        "rule_id": "DT_002",
+        "condition_states": {
+          "C1": "N"
+        },
+        "reduction_note": "Chỉ cần Username rỗng để kích hoạt lỗi"
+      },
+      "inputs": {
+        "Username": "testuser",
+        "Phone": "0123456789",
+        "Password": "1234567890",
+        "ConfirmPassword": "1234567890"
+      },
+      "expected": "Vui lòng điền vào trường này",
+      "priority": "Medium"
+    },
+    {
+      "id": "TC_024",
+      "name": "Phone có số 0 ở đầu",
+      "description": "Kiểm tra trường Phone có số 0 ở đầu",
+      "objective": "Xác nhận thông báo lỗi khi Phone không hợp lệ",
+      "coverage_refs": ["1"],
+      "decision_basis": {
+        "rule_id": "DT_003",
+        "condition_states": {
+          "C1": "Y",
+          "C2": "N"
+        },
+        "reduction_note": "Chỉ cần Phone không hợp lệ để kích hoạt lỗi"
+      },
+      "inputs": {
+        "Username": "testuser",
+        "Phone": "00123456789",
+        "Password": "1234567890",
+        "ConfirmPassword": "1234567890"
+      },
+      "expected": "Số điện thoại không hợp lệ",
+      "priority": "Medium"
+    },
+    {
+      "id": "TC_025",
+      "name": "Password có số 0 ở đầu",
+      "description": "Kiểm tra trường Password có số 0 ở đầu",
+      "objective": "Xác nhận thông báo lỗi khi Password không hợp lệ",
+      "coverage_refs": ["17"],
+      "decision_basis": {
+        "rule_id": "DT_004",
+        "condition_states": {
+          "C1": "Y",
+          "C3": "N"
+        },
+        "reduction_note": "Chỉ cần Password không hợp lệ để kích hoạt lỗi"
+      },
+      "inputs": {
+        "Username": "testuser",
+        "Phone": "0123456789",
+        "Password": "01234567890",
+        "ConfirmPassword": "01234567890"
+      },
+      "expected": "Mật khẩu phải từ 8 đến 20 ký tự",
+      "priority": "Medium"
+    },
+    {
+      "id": "TC_026",
+      "name": "ConfirmPassword có số 0 ở đầu",
+      "description": "Kiểm tra trường ConfirmPassword có số 0 ở đầu",
+      "objective": "Xác nhận thông báo lỗi khi ConfirmPassword không khớp",
+      "coverage_refs": ["21"],
+      "decision_basis": {
+        "rule_id": "DT_005",
+        "condition_states": {
+          "C1": "Y",
+          "C4": "N"
+        },
+        "reduction_note": "Chỉ cần ConfirmPassword không khớp để kích hoạt lỗi"
+      },
+      "inputs": {
+        "Username": "testuser",
+        "Phone": "0123456789",
+        "Password": "1234567890",
+        "ConfirmPassword": "01234567890"
+      },
+      "expected": "Mật khẩu không khớp",
+      "priority": "Medium"
+    },
+    {
+      "id": "TC_027",
+      "name": "Username có số 0 ở đầu",
+      "description": "Kiểm tra trường Username có số 0 ở đầu",
+      "objective": "Xác nhận thông báo lỗi khi Username rỗng",
+      "coverage_refs": ["23"],
+      "decision_basis": {
+        "rule_id": "DT_002",
+        "condition_states": {
+          "C1": "N"
+        },
+        "reduction_note": "Chỉ cần Username rỗng để kích hoạt lỗi"
+      },
+      "inputs": {
+        "Username": "0testuser",
+        "Phone": "0123456789",
+        "Password": "1234567890",
+        "ConfirmPassword": "1234567890"
+      },
+      "expected": "Vui lòng điền vào trường này",
+      "priority": "Medium"
+    },
+    {
+      "id": "TC_028",
+      "name": "Phone có số 0 ở giữa",
+      "description": "Kiểm tra trường Phone có số 0 ở giữa",
+      "objective": "Xác nhận thông báo lỗi khi Phone không hợp lệ",
+      "coverage_refs": ["1"],
+      "decision_basis": {
+        "rule_id": "DT_003",
+        "condition_states": {
+          "C1": "Y",
+          "C2": "N"
+        },
+        "reduction_note": "Chỉ cần Phone không hợp lệ
