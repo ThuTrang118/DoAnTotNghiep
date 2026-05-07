@@ -1,81 +1,80 @@
 {
-  "feature": "login",
-  "description": "User must enter valid username and password to log in. Empty fields trigger specific error messages, while incorrect credentials trigger another.",
+  "feature": "ĐĂNG NHẬP",
+  "description": "Chức năng đăng nhập kiểm tra tính hợp lệ của Username và Password để xác thực người dùng",
   "decision_summary": {
     "condition_count": 4,
     "action_count": 3,
     "full_combination_count": 16,
-    "full_rule_count": 0,
     "reduced_rule_count": 5
   },
   "conditions": [
     {
       "id": "C1",
-      "name": "Username is empty (required)",
+      "name": "Username được nhập?",
       "source_fields": [
         "Username"
       ],
-      "meaning_when_y": "Username field is empty",
-      "meaning_when_n": "Username field is not empty",
       "values": [
         "Y",
         "N"
-      ]
+      ],
+      "meaning_when_y": "Trường Username không rỗng",
+      "meaning_when_n": "Trường Username rỗng"
     },
     {
       "id": "C2",
-      "name": "Password is empty (required)",
+      "name": "Password được nhập?",
       "source_fields": [
         "Password"
       ],
-      "meaning_when_y": "Password field is empty",
-      "meaning_when_n": "Password field is not empty",
       "values": [
         "Y",
         "N"
-      ]
+      ],
+      "meaning_when_y": "Trường Password không rỗng",
+      "meaning_when_n": "Trường Password rỗng"
     },
     {
       "id": "C3",
-      "name": "Username is correct",
+      "name": "Username hợp lệ?",
       "source_fields": [
         "Username"
       ],
-      "meaning_when_y": "Username matches registered value",
-      "meaning_when_n": "Username does not match registered value",
       "values": [
         "Y",
         "N"
-      ]
+      ],
+      "meaning_when_y": "Username khớp với tài khoản đã đăng ký",
+      "meaning_when_n": "Username không khớp với tài khoản đã đăng ký"
     },
     {
       "id": "C4",
-      "name": "Password is correct",
+      "name": "Password hợp lệ?",
       "source_fields": [
         "Password"
       ],
-      "meaning_when_y": "Password matches registered value",
-      "meaning_when_n": "Password does not match registered value",
       "values": [
         "Y",
         "N"
-      ]
+      ],
+      "meaning_when_y": "Password khớp với tài khoản đã đăng ký",
+      "meaning_when_n": "Password không khớp với tài khoản đã đăng ký"
     }
   ],
   "actions": [
     {
       "id": "A1",
-      "name": "Empty field error",
+      "name": "Thông báo lỗi trống",
       "expected": "Vui lòng điền vào trường này"
     },
     {
       "id": "A2",
-      "name": "Successful login",
+      "name": "Đăng nhập thành công",
       "expected": "AnhDuong11"
     },
     {
       "id": "A3",
-      "name": "Invalid credentials error",
+      "name": "Thông báo lỗi tài khoản",
       "expected": "Username hoặc Password không đúng!"
     }
   ],
@@ -93,24 +92,22 @@
         "A2"
       ],
       "expected": "AnhDuong11",
-      "reduction_note": "All fields are valid and match registered values",
-      "coverage_refs": []
+      "reduction_note": "Trường hợp lý tưởng khi cả 2 trường đều hợp lệ"
     },
     {
       "id": "DT_002",
       "type": "single_fault",
       "condition_states": {
         "C1": "N",
-        "C2": "Y",
-        "C3": "Y",
-        "C4": "Y"
+        "C2": "-",
+        "C3": "-",
+        "C4": "-"
       },
       "action_refs": [
         "A1"
       ],
       "expected": "Vui lòng điền vào trường này",
-      "reduction_note": "Username field is empty",
-      "coverage_refs": []
+      "reduction_note": "Chỉ cần Username rỗng để kích hoạt thông báo lỗi trống"
     },
     {
       "id": "DT_003",
@@ -118,15 +115,14 @@
       "condition_states": {
         "C1": "Y",
         "C2": "N",
-        "C3": "Y",
-        "C4": "Y"
+        "C3": "-",
+        "C4": "-"
       },
       "action_refs": [
         "A1"
       ],
       "expected": "Vui lòng điền vào trường này",
-      "reduction_note": "Password field is empty",
-      "coverage_refs": []
+      "reduction_note": "Chỉ cần Password rỗng để kích hoạt thông báo lỗi trống"
     },
     {
       "id": "DT_004",
@@ -135,14 +131,13 @@
         "C1": "Y",
         "C2": "Y",
         "C3": "N",
-        "C4": "Y"
+        "C4": "-"
       },
       "action_refs": [
         "A3"
       ],
       "expected": "Username hoặc Password không đúng!",
-      "reduction_note": "Username does not match registered value",
-      "coverage_refs": []
+      "reduction_note": "Chỉ cần Username không khớp để kích hoạt thông báo lỗi tài khoản"
     },
     {
       "id": "DT_005",
@@ -157,10 +152,8 @@
         "A3"
       ],
       "expected": "Username hoặc Password không đúng!",
-      "reduction_note": "Password does not match registered value",
-      "coverage_refs": []
+      "reduction_note": "Chỉ cần Password không khớp để kích hoạt thông báo lỗi tài khoản"
     }
   ],
-  "full_decision_rules": [],
-  "reduction_steps": []
+  "full_decision_rules": []
 }

@@ -1,50 +1,52 @@
 VAI TRÒ:
-Thực hiện STEP 3: kết hợp Decision Table với dữ liệu EP/BVA để sinh final testcases.
+Bạn là bộ sinh STEP 3 trong pipeline sinh test data tự động dựa trên EP, BVA và Decision Table.
 
-ĐẦU VÀO:
-1. Đặc tả chức năng.
-2. Step 1 JSON: data pool từ EP + BVA.
-3. Step 2 JSON: Decision Table logic.
+NHIỆM VỤ:
+Map kết quả STEP 1 và STEP 2 để sinh bộ test data cuối cùng dạng framework-ready.
 
-MỤC TIÊU:
-Sinh testcases cuối cùng bằng công thức:
-Testcase = Decision Rule × representative_value từ Step 1.
+NGUYÊN LÝ:
+1. STEP 1 là nguồn dữ liệu đầu vào.
+   - coverage_items chứa field, representative_value, validity, technique, boundary, expected_class.
+   - Chỉ chọn dữ liệu từ representative_value của STEP 1, trừ khi bắt buộc phải điền giá trị hợp lệ thay thế do STEP 1 thiếu.
 
-NGUYÊN TẮC:
-1. Step 2 quyết định logic tổ hợp điều kiện.
-2. Step 1 cung cấp dữ liệu cụ thể cho từng field:
-   - EP cung cấp lớp hợp lệ/không hợp lệ.
-   - BVA cung cấp giá trị biên/cận biên.
-3. Không tự tạo dữ liệu ngoài Step 1.
-4. Mỗi testcase phải xuất phát từ đúng 1 decision_rule.
-5. Mỗi decision_rule phải sinh ít nhất 1 testcase.
-6. Mỗi coverage_item ở Step 1 phải được dùng ít nhất 1 lần trong final testcases.
+2. STEP 2 là nguồn logic nghiệp vụ.
+   - decision_rules quyết định testcase thuộc rule nào và Expected là gì.
+   - Không tạo rule mới, không sửa rule cũ, không tự suy diễn expected ngoài STEP 2.
 
-CÁCH CHỌN DỮ LIỆU:
-1. Nếu condition state = Y:
-   - chọn coverage valid tương ứng từ Step 1.
-2. Nếu condition state = N:
-   - chọn coverage invalid tương ứng từ Step 1.
-3. Nếu condition state = "-":
-   - chọn một coverage valid phù hợp từ Step 1.
-4. Với các coverage BVA:
-   - tạo testcase bổ sung dưới decision_rule phù hợp.
-   - BVA valid đi với rule có condition state Y.
-   - BVA invalid đi với rule có condition state N.
-5. Với single_fault:
-   - chỉ 1 field dùng invalid coverage.
-   - các field còn lại dùng valid coverage.
+3. STEP 3 là bước mapping.
+   - Với mỗi decision_rule trong STEP 2, tạo ít nhất 1 testcase đại diện.
+   - Điều kiện Y nghĩa là chọn representative_value hợp lệ từ STEP 1.
+   - Điều kiện N nghĩa là chọn representative_value không hợp lệ hoặc boundary không hợp lệ từ STEP 1.
+   - Điều kiện '-' nghĩa là điều kiện không ảnh hưởng, chọn representative_value hợp lệ mặc định.
 
-CẤM:
-1. Không tạo decision_rule mới.
-2. Không sửa Step 1.
-3. Không sửa Step 2.
-4. Không tự tạo input value.
-5. Không bỏ sót coverage Step 1.
-6. Không output text ngoài JSON.
+QUY TẮC CHỌN DỮ LIỆU:
+1. Happy path:
+   - Tất cả input field dùng representative_value có validity = valid.
 
-OUTPUT:
-Chỉ trả về 1 JSON object hợp lệ theo OUTPUT SCHEMA.
+2. Single fault:
+   - Chỉ field/nhóm điều kiện gây lỗi dùng representative_value invalid hoặc boundary tương ứng.
+   - Các field còn lại bắt buộc dùng representative_value valid.
+
+3. Boundary:
+   - Nếu coverage_item có technique = BVA và phù hợp với rule, ưu tiên dùng representative_value đó.
+   - MIN, MAX, N là boundary hợp lệ.
+   - MIN-1, MAX+1, N-1, N+1 là boundary không hợp lệ tùy rule.
+
+4. Expected:
+   - Expected phải lấy từ decision_rule.expected của STEP 2.
+   - Nếu decision_rule.expected là tên field, ví dụ "Username", thì Expected phải bằng giá trị thực tế của field đó trong testcase.
+
+5. Không sinh trùng:
+   - Không tạo 2 testcase có cùng bộ input và Expected.
+   - Testcase phải tăng dần theo prefix của feature.
+
+6. Không dùng key trung gian:
+   - Không output coverage_refs, decision_basis, inputs, id, name, objective, priority.
+   - Chỉ output row phẳng: Testcase + input fields + Expected.
+
+ĐẦU RA:
+Chỉ trả về JSON object hợp lệ theo OUTPUT FORMAT.
 Không markdown.
-Không comment.
 Không giải thích.
+Không comment.
+Không <think> hoặc </think>.

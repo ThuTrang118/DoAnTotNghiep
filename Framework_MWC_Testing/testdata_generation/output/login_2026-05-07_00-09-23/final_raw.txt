@@ -1,0 +1,36 @@
+{
+  "feature": "login",
+  "description": "Bộ test data kiểm tra chức năng đăng nhập với các trường hợp hợp lệ, thiếu dữ liệu và sai thông tin",
+  "items": [
+    {
+      "Testcase": "login_001",
+      "Username": "AnhDuong11",
+      "Password": "AnhDuong@123",
+      "Expected": "AnhDuong11"
+    },
+    {
+      "Testcase": "login_002",
+      "Username": "",
+      "Password": "AnhDuong@123",
+      "Expected": "Vui lòng điền vào trường này"
+    },
+    {
+      "Testcase": "login_003",
+      "Username": "AnhDuong11",
+      "Password": "",
+      "Expected": "Vui lòng điền vào trường này"
+    },
+    {
+      "Testcase": "login_004",
+      "Username": "wronguser",
+      "Password": "AnhDuong@123",
+      "Expected": "Username hoặc Password không đúng!"
+    },
+    {
+      "Testcase": "login_005",
+      "Username": "AnhDuong11",
+      "Password": "wrongpass",
+      "Expected": "Username hoặc Password không đúng!"
+    }
+  ]
+}

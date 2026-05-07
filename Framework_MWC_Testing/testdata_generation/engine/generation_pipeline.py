@@ -1063,124 +1063,8 @@ class GenerationPipeline:
 
                 rules.append(normalized_rule)
 
-        condition_ids = [
-            self._clean_text(cond.get("id"))
-            for cond in conditions
-            if isinstance(cond, dict) and self._clean_text(cond.get("id"))
-        ]
-
-        for rule in rules:
-            states = rule.get("condition_states")
-            if not isinstance(states, dict):
-                states = {}
-
-            for cid in condition_ids:
-                states.setdefault(cid, "-")
-
-            rule["condition_states"] = {
-                cid: self._normalize_dt_state(states.get(cid))
-                for cid in condition_ids
-            }
-
-            values = list(rule["condition_states"].values())
-            n_count = values.count("N")
-
-            # Chuẩn hóa type sau khi đã đủ tất cả condition id.
-            # happy_path: tất cả Y.
-            # single_fault: đúng 1 N.
-            # business_rule: nhiều N hoặc rule nghiệp vụ đã rút gọn có dấu '-'.
-            if values and all(v == "Y" for v in values):
-                rule["type"] = "happy_path"
-            elif n_count == 1:
-                rule["type"] = "single_fault"
-            else:
-                rule["type"] = "business_rule"
-
-        rules = self._reduce_step2_rules(rules, condition_ids)
-
         dt_data["decision_rules"] = rules
         return dt_data
-
-    def _step2_rule_signature(self, rule: Dict[str, Any]) -> tuple:
-        states = rule.get("condition_states")
-        if not isinstance(states, dict):
-            states = {}
-
-        action_refs = rule.get("action_refs")
-        if not isinstance(action_refs, list):
-            action_refs = []
-
-        return (
-            tuple(sorted((self._clean_text(k), self._clean_text(v)) for k, v in states.items())),
-            tuple(self._clean_text(ref) for ref in action_refs),
-            self._clean_text(rule.get("expected")),
-        )
-
-    def _reduce_step2_rules(self, rules: List[Dict[str, Any]], condition_ids: List[str]) -> List[Dict[str, Any]]:
-        """
-        Rút gọn bảng quyết định Step 2 theo tinh thần Bước 6-7 của Decision Table.
-
-        Một rule được xem là bị bao phủ nếu đã có rule trước đó cùng action/expected
-        và các condition của rule trước đó tổng quát hơn bằng dấu '-'.
-        Ví dụ:
-        - Rule giữ lại: C1=N, C2=-, C3=-
-        - Rule bị bỏ:   C1=N, C2=N, C3=N
-        """
-        reduced: List[Dict[str, Any]] = []
-        seen_signatures: Set[tuple] = set()
-
-        for rule in rules:
-            signature = self._step2_rule_signature(rule)
-            if signature in seen_signatures:
-                continue
-
-            states = rule.get("condition_states")
-            if not isinstance(states, dict):
-                states = {}
-
-            action_refs = rule.get("action_refs")
-            if not isinstance(action_refs, list):
-                action_refs = []
-
-            expected = self._clean_text(rule.get("expected"))
-
-            is_covered = False
-            for kept in reduced:
-                kept_refs = kept.get("action_refs")
-                if not isinstance(kept_refs, list):
-                    kept_refs = []
-
-                if kept_refs != action_refs:
-                    continue
-                if self._clean_text(kept.get("expected")) != expected:
-                    continue
-
-                kept_states = kept.get("condition_states")
-                if not isinstance(kept_states, dict):
-                    kept_states = {}
-
-                covers = True
-                for cid in condition_ids:
-                    kept_state = kept_states.get(cid)
-                    rule_state = states.get(cid)
-                    if kept_state != "-" and kept_state != rule_state:
-                        covers = False
-                        break
-
-                if covers:
-                    is_covered = True
-                    break
-
-            if is_covered:
-                continue
-
-            reduced.append(rule)
-            seen_signatures.add(signature)
-
-        for idx, rule in enumerate(reduced, start=1):
-            rule["id"] = f"DT_{idx:03d}"
-
-        return reduced
 
     def _hard_check_step2_structure(self, dt_data: Dict[str, Any]) -> None:
         if not isinstance(dt_data, dict):
@@ -1556,12 +1440,9 @@ class GenerationPipeline:
         if not isinstance(dt_data, dict):
             raise RuntimeError("Step2 DT output must be a JSON object.")
 
-        self._log("STEP 2: normalize + rebuild summary + reduce ...")
+        self._log("STEP 2: strict schema check, không auto-repair ...")
         try:
-            dt_data = self._force_step2_feature(dt_data, feature_key)
-            dt_data = self._normalize_step2_data(dt_data)
-            dt_data = self._rebuild_step2_summary(dt_data)
-
+            self._strict_check_step2_ai_output(dt_data)
             self._hard_check_step2_structure(dt_data)
             result = self.step2_validator.validate_or_raise(dt_data, step1_data=step1_data)
             if result.warnings:
@@ -1575,10 +1456,7 @@ class GenerationPipeline:
                         "Step2 validation produced severe warnings:\n- " + "\n- ".join(severe)
                     )
         except Exception as exc:
-            self._log(f"STEP 2: output chưa chuẩn, ghi step2_dt_invalid.json. Lỗi: {exc}")
-            invalid_json_path = exporter.write_raw_json(dt_data, filename="step2_dt_invalid.json")
-            self._export_step2_excel_safely(dt_data, exporter)
-            self._log(f"STEP 2: lưu invalid JSON tại {invalid_json_path}")
+            self._log(f"STEP 2: output chưa chuẩn, không ghi step2_dt_invalid.json. Lỗi: {exc}")
             raise
 
         dt_json_path = exporter.write_raw_json(dt_data, filename="step2_dt.json")
@@ -1715,3 +1593,95 @@ class GenerationPipeline:
             self._log(f"STEP 1: đã export Excel {excel_path}")
         except Exception as exc:
             self._log(f"Warning: Step1 Excel export failed: {exc}")
+
+    # ===========================================================================
+    # OVERRIDE STEP 3 FRAMEWORK-READY METHODS
+    # Added at end of class to override older duplicate Step 3 methods above.
+    # ===========================================================================
+    def _normalize_framework_item(self, feature: str, item: Dict[str, Any], index: int) -> Dict[str, Any]:
+        fields = get_feature_item_fields(feature)
+        testcase_id = item.get("Testcase", item.get("testcase", item.get("id")))
+        if not isinstance(testcase_id, str) or not testcase_id.strip():
+            testcase_id = build_default_testcase_id(feature, index)
+
+        inputs = item.get("inputs")
+        if not isinstance(inputs, dict):
+            inputs = item
+
+        row: Dict[str, Any] = {"Testcase": testcase_id.strip()}
+        for field in fields:
+            value = inputs.get(field, item.get(field, ""))
+            row[field] = "" if value is None else value
+
+        expected = item.get("Expected", item.get("expected", ""))
+        row["Expected"] = "" if expected is None else str(expected)
+        return row
+
+    def _normalize_step3_data(self, feature: str, step3_data: Dict[str, Any]) -> Dict[str, Any]:
+        items = step3_data.get("items")
+        if not isinstance(items, list):
+            items = step3_data.get("testcases")
+
+        if not isinstance(items, list):
+            step3_data["items"] = []
+            return step3_data
+
+        normalized_items: List[Dict[str, Any]] = []
+        seen_signatures: Set[tuple] = set()
+        for idx, item in enumerate(items, start=1):
+            if not isinstance(item, dict):
+                continue
+            row = self._normalize_framework_item(feature, item, idx)
+            signature = tuple((k, str(v)) for k, v in row.items() if k != "Testcase")
+            if signature in seen_signatures:
+                continue
+            seen_signatures.add(signature)
+            row["Testcase"] = build_default_testcase_id(feature, len(normalized_items) + 1)
+            normalized_items.append(row)
+
+        step3_data["items"] = normalized_items
+        step3_data.pop("testcases", None)
+        step3_data.pop("testcase_summary", None)
+        return step3_data
+
+    def _hard_check_step3_structure(self, step3_data: Dict[str, Any], feature: str) -> None:
+        if not isinstance(step3_data, dict):
+            raise RuntimeError("Step3 output must be a JSON object.")
+        if not self._clean_text(step3_data.get("feature")):
+            raise RuntimeError("Step3 missing 'feature'.")
+        if not self._clean_text(step3_data.get("description")):
+            raise RuntimeError("Step3 missing 'description'.")
+
+        items = step3_data.get("items")
+        if not isinstance(items, list) or not items:
+            raise RuntimeError("Step3 must contain non-empty 'items'.")
+
+        expected_fields = get_feature_item_fields(feature)
+        required_keys = ["Testcase", *expected_fields, "Expected"]
+        allowed_keys = set(required_keys)
+        forbidden_keys = {
+            "id", "name", "description", "objective", "coverage_refs", "decision_basis",
+            "inputs", "priority", "expected", "testcase",
+        }
+
+        testcase_ids: Set[str] = set()
+        for idx, item in enumerate(items, start=1):
+            if not isinstance(item, dict):
+                raise RuntimeError(f"Step3 items[{idx}] must be an object.")
+            for key in forbidden_keys:
+                if key in item:
+                    raise RuntimeError(f"Step3 items[{idx}] must not contain intermediate key '{key}'.")
+            missing = [key for key in required_keys if key not in item]
+            extra = sorted(set(item.keys()) - allowed_keys)
+            if missing:
+                raise RuntimeError(f"Step3 items[{idx}] missing required keys: {missing}.")
+            if extra:
+                raise RuntimeError(f"Step3 items[{idx}] contains unexpected keys: {extra}.")
+            testcase_id = self._clean_text(item.get("Testcase"))
+            if not testcase_id:
+                raise RuntimeError(f"Step3 items[{idx}] missing 'Testcase'.")
+            if testcase_id in testcase_ids:
+                raise RuntimeError(f"Step3 duplicate Testcase: '{testcase_id}'.")
+            testcase_ids.add(testcase_id)
+            if not self._clean_text(item.get("Expected")):
+                raise RuntimeError(f"Step3 items[{idx}] missing 'Expected'.")

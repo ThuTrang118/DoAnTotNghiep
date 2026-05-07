@@ -328,3 +328,130 @@ class PromptLoader:
 
     def preview_step3_prompt(self, feature: str, step1_data: Dict[str, Any], dt_data: Dict[str, Any]) -> str:
         return self.build_step3_prompt(feature, step1_data, dt_data)
+
+    # ===========================================================================
+    # OVERRIDE STEP 3 PROMPT BUILDER - compact input + /no_think
+    # ===========================================================================
+    @staticmethod
+    def _compact_step1_for_step3(step1_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Rút gọn Step 1 cho Step 3 để giảm prompt và tránh model chỉ trả thinking."""
+        items = step1_data.get("coverage_items", [])
+        compact_items = []
+        if isinstance(items, list):
+            for item in items:
+                if not isinstance(item, dict):
+                    continue
+                boundary = item.get("boundary") if isinstance(item.get("boundary"), dict) else None
+                compact_items.append({
+                    "id": item.get("id", ""),
+                    "field": item.get("field", ""),
+                    "technique": item.get("technique", ""),
+                    "validity": item.get("validity", ""),
+                    "representative_value": "" if item.get("representative_value") is None else item.get("representative_value"),
+                    "expected_class": item.get("expected_class", ""),
+                    "rule": item.get("rule", ""),
+                    "boundary": {
+                        "kind": boundary.get("kind", ""),
+                        "point": boundary.get("point", ""),
+                    } if boundary else None,
+                })
+        return {
+            "feature": step1_data.get("feature", ""),
+            "description": step1_data.get("description", ""),
+            "coverage_items": compact_items,
+        }
+
+    @staticmethod
+    def _compact_dt_for_step3(dt_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Rút gọn Step 2 cho Step 3: giữ conditions/actions/rules cần map."""
+        conditions = []
+        for cond in dt_data.get("conditions", []) if isinstance(dt_data.get("conditions"), list) else []:
+            if not isinstance(cond, dict):
+                continue
+            conditions.append({
+                "id": cond.get("id", ""),
+                "name": cond.get("name", ""),
+                "source_fields": cond.get("source_fields", []),
+                "meaning_when_y": cond.get("meaning_when_y", ""),
+                "meaning_when_n": cond.get("meaning_when_n", ""),
+            })
+
+        actions = []
+        for action in dt_data.get("actions", []) if isinstance(dt_data.get("actions"), list) else []:
+            if not isinstance(action, dict):
+                continue
+            actions.append({
+                "id": action.get("id", ""),
+                "name": action.get("name", ""),
+                "expected": action.get("expected", ""),
+            })
+
+        rules = []
+        for rule in dt_data.get("decision_rules", []) if isinstance(dt_data.get("decision_rules"), list) else []:
+            if not isinstance(rule, dict):
+                continue
+            rules.append({
+                "id": rule.get("id", ""),
+                "type": rule.get("type", ""),
+                "condition_states": rule.get("condition_states", {}),
+                "action_refs": rule.get("action_refs", []),
+                "expected": rule.get("expected", ""),
+                "reduction_note": rule.get("reduction_note", ""),
+            })
+
+        return {
+            "feature": dt_data.get("feature", ""),
+            "description": dt_data.get("description", ""),
+            "conditions": conditions,
+            "actions": actions,
+            "decision_rules": rules,
+        }
+
+    def build_step3_prompt(
+        self,
+        feature: str,
+        step1_data: Dict[str, Any],
+        dt_data: Dict[str, Any],
+    ) -> str:
+        feature_name = normalize_feature_name(feature)
+        self._assert_step1_data_shape(step1_data)
+        self._assert_dt_data_shape(dt_data)
+
+        prompt_template = self.load_step3_prompt_template()
+        final_schema = self.load_final_output_format()
+        feature_spec = self.load_feature_description(feature_name)
+
+        step1_compact = self._compact_step1_for_step3(step1_data)
+        dt_compact = self._compact_dt_for_step3(dt_data)
+
+        parts = [
+            "/no_think",
+            prompt_template,
+            "================================================================================",
+            "FEATURE SPECIFICATION",
+            "================================================================================",
+            feature_spec,
+            "================================================================================",
+            "STEP 1 EP/BVA COVERAGE - LOCKED INPUT",
+            "================================================================================",
+            self._json_dumps_compact(step1_compact),
+            "================================================================================",
+            "STEP 2 DECISION TABLE - LOCKED INPUT",
+            "================================================================================",
+            self._json_dumps_compact(dt_compact),
+            "================================================================================",
+            "OUTPUT FORMAT REQUIREMENT",
+            "================================================================================",
+            final_schema,
+            "================================================================================",
+            "FINAL CONTRACT",
+            "================================================================================",
+            "Chỉ trả về JSON object cuối cùng.",
+            "Không suy luận dài.",
+            "Không markdown.",
+            "Không comment.",
+            "Không giải thích.",
+            "Không text ngoài JSON.",
+            "Không <think> hoặc </think>.",
+        ]
+        return "\n\n".join(parts).strip()
