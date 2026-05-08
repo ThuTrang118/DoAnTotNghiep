@@ -1,56 +1,45 @@
 {
   "feature": "string",
   "description": "string",
-  "decision_summary": {
-    "condition_count": 0,
-    "action_count": 0,
-    "full_combination_count": 0,
-    "reduced_rule_count": 0
-  },
+
   "conditions": [
     {
       "id": "C1",
-      "name": "mô tả điều kiện bằng tiếng Việt",
-      "source_fields": ["TênField"],
+      "name": "string",
+      "source_fields": ["string"],
       "values": ["Y", "N"],
-      "meaning_when_y": "ý nghĩa khi Y bằng tiếng Việt",
-      "meaning_when_n": "ý nghĩa khi N bằng tiếng Việt"
+      "meaning_when_y": "string",
+      "meaning_when_n": "string"
     }
   ],
+
   "actions": [
     {
       "id": "A1",
-      "name": "tên kết quả/hành động bằng tiếng Việt",
-      "expected": "kết quả mong đợi bằng tiếng Việt"
+      "name": "string",
+      "expected": "string"
     }
   ],
+
   "decision_rules": [
     {
       "id": "DT_001",
       "type": "happy_path",
       "condition_states": {
-        "C1": "Y"
+        "C1": "Y",
+        "C2": "N",
+        "C3": "-"
       },
       "action_refs": ["A1"],
-      "expected": "kết quả mong đợi bằng tiếng Việt",
-      "reduction_note": "ghi chú rút gọn bằng tiếng Việt"
+      "expected": "string",
+      "reduction_note": "string"
     }
-  ]
-}
+  ],
 
-RÀNG BUỘC:
-1. Chỉ output 1 JSON object.
-2. Không markdown, không ```json, không giải thích, không text ngoài JSON.
-3. Không copy placeholder string/number.
-4. conditions/actions/decision_rules không rỗng.
-5. condition id dạng C1, C2...; action id dạng A1, A2...; rule id dạng DT_001, DT_002...
-6. decision_rules chỉ dùng condition_states, action_refs, expected, reduction_note.
-7. Không dùng condition, conditions, action, action_id, coverage_refs, optimization_note trong decision_rules.
-8. condition_states phải chứa đủ condition id và chỉ dùng Y, N, -.
-9. action_refs phải tham chiếu action id có thật.
-10. Có đúng 1 happy_path và tất cả condition_states của happy_path là Y.
-11. single_fault có đúng 1 condition = N; các condition còn lại phải là Y hoặc -.
-12. Nếu một rule có từ 2 condition = N trở lên thì type bắt buộc là business_rule, không được là single_fault.
-13. Bảng cuối cùng phải là bảng DT đã rút gọn hoàn chỉnh: nếu một rule tổng quát có dấu "-" đã bao phủ rule cụ thể cùng action/expected thì bỏ rule cụ thể.
-14. expected không rỗng và phải khớp action được tham chiếu.
-15. Tất cả mô tả phải là tiếng Việt.
+  "decision_summary": {
+    "condition_count": 0,
+    "action_count": 0,
+    "full_combination_count": 0,
+    "reduced_rule_count": 0
+  }
+}

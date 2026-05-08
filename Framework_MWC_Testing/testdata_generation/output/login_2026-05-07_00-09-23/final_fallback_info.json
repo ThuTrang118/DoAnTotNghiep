@@ -1,0 +1,5 @@
+{
+  "fallback_used": true,
+  "mode": "code_only",
+  "reason": "Step 3 được cấu hình sinh bằng code mapping, không gọi AI."
+}

@@ -1,156 +1,123 @@
 VAI TRÒ:
-Sinh Decision Table (bảng quyết định) từ đặc tả chức năng.
+Sinh STEP 2 Reduced Decision Logic Table phục vụ cho Step 3 code-only mapping.
 
 ĐẦU VÀO:
-- Mô tả chức năng
-- Step 1 EP + BVA: chỉ dùng để biết field/ràng buộc/kết quả lỗi
+1. FEATURE SPECIFICATION
+2. STEP 1 COMPACT COVERAGE
 
 MỤC TIÊU:
-Sinh bảng quyết định logic, KHÔNG sinh test data cụ thể.
+Sinh bảng quyết định rút gọn phản ánh đúng logic nghiệp vụ và dùng được để code Step 3 sinh test data cuối.
+
+LƯU Ý BẮT BUỘC:
+- Step 2 KHÔNG sinh testcase.
+- Step 2 KHÔNG sinh test data cụ thể.
+- Step 2 KHÔNG sinh representative value.
+- Step 2 KHÔNG sinh full combination table 2^n.
+- Step 2 KHÔNG sinh coverage_refs.
+- Step 2 KHÔNG giải thích ngoài JSON.
+- Step 2 chỉ sinh logic quyết định rút gọn.
 
 ==================================================
-LÝ THUYẾT BẮT BUỘC
+NGUYÊN TẮC EXPECTED/ACTION
 ==================================================
 
-Decision Table dùng để mô hình hóa:
-- Condition: điều kiện đầu vào ảnh hưởng tới kết quả
-- Values: Y/N/-
-- Action: phản hồi/kết quả hệ thống
-- Rule: tổ hợp condition dẫn tới action
+Actions phải bám đúng KỲ VỌNG NGHIỆP VỤ trong FEATURE SPECIFICATION.
 
-Quy ước:
-- Y = điều kiện đúng / được thỏa mãn
-- N = điều kiện sai / không được thỏa mãn
-- - = điều kiện không ảnh hưởng tới kết quả
+Với mọi action:
+- action.expected PHẢI dùng đúng giá trị sau "Expected = ..." trong FEATURE SPECIFICATION.
+- Không tự diễn giải lại expected.
+- Không đổi wording của expected.
+- Không dùng expected chung chung nếu FEATURE SPECIFICATION đã nêu expected cụ thể.
 
-Phải xây dựng theo đúng quy trình:
-1. Xác định condition
-2. Xác định action
-3. Tạo tổ hợp rule
-4. Gán action cho từng rule
-5. Rút gọn bằng dấu "-" khi condition không ảnh hưởng
+Với mọi decision rule:
+- rule.expected PHẢI bằng expected của action đầu tiên trong action_refs.
+- happy_path phải dùng expected thành công được nêu trong FEATURE SPECIFICATION.
+- invalid rule phải dùng expected lỗi tương ứng được nêu trong FEATURE SPECIFICATION.
 
 ==================================================
-QUY TẮC CONDITION
+QUY TẮC CONDITIONS
 ==================================================
 
-1. Condition phải là câu hỏi Yes/No.
-2. Condition phải viết bằng tiếng Việt.
-3. Condition chỉ mô tả logic quyết định, không mô tả dữ liệu cụ thể.
-4. Không tạo condition từ từng giá trị BVA.
-5. Không tạo condition tổng hợp như "tất cả dữ liệu hợp lệ?".
-6. Không tạo condition trùng nghĩa.
-7. Nếu nhiều ràng buộc của cùng field cho cùng một lỗi chung, gộp thành "<field> hợp lệ?".
-8. Nếu các lỗi của cùng field có kết quả khác nhau, được tách thành các condition khác nhau theo nhóm kết quả.
+Mỗi condition phải có:
+- id duy nhất dạng C1, C2, ...
+- name rõ nghĩa
+- source_fields là danh sách field liên quan
+- values đúng bằng ["Y", "N"]
+- meaning_when_y
+- meaning_when_n
 
-Mẫu condition tiếng Việt:
-- "Username được nhập?"
-- "Phone hợp lệ?"
-- "Password hợp lệ?"
-- "ConfirmPassword khớp với Password?"
+Chỉ dùng trạng thái:
+- Y = condition đúng
+- N = condition sai
+- - = don't care
 
 ==================================================
-QUY TẮC ACTION
+QUY TẮC PHỤ THUỘC ĐIỀU KIỆN
 ==================================================
 
-1. Action là kết quả/phản hồi của hệ thống.
-2. Action phải viết bằng tiếng Việt.
-3. expected phải là thông báo/kết quả cụ thể theo đặc tả.
-4. Không tự thêm action không có trong đặc tả.
+Phải ưu tiên điều kiện có nhập dữ liệu trước các điều kiện kiểm tra sâu hơn.
+
+Nếu một condition kiểm tra thuộc tính sâu hơn của field như:
+- định dạng, độ dài, miền giá trị, tồn tại/không tồn tại, trùng/không trùng;
+- so khớp, so sánh, quan hệ giữa nhiều field;
+- bất kỳ rule nghiệp vụ nào chỉ có ý nghĩa khi field đã có dữ liệu;
+
+thì trong decision rule đó, condition "field không rỗng / field được nhập" tương ứng BẮT BUỘC phải là Y.
+
+Bắt buộc áp dụng:
+- Nếu rule có condition lỗi của một field ở trạng thái N, và condition đó không phải là lỗi rỗng, thì condition "field không rỗng" của field đó phải là Y.
+- Nếu rule có condition lỗi quan hệ giữa nhiều field ở trạng thái N, thì tất cả condition "field không rỗng" của các field liên quan phải là Y.
+- Không được để "-" cho condition "field không rỗng" nếu rule đang kiểm tra định dạng, độ dài, tồn tại, trùng, so khớp hoặc quan hệ của field đó.
+- Dấu "-" chỉ được dùng khi condition thật sự không ảnh hưởng và không phải điều kiện tiền đề của condition đang được kiểm tra.
+
+Khi một field rỗng:
+- rule lỗi rỗng được ưu tiên;
+- các condition kiểm tra sâu hơn của chính field đó được để "-" vì không còn ý nghĩa kiểm tra.
 
 ==================================================
-QUY TẮC RULE
+QUY TẮC ACTIONS
 ==================================================
 
-Mỗi rule bắt buộc có:
-- id
+Mỗi action phải có:
+- id duy nhất dạng A1, A2, ...
+- name rõ nghĩa
+- expected lấy đúng từ FEATURE SPECIFICATION
+
+Không dùng key description thay cho expected.
+
+==================================================
+QUY TẮC DECISION RULES
+==================================================
+
+Mỗi decision rule phải có:
+- id dạng DT_001, DT_002, ...
 - type
 - condition_states
 - action_refs
 - expected
 - reduction_note
 
-Không dùng field khác để thay thế.
-
-Type hợp lệ:
-- happy_path: tất cả condition = Y
-- single_fault: đúng 1 condition = N
-- business_rule: dùng khi nhiều condition cùng tạo ra một quy tắc nghiệp vụ
+ALLOWED TYPE:
+- happy_path
+- single_fault
+- boundary
+- business_rule
 
 Bắt buộc:
 - Có đúng 1 happy_path.
-- Mỗi single_fault có đúng 1 N.
-- condition_states phải chứa đủ tất cả condition id.
-- action_refs là list, ví dụ ["A1"].
-- expected phải khớp với action được tham chiếu.
-- reduction_note phải viết tiếng Việt.
+- Có rule riêng cho mỗi nhánh lỗi/nghiệp vụ quan trọng có expected riêng.
+- Không bỏ sót rule nếu condition N tạo ra expected khác happy_path.
+- Không gộp các lỗi có expected khác nhau vào cùng một rule.
+- Không sinh rule dư nếu không tạo expected hoặc business behavior mới.
 
-Được dùng dấu "-" khi condition không ảnh hưởng đến action.
-
-QUY TẮC RÚT GỌN CUỐI CÙNG:
-- Chỉ xuất bảng quyết định cuối cùng sau khi đã rút gọn.
-- Nếu C1=N và các điều kiện khác không ảnh hưởng thì dùng {"C1":"N","C2":"-","C3":"-"}.
-- Không xuất thêm rule cụ thể như {"C1":"N","C2":"N","C3":"N"} nếu đã bị rule tổng quát C1=N bao phủ.
-- Rule single_fault chỉ được có đúng 1 giá trị N.
-- Rule có nhiều hơn 1 giá trị N phải là business_rule, nhưng chỉ giữ lại nếu chưa bị rule tổng quát hơn bao phủ.
-- Không sinh full_decision_rules.
+reduction_note phải ngắn và có ý nghĩa theo rule cụ thể.
+Không dùng câu mô tả chung chung về bảng quyết định hoặc dấu "-".
 
 ==================================================
-CẤM OUTPUT SAI SCHEMA
+OUTPUT
 ==================================================
 
-CẤM dùng trong decision_rules:
-- "condition": "C1=N"
-- "conditions": { ... }
-- "action": "A1"
-- "action_id": "A1"
-- "coverage_refs"
-- "optimization_note"
-
-BẮT BUỘC dùng:
-- "condition_states": {"C1":"Y"}
-- "action_refs": ["A1"]
-- "reduction_note"
-
-==================================================
-NGÔN NGỮ
-==================================================
-
-Tất cả mô tả phải viết bằng tiếng Việt:
-- description
-- conditions[].name
-- conditions[].meaning_when_y
-- conditions[].meaning_when_n
-- actions[].name
-- actions[].expected
-- decision_rules[].expected
-- decision_rules[].reduction_note
-
-Được giữ nguyên tên field kỹ thuật nếu field gốc là tiếng Anh.
-
-CẤM dùng tiếng Anh trong mô tả:
-- is valid
-- is non-empty
-- matches
-- invalid
-- valid data
-- please fill
-- happy path
-
-==================================================
-OUTPUT BẮT BUỘC
-==================================================
-
-Chỉ trả về DUY NHẤT 1 JSON object.
-JSON phải bắt đầu bằng { và kết thúc bằng }.
-
-CẤM TUYỆT ĐỐI:
-- markdown
-- ```json
-- giải thích ngoài JSON
-- bảng text
-- tiêu đề ngoài JSON
-- <think>
-- </think>
-
-Nếu không chắc chắn, vẫn phải trả về JSON đúng schema.
+Chỉ trả về 1 JSON object hợp lệ theo OUTPUT SCHEMA.
+Không markdown.
+Không comment.
+Không text ngoài JSON.

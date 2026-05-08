@@ -1,0 +1,34 @@
+{
+  "items": [
+    {
+      "Testcase": "LG01",
+      "Username": "AnhDuong11",
+      "Password": "AnhDuong@123",
+      "Expected": "AnhDuong11"
+    },
+    {
+      "Testcase": "LG02",
+      "Username": "",
+      "Password": "AnhDuong@123",
+      "Expected": "Vui lòng điền vào trường này"
+    },
+    {
+      "Testcase": "LG03",
+      "Username": "AnhDuong11",
+      "Password": "",
+      "Expected": "Vui lòng điền vào trường này"
+    },
+    {
+      "Testcase": "LG04",
+      "Username": "wronguser",
+      "Password": "AnhDuong@123",
+      "Expected": "Username hoặc Password không đúng!"
+    },
+    {
+      "Testcase": "LG05",
+      "Username": "AnhDuong11",
+      "Password": "wrongpass",
+      "Expected": "Username hoặc Password không đúng!"
+    }
+  ]
+}

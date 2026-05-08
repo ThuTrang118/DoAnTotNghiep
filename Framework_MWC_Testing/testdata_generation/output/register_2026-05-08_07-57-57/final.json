@@ -1,0 +1,182 @@
+{
+  "feature": "register",
+  "description": "Bộ test data cuối cùng được sinh bằng coverage-preserving mapping giữa Step 1 EP/BVA và Step 2 Decision Table.",
+  "items": [
+    {
+      "Testcase": "RG01",
+      "Username": "NewUser123",
+      "Phone": "0123456789",
+      "Password": "1234567890",
+      "ConfirmPassword": "1234567890",
+      "Expected": "NewUser123"
+    },
+    {
+      "Testcase": "RG02",
+      "Username": "NewUser123",
+      "Phone": "0123456789",
+      "Password": "12345678",
+      "ConfirmPassword": "12345678",
+      "Expected": "NewUser123"
+    },
+    {
+      "Testcase": "RG03",
+      "Username": "NewUser123",
+      "Phone": "0123456789",
+      "Password": "123456789",
+      "ConfirmPassword": "123456789",
+      "Expected": "NewUser123"
+    },
+    {
+      "Testcase": "RG04",
+      "Username": "NewUser123",
+      "Phone": "0123456789",
+      "Password": "12345678901234567890",
+      "ConfirmPassword": "12345678901234567890",
+      "Expected": "NewUser123"
+    },
+    {
+      "Testcase": "RG05",
+      "Username": "NewUser123",
+      "Phone": "0123456789",
+      "Password": "123456789012345678901",
+      "ConfirmPassword": "123456789012345678901",
+      "Expected": "NewUser123"
+    },
+    {
+      "Testcase": "RG06",
+      "Username": "",
+      "Phone": "0123456789",
+      "Password": "1234567890",
+      "ConfirmPassword": "1234567890",
+      "Expected": "Vui lòng điền vào trường này"
+    },
+    {
+      "Testcase": "RG07",
+      "Username": "NewUser123",
+      "Phone": "",
+      "Password": "1234567890",
+      "ConfirmPassword": "1234567890",
+      "Expected": "Vui lòng điền vào trường này"
+    },
+    {
+      "Testcase": "RG08",
+      "Username": "NewUser123",
+      "Phone": "0123456789",
+      "Password": "",
+      "ConfirmPassword": "1234567890",
+      "Expected": "Vui lòng điền vào trường này"
+    },
+    {
+      "Testcase": "RG09",
+      "Username": "NewUser123",
+      "Phone": "0123456789",
+      "Password": "1234567890",
+      "ConfirmPassword": "",
+      "Expected": "Vui lòng điền vào trường này"
+    },
+    {
+      "Testcase": "RG10",
+      "Username": "NewUser123",
+      "Phone": "012345678",
+      "Password": "1234567890",
+      "ConfirmPassword": "1234567890",
+      "Expected": "Số điện thoại không hợp lệ"
+    },
+    {
+      "Testcase": "RG11",
+      "Username": "NewUser123",
+      "Phone": "01234567890",
+      "Password": "1234567890",
+      "ConfirmPassword": "1234567890",
+      "Expected": "Số điện thoại không hợp lệ"
+    },
+    {
+      "Testcase": "RG12",
+      "Username": "NewUser123",
+      "Phone": "1234567890",
+      "Password": "1234567890",
+      "ConfirmPassword": "1234567890",
+      "Expected": "Số điện thoại không hợp lệ"
+    },
+    {
+      "Testcase": "RG13",
+      "Username": "NewUser123",
+      "Phone": "0123a56789",
+      "Password": "1234567890",
+      "ConfirmPassword": "1234567890",
+      "Expected": "Số điện thoại không hợp lệ"
+    },
+    {
+      "Testcase": "RG14",
+      "Username": "NewUser123",
+      "Phone": "0123!56789",
+      "Password": "1234567890",
+      "ConfirmPassword": "1234567890",
+      "Expected": "Số điện thoại không hợp lệ"
+    },
+    {
+      "Testcase": "RG15",
+      "Username": "NewUser123",
+      "Phone": "0123 56789",
+      "Password": "1234567890",
+      "ConfirmPassword": "1234567890",
+      "Expected": "Số điện thoại không hợp lệ"
+    },
+    {
+      "Testcase": "RG16",
+      "Username": "NewUser123",
+      "Phone": "0123456789",
+      "Password": "1234567",
+      "ConfirmPassword": "1234567890",
+      "Expected": "Mật khẩu phải từ 8 đến 20 ký tự"
+    },
+    {
+      "Testcase": "RG17",
+      "Username": "NewUser123",
+      "Phone": "0123456789",
+      "Password": "1234567890123456789012",
+      "ConfirmPassword": "1234567890",
+      "Expected": "Mật khẩu phải từ 8 đến 20 ký tự"
+    },
+    {
+      "Testcase": "RG18",
+      "Username": "NewUser123",
+      "Phone": "0123456789",
+      "Password": "1234567890",
+      "ConfirmPassword": "12345678901",
+      "Expected": "Mật khẩu không khớp"
+    },
+    {
+      "Testcase": "RG19",
+      "Username": "NewUser123",
+      "Phone": "0123456789",
+      "Password": "1234567",
+      "ConfirmPassword": "1234567890",
+      "Expected": "Mật khẩu không khớp"
+    },
+    {
+      "Testcase": "RG20",
+      "Username": "NewUser123",
+      "Phone": "0123456789",
+      "Password": "1234567890123456789012",
+      "ConfirmPassword": "1234567890",
+      "Expected": "Mật khẩu không khớp"
+    },
+    {
+      "Testcase": "RG21",
+      "Username": "NewUser123",
+      "Phone": "0123456789",
+      "Password": "",
+      "ConfirmPassword": "1234567890",
+      "Expected": "Mật khẩu không khớp"
+    },
+    {
+      "Testcase": "RG22",
+      "Username": "AnhDuong11",
+      "Phone": "0123456789",
+      "Password": "1234567890",
+      "ConfirmPassword": "1234567890",
+      "Expected": "tài khoản đã tồn tại trong hệ thống"
+    }
+  ]
+}

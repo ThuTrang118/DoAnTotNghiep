@@ -153,30 +153,50 @@ class DataExporter:
         item: Dict[str, Any],
         index: int,
     ) -> Dict[str, Any]:
+        """
+        Nhận cả 2 dạng:
+        1. Schema mới Step 3:
+           {
+             "Testcase": "...",
+             "<Field>": "...",
+             "Expected": "..."
+           }
+
+        2. Schema cũ nếu còn sót:
+           {
+             "id": "...",
+             "inputs": {...},
+             "expected": "..."
+           }
+
+        Output luôn là row phẳng theo framework:
+        Testcase + input fields + Expected
+        """
         if not isinstance(item, dict):
             raise ValueError(f"Each exported item must be a dict, got: {type(item).__name__}")
 
         feature_fields = get_feature_item_fields(feature)
 
-        testcase_id = item.get("id")
+        testcase_id = item.get("Testcase")
+        if not isinstance(testcase_id, str) or not testcase_id.strip():
+            testcase_id = item.get("id")
+
         if not isinstance(testcase_id, str) or not testcase_id.strip():
             testcase_id = build_default_testcase_id(feature, index)
 
-        inputs = item.get("inputs", {})
+        inputs = item.get("inputs")
         if not isinstance(inputs, dict):
-            raise ValueError("Invalid final testcase: 'inputs' must be an object")
+            inputs = item
 
-        expected = item.get("expected", "")
-        if expected is None:
-            expected = ""
-
-        row: Dict[str, Any] = {"Testcase": testcase_id}
+        row: Dict[str, Any] = {"Testcase": testcase_id.strip()}
 
         for field in feature_fields:
-            value = inputs.get(field, "")
+            value = inputs.get(field, item.get(field, ""))
             row[field] = "" if value is None else value
 
-        row["Expected"] = expected
+        expected = item.get("Expected", item.get("expected", ""))
+        row["Expected"] = "" if expected is None else str(expected)
+
         return row
 
     def _prepare_rows_for_processed(
@@ -1022,8 +1042,9 @@ class Step2DecisionTableExcelExporter:
                 continue
 
             condition_id = self._clean(cond.get("id")) or f"C{idx}"
-            condition_name = self._clean(cond.get("name")) or condition_id
+            condition_name = self._clean(cond.get("name")) or "Điều kiện"
             values = cond.get("values")
+
             if isinstance(values, list) and values:
                 value_text = "/".join(self._clean(v) for v in values if self._clean(v))
             else:
@@ -1032,7 +1053,7 @@ class Step2DecisionTableExcelExporter:
             out.append(
                 {
                     "id": condition_id,
-                    "label": condition_name,
+                    "label": f"{condition_id} - {condition_name}",
                     "values": value_text or "Y/N",
                 }
             )
@@ -1053,8 +1074,15 @@ class Step2DecisionTableExcelExporter:
             action_name = self._clean(action.get("name"))
             expected = self._clean(action.get("expected"))
 
-            # Ưu tiên expected vì đây là kết quả nghiệp vụ cụ thể hiển thị trong bảng DT.
-            label = expected or action_name or action_id
+            if expected and action_name:
+                label = f"{action_id} - {action_name}: {expected}"
+            elif expected:
+                label = f"{action_id} - {expected}"
+            elif action_name:
+                label = f"{action_id} - {action_name}"
+            else:
+                label = action_id
+
             out.append({"id": action_id, "label": label})
 
         return out
@@ -1078,16 +1106,17 @@ class Step2DecisionTableExcelExporter:
         return [self._clean(ref) for ref in refs if self._clean(ref)]
 
     def _get_rule_label(self, rule: Dict[str, Any], index: int) -> str:
-        """
-        Thay R1/R2 bằng mô tả tiếng Việt cụ thể.
-        Ưu tiên reduction_note; nếu thiếu thì dùng expected; cuối cùng mới fallback DT id.
-        """
-        return (
-            self._clean(rule.get("reduction_note"))
-            or self._clean(rule.get("expected"))
-            or self._clean(rule.get("id"))
-            or f"Rule {index}"
-        )
+        rule_id = self._clean(rule.get("id")) or f"DT_{index:03d}"
+        rule_type = self._clean(rule.get("type"))
+        expected = self._clean(rule.get("expected"))
+        note = self._clean(rule.get("reduction_note"))
+
+        details = note or expected or rule_type
+
+        if details:
+            return f"{rule_id}\n{details}"
+
+        return rule_id
 
     def _set_cell(self, ws, row: int, col: int, value: Any, *, fill=None, font=None, alignment=None) -> None:
         cell = ws.cell(row=row, column=col, value=value)

@@ -1,10 +1,11 @@
 {
-  "feature": "ĐĂNG NHẬP",
+  "feature": "login",
   "description": "Chức năng đăng nhập kiểm tra tính hợp lệ của Username và Password để xác thực người dùng",
   "decision_summary": {
     "condition_count": 4,
     "action_count": 3,
     "full_combination_count": 16,
+    "full_rule_count": 0,
     "reduced_rule_count": 5
   },
   "conditions": [
@@ -155,5 +156,6 @@
       "reduction_note": "Chỉ cần Password không khớp để kích hoạt thông báo lỗi tài khoản"
     }
   ],
-  "full_decision_rules": []
+  "full_decision_rules": [],
+  "reduction_steps": []
 }

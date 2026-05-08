@@ -702,53 +702,90 @@ class DecisionTableValidator(_ValidationCommon):
 
 class FinalTestcaseValidator(_ValidationCommon):
     """
-    Validate Step 3 final testcase JSON.
+    Validate Step 3 final testcase JSON theo schema framework-ready mới.
+
+    Schema đúng:
+    {
+      "feature": "...",
+      "description": "...",
+      "items": [
+        {
+          "Testcase": "...",
+          "<InputField>": "...",
+          "Expected": "..."
+        }
+      ]
+    }
+
+    Không dùng schema cũ:
+    - testcase_summary
+    - testcases
+    - id/name/objective/coverage_refs/decision_basis/inputs/priority/expected
     """
 
-    def _build_step1_field_validity_index(
-        self,
-        coverage_map: Dict[str, Dict[str, Any]],
-    ) -> Dict[str, Dict[str, List[str]]]:
-        out: Dict[str, Dict[str, List[str]]] = {}
-        for cov_id, cov in coverage_map.items():
-            field = cov.get("field")
-            validity = cov.get("validity")
-            if not isinstance(field, str) or not isinstance(validity, str):
-                continue
-            out.setdefault(field, {"valid": [], "invalid": []})
-            if validity in {"valid", "invalid"}:
-                out[field][validity].append(cov_id)
-        return out
+    FORBIDDEN_ITEM_KEYS = {
+        "id",
+        "name",
+        "description",
+        "objective",
+        "coverage_refs",
+        "decision_basis",
+        "inputs",
+        "priority",
+        "expected",
+        "testcase",
+    }
 
-    def _build_dt_rule_index(
+    FORBIDDEN_TOP_LEVEL_KEYS = {
+        "testcase_summary",
+        "testcases",
+        "coverage_refs",
+        "decision_basis",
+    }
+
+    def _load_dt_expected_values(
         self,
         dt_data: Optional[Dict[str, Any]],
-        errors: List[str],
-    ) -> Dict[str, Dict[str, Any]]:
-        if dt_data is None:
-            return {}
-
+    ) -> List[str]:
         if not isinstance(dt_data, dict):
-            errors.append("Step 2 DT data must be a JSON object.")
-            return {}
+            return []
 
-        dt_feature = dt_data.get("feature")
-        if dt_feature is not None and (not isinstance(dt_feature, str) or not dt_feature.strip()):
-            errors.append("Step 2 DT data has invalid 'feature'.")
+        rules = dt_data.get("decision_rules")
+        if not isinstance(rules, list):
+            return []
 
-        decision_rules = dt_data.get("decision_rules")
-        if not isinstance(decision_rules, list):
-            errors.append("Step 2 DT data is missing valid 'decision_rules'.")
-            return {}
-
-        out: Dict[str, Dict[str, Any]] = {}
-        for rule in decision_rules:
+        expected_values: List[str] = []
+        for rule in rules:
             if not isinstance(rule, dict):
                 continue
-            rule_id = rule.get("id")
-            if isinstance(rule_id, str) and rule_id.strip():
-                out[rule_id] = rule
-        return out
+            expected = rule.get("expected")
+            if isinstance(expected, str) and expected.strip():
+                expected_values.append(expected.strip())
+
+        return expected_values
+
+    def _expected_matches_dt(
+        self,
+        row: Dict[str, Any],
+        expected_value: str,
+        dt_expected_values: List[str],
+        expected_fields: List[str],
+    ) -> bool:
+        if not dt_expected_values:
+            return True
+
+        if expected_value in dt_expected_values:
+            return True
+
+        # Trường hợp Step 2 expected là tên field, ví dụ "Username".
+        # Khi đó Expected trong final phải bằng giá trị thật của field đó.
+        for dt_expected in dt_expected_values:
+            if dt_expected in expected_fields:
+                field_value = row.get(dt_expected)
+                if str(field_value) == expected_value:
+                    return True
+
+        return False
 
     def validate(
         self,
@@ -763,34 +800,43 @@ class FinalTestcaseValidator(_ValidationCommon):
         errors: List[str] = []
         warnings: List[str] = []
 
+        top_keys = set(final_data.keys())
+        required_top_keys = {"feature", "description", "items"}
+
+        missing_top = sorted(required_top_keys - top_keys)
+        extra_forbidden_top = sorted(top_keys & self.FORBIDDEN_TOP_LEVEL_KEYS)
+
+        if missing_top:
+            errors.append(f"Step3 top-level missing required keys: {missing_top}.")
+        if extra_forbidden_top:
+            errors.append(f"Step3 top-level must not contain old/intermediate keys: {extra_forbidden_top}.")
+
         feature, expected_fields = self._load_feature_and_expected_fields(final_data, errors)
         if feature is None:
             return ValidationResult(ok=False, errors=errors, warnings=warnings)
 
         self._validate_non_empty_string(final_data.get("description"), "description", errors)
 
-        testcase_summary = self._validate_required_dict(final_data, "testcase_summary", errors)
-        testcases = self._validate_required_list(
+        items = self._validate_required_list(
             final_data,
-            "testcases",
+            "items",
             errors,
-            message="Missing or invalid 'testcases'. It must be a list.",
+            message="Missing or invalid 'items'. It must be a non-empty list.",
         )
 
-        if testcase_summary is None or testcases is None:
+        if items is None:
             return ValidationResult(ok=False, errors=errors, warnings=warnings)
 
-        if not testcases:
-            errors.append("testcases must not be empty.")
+        if not items:
+            errors.append("items must not be empty.")
             return ValidationResult(ok=False, errors=errors, warnings=warnings)
 
-        step1_feature, coverage_map = self._load_step1_coverage_reference(step1_data, errors)
+        step1_feature, _coverage_map = self._load_step1_coverage_reference(step1_data, errors)
         if step1_feature is not None and step1_feature != feature:
             errors.append(
                 f"Feature mismatch: Step 3 feature='{feature}' but Step 1 feature='{step1_feature}'."
             )
 
-        dt_rule_map = self._build_dt_rule_index(dt_data, errors)
         if isinstance(dt_data, dict):
             dt_feature = dt_data.get("feature")
             if isinstance(dt_feature, str) and dt_feature.strip():
@@ -800,210 +846,81 @@ class FinalTestcaseValidator(_ValidationCommon):
                         f"Feature mismatch: Step 3 feature='{feature}' but Step 2 feature='{dt_feature}'."
                     )
 
-        declared_total_testcases = testcase_summary.get("total_testcases")
-        if not isinstance(declared_total_testcases, int) or declared_total_testcases < 0:
-            errors.append("testcase_summary.total_testcases must be a non-negative integer.")
-        elif declared_total_testcases != len(testcases):
-            errors.append(
-                f"testcase_summary.total_testcases={declared_total_testcases} but actual testcases={len(testcases)}."
-            )
+        dt_expected_values = self._load_dt_expected_values(dt_data)
+
+        required_item_keys = ["Testcase", *expected_fields, "Expected"]
+        allowed_item_keys = set(required_item_keys)
 
         seen_testcase_ids: Set[str] = set()
-        all_coverage_refs_used: Set[str] = set()
-        all_rule_ids_used: Set[str] = set()
-        has_happy_path = False
-        step1_field_index = self._build_step1_field_validity_index(coverage_map)
+        seen_signatures: Set[Tuple[Tuple[str, str], ...]] = set()
 
-        for idx, tc in enumerate(testcases):
-            prefix = f"testcases[{idx}]"
+        for idx, item in enumerate(items):
+            prefix = f"items[{idx}]"
 
-            if not isinstance(tc, dict):
+            if not isinstance(item, dict):
                 errors.append(f"{prefix} must be an object.")
                 continue
 
-            testcase_id = tc.get("id")
-            name = tc.get("name")
-            description = tc.get("description")
-            objective = tc.get("objective")
-            coverage_refs = tc.get("coverage_refs")
-            decision_basis = tc.get("decision_basis")
-            expected = tc.get("expected")
-            priority = tc.get("priority")
-            inputs = self._validate_inputs_shape(prefix, tc.get("inputs"), expected_fields, errors)
+            forbidden = sorted(set(item.keys()) & self.FORBIDDEN_ITEM_KEYS)
+            if forbidden:
+                errors.append(f"{prefix} must not contain intermediate/old keys: {forbidden}.")
 
+            missing = [key for key in required_item_keys if key not in item]
+            extra = sorted(set(item.keys()) - allowed_item_keys)
+
+            if missing:
+                errors.append(f"{prefix} missing required keys: {missing}.")
+            if extra:
+                errors.append(f"{prefix} contains unexpected keys: {extra}.")
+
+            testcase_id = item.get("Testcase")
             if not isinstance(testcase_id, str) or not testcase_id.strip():
-                errors.append(f"{prefix}.id is missing or invalid.")
-            elif testcase_id in seen_testcase_ids:
-                errors.append(f"Duplicate testcase id: '{testcase_id}'.")
+                errors.append(f"{prefix}.Testcase is missing or empty.")
             else:
+                testcase_id = testcase_id.strip()
+                if testcase_id in seen_testcase_ids:
+                    errors.append(f"Duplicate Testcase: '{testcase_id}'.")
                 seen_testcase_ids.add(testcase_id)
 
-            self._validate_non_empty_string(name, f"{prefix}.name", errors)
-            self._validate_non_empty_string(description, f"{prefix}.description", errors)
-            self._validate_non_empty_string(objective, f"{prefix}.objective", errors)
-            self._validate_non_empty_string(expected, f"{prefix}.expected", errors)
-
-            if self._is_placeholder(expected):
-                errors.append(f"{prefix}.expected must not be placeholder '{expected}'.")
-
-            if priority not in _ALLOWED_PRIORITIES:
-                errors.append(
-                    f"{prefix}.priority must be one of {sorted(_ALLOWED_PRIORITIES)}, got '{priority}'."
-                )
-
-            invalid_refs = 0
-            valid_refs = 0
-            invalid_fields: Set[str] = set()
-
-            if not isinstance(coverage_refs, list) or not coverage_refs:
-                errors.append(f"{prefix}.coverage_refs must be a non-empty list.")
+            expected_value = item.get("Expected")
+            if not isinstance(expected_value, str) or not expected_value.strip():
+                errors.append(f"{prefix}.Expected is missing or empty.")
             else:
-                seen_local_refs: Set[str] = set()
-                for ref in coverage_refs:
-                    if not isinstance(ref, str) or not ref.strip():
-                        errors.append(f"{prefix}.coverage_refs contains invalid coverage id.")
-                        continue
+                expected_value = expected_value.strip()
+                if self._is_placeholder(expected_value):
+                    errors.append(f"{prefix}.Expected must not be placeholder '{expected_value}'.")
 
-                    if ref in seen_local_refs:
-                        errors.append(f"{prefix}.coverage_refs contains duplicate id '{ref}'.")
-                        continue
-                    seen_local_refs.add(ref)
+                if not self._expected_matches_dt(
+                    row=item,
+                    expected_value=expected_value,
+                    dt_expected_values=dt_expected_values,
+                    expected_fields=expected_fields,
+                ):
+                    warnings.append(
+                        f"{prefix}.Expected='{expected_value}' does not directly match Step 2 expected values."
+                    )
 
-                    all_coverage_refs_used.add(ref)
+            for field in expected_fields:
+                value = item.get(field)
+                if value is None:
+                    errors.append(f"{prefix}.{field} must not be null.")
+                elif self._is_placeholder(value):
+                    errors.append(f"{prefix}.{field} must not be placeholder '{value}'.")
 
-                    if coverage_map and ref not in coverage_map:
-                        errors.append(f"{prefix}.coverage_refs contains unknown Step 1 coverage id '{ref}'.")
-                        continue
+            signature = tuple(
+                (key, "" if item.get(key) is None else str(item.get(key)))
+                for key in [*expected_fields, "Expected"]
+            )
+            if signature in seen_signatures:
+                errors.append(f"{prefix} duplicates another item with the same input values and Expected.")
+            seen_signatures.add(signature)
 
-                    cov = coverage_map.get(ref)
-                    if not cov:
-                        continue
-
-                    cov_validity = cov.get("validity")
-                    cov_field = cov.get("field")
-                    cov_rep = cov.get("representative_value")
-
-                    if cov_validity == "invalid":
-                        invalid_refs += 1
-                        if isinstance(cov_field, str):
-                            invalid_fields.add(cov_field)
-                    elif cov_validity == "valid":
-                        valid_refs += 1
-
-                    if isinstance(cov_field, str) and cov_field in inputs and inputs[cov_field] != cov_rep:
-                        errors.append(
-                            f"{prefix}.inputs['{cov_field}'] must match Step 1 representative_value of coverage '{ref}'."
-                        )
-
-                if invalid_refs == 0 and valid_refs > 0:
-                    has_happy_path = True
-
-                if invalid_refs > 1:
-                    errors.append(f"{prefix} has more than one invalid coverage reference, violating single-fault.")
-
-                if len(invalid_fields) > 1:
-                    errors.append(f"{prefix} contains invalid coverage on multiple fields, violating single-fault.")
-
-            if not isinstance(decision_basis, dict):
-                errors.append(f"{prefix}.decision_basis must be an object.")
-            else:
-                rule_id = decision_basis.get("rule_id")
-                conditions = decision_basis.get("conditions")
-                optimization_note = decision_basis.get("optimization_note")
-
-                if not isinstance(rule_id, str) or not rule_id.strip():
-                    errors.append(f"{prefix}.decision_basis.rule_id must be non-empty.")
-                else:
-                    all_rule_ids_used.add(rule_id)
-                    if dt_rule_map and rule_id not in dt_rule_map:
-                        errors.append(f"{prefix}.decision_basis.rule_id '{rule_id}' not found in Step 2 DT.")
-                    elif dt_rule_map:
-                        dt_rule = dt_rule_map[rule_id]
-
-                        dt_refs = dt_rule.get("coverage_refs")
-                        if isinstance(dt_refs, list) and dt_refs:
-                            tc_refs = [r for r in coverage_refs if isinstance(r, str)] if isinstance(coverage_refs, list) else []
-                            rule_refs = [r for r in dt_refs if isinstance(r, str)]
-                            if tc_refs != rule_refs:
-                                errors.append(f"{prefix}.coverage_refs must match Step 2 decision rule '{rule_id}'.")
-
-                        dt_expected = dt_rule.get("expected")
-                        if isinstance(dt_expected, str) and isinstance(expected, str) and dt_expected.strip() != expected.strip():
-                            errors.append(f"{prefix}.expected must match Step 2 decision rule '{rule_id}'.")
-
-                        dt_conditions = self._normalize_condition_list(dt_rule.get("conditions"))
-                        tc_conditions = self._normalize_condition_list(conditions)
-                        if tc_conditions != dt_conditions:
-                            errors.append(
-                                f"{prefix}.decision_basis.conditions must match Step 2 decision rule '{rule_id}'."
-                            )
-
-                if not isinstance(conditions, list) or not conditions:
-                    errors.append(f"{prefix}.decision_basis.conditions must be a non-empty list.")
-                else:
-                    seen_conditions: Set[Tuple[str, str]] = set()
-                    for cond_idx, cond in enumerate(conditions):
-                        cond_prefix = f"{prefix}.decision_basis.conditions[{cond_idx}]"
-                        if not isinstance(cond, dict):
-                            errors.append(f"{cond_prefix} must be an object.")
-                            continue
-
-                        cond_field = cond.get("field")
-                        cond_state = cond.get("state")
-
-                        if not isinstance(cond_field, str) or cond_field not in expected_fields:
-                            errors.append(f"{cond_prefix}.field must be one of {expected_fields}, got '{cond_field}'.")
-
-                        if cond_state not in {"valid", "invalid"}:
-                            errors.append(f"{cond_prefix}.state must be 'valid' or 'invalid', got '{cond_state}'.")
-
-                        if (
-                            isinstance(cond_field, str)
-                            and isinstance(cond_state, str)
-                            and cond_field.strip()
-                            and cond_state.strip()
-                        ):
-                            key = (cond_field.strip(), cond_state.strip())
-                            if key in seen_conditions:
-                                errors.append(f"{cond_prefix} duplicates condition {key}.")
-                            seen_conditions.add(key)
-
-                if not isinstance(optimization_note, str):
-                    errors.append(f"{prefix}.decision_basis.optimization_note must be a string.")
-
-            if coverage_map and isinstance(inputs, dict) and invalid_refs == 1:
-                for field in expected_fields:
-                    if field in invalid_fields:
-                        continue
-                    valid_ids = step1_field_index.get(field, {}).get("valid", [])
-                    if not valid_ids:
-                        continue
-                    valid_values = {
-                        coverage_map[v_id].get("representative_value")
-                        for v_id in valid_ids
-                        if v_id in coverage_map
-                    }
-                    if field in inputs and inputs[field] not in valid_values:
-                        warnings.append(
-                            f"{prefix}.inputs['{field}'] does not match any known valid representative_value from Step 1."
-                        )
-
-        if coverage_map:
-            missing_coverage = sorted(set(coverage_map.keys()) - all_coverage_refs_used)
-            if missing_coverage:
-                errors.append(
-                    f"Some Step 1 coverage items are not referenced by any testcase: {missing_coverage}."
+        if isinstance(dt_data, dict):
+            decision_rules = dt_data.get("decision_rules")
+            if isinstance(decision_rules, list) and len(items) < len(decision_rules):
+                warnings.append(
+                    f"Step3 has fewer items ({len(items)}) than Step2 decision_rules ({len(decision_rules)})."
                 )
-
-        if dt_rule_map:
-            missing_rules = sorted(set(dt_rule_map.keys()) - all_rule_ids_used)
-            if missing_rules:
-                errors.append(
-                    f"Some Step 2 decision rules are not referenced by any testcase: {missing_rules}."
-                )
-
-        if coverage_map and not has_happy_path:
-            errors.append("Step 3 must contain at least one happy path testcase using only valid coverage.")
 
         return ValidationResult(ok=not errors, errors=errors, warnings=warnings)
 

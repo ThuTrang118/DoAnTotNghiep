@@ -9,6 +9,7 @@ from typing import Any, Dict, List, Set, Tuple
 from testdata_generation.engine.exporters import DataExporter, export_step1_to_excel, export_step2_to_excel
 from testdata_generation.engine.feature_item_schema import (
     build_default_testcase_id,
+    get_feature_item_fields,
     normalize_feature_name,
 )
 from testdata_generation.engine.llm_output_parser import LLMOutputParser
@@ -188,6 +189,7 @@ class GenerationPipeline:
 
         dt_data = self._force_step2_feature(dt_data, feature_key)
         dt_data = self._normalize_step2_data(dt_data)
+        dt_data = self._align_step2_with_expected_contract(dt_data, step1_data, feature_key)
         dt_data = self._rebuild_step2_summary(dt_data)
 
         self._hard_check_step2_structure(dt_data)
@@ -712,7 +714,7 @@ class GenerationPipeline:
 
         Đây là luật chung cho mọi feature/field: nếu một field có rule bắt buộc nhập
         thì lớp rỗng là một phân vùng không hợp lệ riêng theo EP, không phụ thuộc
-        vào tên field cụ thể như Phone/Register.
+        vào tên field hoặc feature cụ thể.
         """
         if not items:
             return items
@@ -815,22 +817,24 @@ class GenerationPipeline:
         return dt_data
 
     def _rebuild_step2_summary(self, dt_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Rebuild summary cho Step 2 Reduced Decision Logic Table.
+
+        Giữ full_combination_count vì validator/schema hiện tại vẫn dùng để tham chiếu
+        số tổ hợp lý thuyết 2^n, nhưng Step 2 KHÔNG sinh full_decision_rules.
+        """
         conditions = dt_data.get("conditions", [])
         actions = dt_data.get("actions", [])
-        full_rules = dt_data.get("full_decision_rules", [])
         reduced_rules = dt_data.get("decision_rules", [])
 
         condition_count = len(conditions) if isinstance(conditions, list) else 0
         action_count = len(actions) if isinstance(actions, list) else 0
-        full_rule_count = len(full_rules) if isinstance(full_rules, list) else 0
         reduced_rule_count = len(reduced_rules) if isinstance(reduced_rules, list) else 0
-        full_combination_count = 2 ** condition_count if condition_count > 0 else 0
 
         dt_data["decision_summary"] = {
             "condition_count": condition_count,
             "action_count": action_count,
-            "full_combination_count": full_combination_count,
-            "full_rule_count": full_rule_count,
+            "full_combination_count": 2 ** condition_count if condition_count > 0 else 0,
             "reduced_rule_count": reduced_rule_count,
         }
         return dt_data
@@ -840,41 +844,557 @@ class GenerationPipeline:
         raw = str(value or "").strip().upper()
         return raw if raw in {"Y", "N", "-"} else str(value or "").strip()
 
-    def _normalize_step2_rule(self, rule: Dict[str, Any], *, full_table: bool) -> Dict[str, Any]:
+    def _parse_legacy_condition_states(self, value: Any) -> Dict[str, str]:
+        """
+        Hỗ trợ output cũ từ LLM:
+        - conditions: ["C1=Y", "C2=N", ...]
+        - conditions: {"C1": "Y", "C2": "N"}
+
+        Nếu không parse phần này, Step 2 sẽ mất Y/N và bị fill toàn '-' trong Excel/JSON.
+        """
+        out: Dict[str, str] = {}
+
+        if isinstance(value, dict):
+            for key, state in value.items():
+                cid = self._clean_text(key)
+                normalized_state = self._normalize_dt_state(state)
+                if cid and normalized_state in {"Y", "N", "-"}:
+                    out[cid] = normalized_state
+            return out
+
+        if isinstance(value, list):
+            for item in value:
+                text = self._clean_text(item)
+                if not text:
+                    continue
+                match = re.match(r"^\s*(C\d+)\s*[=:]\s*([YNyn-])\s*$", text)
+                if match:
+                    out[match.group(1)] = self._normalize_dt_state(match.group(2))
+            return out
+
+        return out
+
+    def _normalize_step2_rule(self, rule: Dict[str, Any]) -> Dict[str, Any]:
+        """Normalize 1 decision_rule rút gọn. Không xử lý full table ở Step 2."""
         normalized = dict(rule)
         normalized["id"] = self._clean_text(normalized.get("id"))
-        normalized["type"] = "full_combination" if full_table else self._normalize_step2_rule_type(normalized.get("type"))
+
+        rule_type = self._clean_text(normalized.get("type")).lower()
+        type_aliases = {
+            "validation_fault": "single_fault",
+            "single-fault": "single_fault",
+            "single fault": "single_fault",
+            "boundary_valid": "boundary",
+            "boundary_invalid": "boundary",
+            "valid_boundary": "boundary",
+            "invalid_boundary": "boundary",
+            "business": "business_rule",
+            "business rule": "business_rule",
+            "success": "happy_path",
+            "happy path": "happy_path",
+        }
+        normalized["type"] = type_aliases.get(rule_type, rule_type)
 
         states = normalized.get("condition_states")
         if not isinstance(states, dict):
-            states = {}
+            # Nhiều model vẫn trả schema cũ: "conditions": ["C1=Y", "C2=N"].
+            # Parse lại để không mất trạng thái Y/N khi export Excel và khi Step 3 map.
+            states = self._parse_legacy_condition_states(normalized.get("conditions"))
         normalized["condition_states"] = {
             self._clean_text(k): self._normalize_dt_state(v)
             for k, v in states.items()
-            if self._clean_text(k)
+            if self._clean_text(k) and self._normalize_dt_state(v) in {"Y", "N", "-"}
         }
 
         action_refs = self._dedupe_string_list(normalized.get("action_refs"))
         if not action_refs and self._clean_text(normalized.get("action")):
             action_refs = [self._clean_text(normalized.get("action"))]
         normalized["action_refs"] = action_refs
-        normalized.pop("action", None)
 
-        normalized.pop("coverage_refs", None)
-        normalized["expected"] = self._clean_text(normalized.get("expected") or normalized.get("description"))
+        # Step 2 không được giữ các key trung gian/cũ.
+        for key in (
+            "action",
+            "coverage_refs",
+            "conditions",
+            "optimization_note",
+            "combination_note",
+            "description",
+            "name",
+        ):
+            normalized.pop(key, None)
 
-        if full_table:
-            normalized["combination_note"] = self._clean_text(
-                normalized.get("combination_note") or normalized.get("reduction_note") or normalized.get("optimization_note")
-            )
-        else:
-            normalized["reduction_note"] = self._clean_text(
-                normalized.get("reduction_note") or normalized.get("optimization_note") or normalized.get("combination_note")
-            )
+        normalized["expected"] = self._clean_text(normalized.get("expected"))
+        normalized["reduction_note"] = self._clean_text(normalized.get("reduction_note"))
         return normalized
 
+    def _extract_step2_expected_contracts(self, feature: str) -> List[str]:
+        """
+        Lấy danh sách Expected chuẩn từ đặc tả nghiệp vụ.
+        Hàm này chỉ đọc các dòng/mệnh đề có dạng Expected = ... và không chứa luật riêng
+        cho bất kỳ field hoặc feature cụ thể nào.
+        """
+        try:
+            spec = self.prompt_loader.load_feature_description(feature)
+        except Exception:
+            return []
+
+        contracts: List[str] = []
+        pattern = re.compile(
+            r"Expected\s*=\s*(?:\"([^\"\r\n]+)\"|'([^'\r\n]+)'|([^\r\n]+))",
+            flags=re.IGNORECASE,
+        )
+        for match in pattern.finditer(spec):
+            value = next((g for g in match.groups() if g is not None), "")
+            value = self._clean_text(value).strip('"').strip("'")
+            if value and value not in contracts:
+                contracts.append(value)
+        return contracts
+
+    def _extract_step2_expected_sources(
+        self,
+        feature: str,
+        step1_data: Dict[str, Any] | None,
+    ) -> List[str]:
+        """
+        Nguồn expected chuẩn dùng cho Step 2:
+        - ưu tiên Expected trong đặc tả nghiệp vụ;
+        - bổ sung expected_class từ Step 1 nếu có.
+        """
+        values: List[str] = []
+
+        for value in self._extract_step2_expected_contracts(feature):
+            if value and value not in values:
+                values.append(value)
+
+        if isinstance(step1_data, dict):
+            items = step1_data.get("coverage_items", [])
+            if isinstance(items, list):
+                for item in items:
+                    if not isinstance(item, dict):
+                        continue
+                    expected = self._clean_text(item.get("expected_class"))
+                    if expected and expected not in values:
+                        values.append(expected)
+        return values
+
+    @staticmethod
+    def _step2_text_tokens(value: Any) -> Set[str]:
+        text = str(value or "").strip().lower()
+        return set(re.findall(r"[\wÀ-ỹ]+", text, flags=re.UNICODE))
+
+    def _step2_similarity(self, left: Any, right: Any) -> float:
+        left_text = self._clean_text(left).lower()
+        right_text = self._clean_text(right).lower()
+        if not left_text or not right_text:
+            return 0.0
+        if left_text == right_text:
+            return 1.0
+        if left_text in right_text or right_text in left_text:
+            return 0.85
+
+        left_tokens = self._step2_text_tokens(left_text)
+        right_tokens = self._step2_text_tokens(right_text)
+        if not left_tokens or not right_tokens:
+            return 0.0
+        overlap = len(left_tokens & right_tokens)
+        union = len(left_tokens | right_tokens)
+        return overlap / union if union else 0.0
+
+    def _canonical_step2_expected(self, value: Any, expected_sources: List[str]) -> str:
+        """Chuẩn hóa expected về đúng một giá trị trong expected_sources nếu đủ tin cậy."""
+        raw = self._clean_text(value)
+        if not raw:
+            return ""
+        if raw in expected_sources:
+            return raw
+
+        best_value = ""
+        best_score = 0.0
+        for candidate in expected_sources:
+            score = self._step2_similarity(raw, candidate)
+            if score > best_score:
+                best_score = score
+                best_value = candidate
+        return best_value if best_score >= 0.5 else raw
+
+    def _choose_step2_success_expected(self, feature: str, expected_sources: List[str]) -> str:
+        """Chọn expected cho happy path từ hợp đồng Expected trong đặc tả."""
+        contracts = self._extract_step2_expected_contracts(feature)
+        if contracts:
+            return contracts[-1]
+        return expected_sources[-1] if expected_sources else "Dữ liệu hợp lệ"
+
+    def _ensure_step2_action(
+        self,
+        actions: List[Dict[str, Any]],
+        expected: str,
+        name: str,
+    ) -> str:
+        expected = self._clean_text(expected)
+        for action in actions:
+            if self._clean_text(action.get("expected")) == expected:
+                if not self._clean_text(action.get("name")):
+                    action["name"] = name
+                return self._clean_text(action.get("id"))
+
+        used_numbers: List[int] = []
+        for action in actions:
+            aid = self._clean_text(action.get("id"))
+            m = re.match(r"^A(\d+)$", aid)
+            if m:
+                used_numbers.append(int(m.group(1)))
+        next_id = f"A{(max(used_numbers) + 1) if used_numbers else 1}"
+        actions.append({
+            "id": next_id,
+            "name": name or f"Kết quả: {expected}",
+            "expected": expected,
+        })
+        return next_id
+
+    def _step2_rule_note(
+        self,
+        rule_type: str,
+        states: Dict[str, str],
+        condition_map: Dict[str, Dict[str, Any]],
+        expected: str,
+    ) -> str:
+        changed = [cid for cid, state in states.items() if state == "N"]
+        if rule_type == "happy_path":
+            return "Các điều kiện chính đều thỏa mãn nên rule dẫn tới expected thành công."
+        if len(changed) == 1:
+            cid = changed[0]
+            name = self._clean_text(condition_map.get(cid, {}).get("name")) or cid
+            return f"{cid}=N ({name}) quyết định expected của rule."
+        if changed:
+            return f"Tổ hợp {', '.join(changed)} quyết định expected của rule."
+        return "Rule được giữ vì tạo ra một expected nghiệp vụ riêng."
+
+    def _infer_step2_expected_for_condition(
+        self,
+        condition: Dict[str, Any],
+        step1_data: Dict[str, Any] | None,
+        expected_sources: List[str],
+    ) -> str:
+        """
+        Suy ra expected cho một condition ở trạng thái N bằng cách so khớp condition
+        với các coverage invalid của Step 1. Không dùng tên field hoặc feature cố định.
+        """
+        if not isinstance(step1_data, dict):
+            return ""
+
+        source_fields = condition.get("source_fields")
+        if not isinstance(source_fields, list):
+            source_fields = []
+        source_fields = [self._clean_text(field) for field in source_fields if self._clean_text(field)]
+
+        condition_text = " ".join([
+            self._clean_text(condition.get("name")),
+            self._clean_text(condition.get("meaning_when_n")),
+        ])
+
+        items = step1_data.get("coverage_items", [])
+        if not isinstance(items, list):
+            return ""
+
+        best_expected = ""
+        best_score = 0.0
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            if self._clean_text(item.get("validity")).lower() != "invalid":
+                continue
+            expected = self._clean_text(item.get("expected_class"))
+            if not expected:
+                continue
+
+            item_field = self._clean_text(item.get("field"))
+            field_score = 0.35 if item_field in source_fields else 0.0
+            item_text = " ".join([
+                self._clean_text(item.get("description")),
+                self._clean_text(item.get("rule")),
+                expected,
+            ])
+            text_score = self._step2_similarity(condition_text, item_text)
+            score = field_score + text_score
+
+            if score > best_score:
+                best_score = score
+                best_expected = expected
+
+        if not best_expected or best_score < 0.35:
+            return ""
+        return self._canonical_step2_expected(best_expected, expected_sources)
+
+    # --------------------------------------------------------------------------
+    # STEP 2 CONDITION DEPENDENCY REPAIR
+    # --------------------------------------------------------------------------
+    PRESENCE_CONDITION_MARKERS = (
+        "không rỗng",
+        "khong rong",
+        "không trống",
+        "khong trong",
+        "được nhập",
+        "duoc nhap",
+        "bắt buộc",
+        "bat buoc",
+        "required",
+        "not empty",
+        "not blank",
+    )
+
+    @classmethod
+    def _is_step2_presence_condition(cls, condition: Dict[str, Any]) -> bool:
+        """
+        Nhận diện condition tiền đề kiểu "field đã được nhập / không rỗng".
+
+        Luật này dùng chung cho mọi feature: không dựa vào tên field cụ thể,
+        chỉ dựa vào ý nghĩa của condition và source_fields.
+        """
+        if not isinstance(condition, dict):
+            return False
+
+        source_fields = condition.get("source_fields")
+        if not isinstance(source_fields, list) or len([f for f in source_fields if str(f).strip()]) != 1:
+            return False
+
+        text = " ".join([
+            str(condition.get("name", "")),
+            str(condition.get("meaning_when_y", "")),
+            str(condition.get("meaning_when_n", "")),
+        ]).strip().lower()
+
+        return any(marker in text for marker in cls.PRESENCE_CONDITION_MARKERS)
+
+    def _build_step2_presence_condition_by_field(
+        self,
+        conditions: List[Dict[str, Any]],
+    ) -> Dict[str, str]:
+        """Map field -> condition id của điều kiện tiền đề không rỗng/được nhập."""
+        out: Dict[str, str] = {}
+        for condition in conditions:
+            if not isinstance(condition, dict):
+                continue
+            if not self._is_step2_presence_condition(condition):
+                continue
+
+            cid = self._clean_text(condition.get("id"))
+            source_fields = condition.get("source_fields")
+            if not cid or not isinstance(source_fields, list):
+                continue
+
+            field = next((self._clean_text(f) for f in source_fields if self._clean_text(f)), "")
+            if field and field not in out:
+                out[field] = cid
+        return out
+
+    def _repair_step2_condition_dependencies(
+        self,
+        states: Dict[str, str],
+        condition_map: Dict[str, Dict[str, Any]],
+        presence_condition_by_field: Dict[str, str],
+    ) -> Dict[str, str]:
+        """
+        Sửa mâu thuẫn trong bảng quyết định rút gọn.
+
+        Nếu một condition kiểm tra sâu hơn của field đang = N thì field đó phải
+        có dữ liệu trước, nên condition tiền đề "field không rỗng" phải = Y.
+        Với condition quan hệ nhiều field, tất cả field liên quan phải có tiền đề = Y.
+        """
+        if not isinstance(states, dict):
+            return {}
+
+        repaired = dict(states)
+
+        for cid, state in list(repaired.items()):
+            if self._normalize_dt_state(state) != "N":
+                continue
+
+            condition = condition_map.get(cid, {})
+            if self._is_step2_presence_condition(condition):
+                continue
+
+            source_fields = condition.get("source_fields")
+            if not isinstance(source_fields, list):
+                continue
+
+            for field in source_fields:
+                field_clean = self._clean_text(field)
+                if not field_clean:
+                    continue
+
+                presence_cid = presence_condition_by_field.get(field_clean)
+                if not presence_cid or presence_cid == cid:
+                    continue
+
+                # Ép tiền đề thành Y. Đây là sửa logic, không tạo thêm lỗi mới.
+                repaired[presence_cid] = "Y"
+
+        return repaired
+
+    def _align_step2_with_expected_contract(
+        self,
+        dt_data: Dict[str, Any],
+        step1_data: Dict[str, Any] | None,
+        feature: str,
+    ) -> Dict[str, Any]:
+        """
+        Căn Step 2 về hợp đồng expected dùng chung:
+        - action.expected phải bám theo Expected trong đặc tả hoặc expected_class Step 1;
+        - rule.expected phải trùng action.expected;
+        - đảm bảo có happy_path;
+        - bổ sung single_fault khi có thể suy ra expected từ Step 1;
+        - không chứa luật riêng cho field/feature cụ thể.
+        """
+        conditions = dt_data.get("conditions", [])
+        actions = dt_data.get("actions", [])
+        rules = dt_data.get("decision_rules", [])
+        if not isinstance(conditions, list):
+            conditions = []
+        if not isinstance(actions, list):
+            actions = []
+        if not isinstance(rules, list):
+            rules = []
+
+        expected_sources = self._extract_step2_expected_sources(feature, step1_data)
+        condition_ids = [self._clean_text(c.get("id")) for c in conditions if isinstance(c, dict) and self._clean_text(c.get("id"))]
+        condition_map = {self._clean_text(c.get("id")): c for c in conditions if isinstance(c, dict) and self._clean_text(c.get("id"))}
+        presence_condition_by_field = self._build_step2_presence_condition_by_field(conditions)
+        all_y_states = {cid: "Y" for cid in condition_ids}
+
+        normalized_actions: List[Dict[str, Any]] = []
+        for idx, action in enumerate(actions, start=1):
+            if not isinstance(action, dict):
+                continue
+            aid = self._clean_text(action.get("id")) or f"A{idx}"
+            name = self._clean_text(action.get("name")) or f"Action {idx}"
+            expected_raw = self._clean_text(action.get("expected") or action.get("description") or name)
+            expected = self._canonical_step2_expected(expected_raw, expected_sources)
+            normalized_actions.append({"id": aid, "name": name, "expected": expected})
+
+        actions = normalized_actions
+        action_expected = {
+            self._clean_text(action.get("id")): self._clean_text(action.get("expected"))
+            for action in actions
+            if self._clean_text(action.get("id"))
+        }
+
+        success_expected = self._choose_step2_success_expected(feature, expected_sources)
+        success_action_id = self._ensure_step2_action(actions, success_expected, "Kết quả xử lý thành công")
+        action_expected[success_action_id] = success_expected
+
+        expected_by_condition: Dict[str, str] = {}
+        action_by_condition: Dict[str, str] = {}
+        for cid in condition_ids:
+            expected = self._infer_step2_expected_for_condition(condition_map[cid], step1_data, expected_sources)
+            if expected:
+                expected_by_condition[cid] = expected
+                action_by_condition[cid] = self._ensure_step2_action(actions, expected, f"Kết quả: {expected}")
+
+        repaired_rules: List[Dict[str, Any]] = []
+        seen_keys: Set[Tuple[str, str]] = set()
+
+        def normalize_states(raw_states: Any) -> Dict[str, str]:
+            states = raw_states if isinstance(raw_states, dict) else {}
+            return {cid: self._normalize_dt_state(states.get(cid, "-")) for cid in condition_ids}
+
+        for rule in rules:
+            if not isinstance(rule, dict):
+                continue
+            states = normalize_states(rule.get("condition_states"))
+            states = self._repair_step2_condition_dependencies(states, condition_map, presence_condition_by_field)
+            all_y = bool(condition_ids) and all(states.get(cid) == "Y" for cid in condition_ids)
+            n_conditions = [cid for cid, state in states.items() if state == "N"]
+            action_refs = self._dedupe_string_list(rule.get("action_refs"))
+
+            if all_y:
+                rule_type = "happy_path"
+                expected = success_expected
+                action_refs = [success_action_id]
+                key = (rule_type, "happy")
+            elif len(n_conditions) == 1:
+                cid = n_conditions[0]
+                expected = ""
+                if action_refs:
+                    expected = action_expected.get(action_refs[0], "")
+                if not expected:
+                    expected = expected_by_condition.get(cid, "")
+                expected = self._canonical_step2_expected(expected, expected_sources)
+                if not expected:
+                    continue
+                action_id = self._ensure_step2_action(actions, expected, f"Kết quả: {expected}")
+                action_refs = [action_id]
+                rule_type = "single_fault"
+                key = (rule_type, cid)
+            else:
+                expected = ""
+                if action_refs:
+                    expected = action_expected.get(action_refs[0], "")
+                expected = self._canonical_step2_expected(expected or rule.get("expected"), expected_sources)
+                if not expected:
+                    continue
+                action_id = self._ensure_step2_action(actions, expected, f"Kết quả: {expected}")
+                action_refs = [action_id]
+                rule_type = self._clean_text(rule.get("type")) or "business_rule"
+                key = (rule_type, "|".join(f"{k}={v}" for k, v in sorted(states.items())))
+
+            if key in seen_keys:
+                continue
+            seen_keys.add(key)
+            repaired_rules.append({
+                "id": "",
+                "type": rule_type,
+                "condition_states": states,
+                "action_refs": action_refs,
+                "expected": expected,
+                "reduction_note": self._step2_rule_note(rule_type, states, condition_map, expected),
+            })
+
+        if ("happy_path", "happy") not in seen_keys:
+            repaired_rules.insert(0, {
+                "id": "",
+                "type": "happy_path",
+                "condition_states": dict(all_y_states),
+                "action_refs": [success_action_id],
+                "expected": success_expected,
+                "reduction_note": self._step2_rule_note("happy_path", all_y_states, condition_map, success_expected),
+            })
+            seen_keys.add(("happy_path", "happy"))
+
+        for cid, expected in expected_by_condition.items():
+            key = ("single_fault", cid)
+            if key in seen_keys:
+                continue
+            states = dict(all_y_states)
+            states[cid] = "N"
+            states = self._repair_step2_condition_dependencies(states, condition_map, presence_condition_by_field)
+            action_id = action_by_condition[cid]
+            repaired_rules.append({
+                "id": "",
+                "type": "single_fault",
+                "condition_states": states,
+                "action_refs": [action_id],
+                "expected": expected,
+                "reduction_note": self._step2_rule_note("single_fault", states, condition_map, expected),
+            })
+            seen_keys.add(key)
+
+        for idx, rule in enumerate(repaired_rules, start=1):
+            rule["id"] = f"DT_{idx:03d}"
+
+        dt_data["actions"] = actions
+        dt_data["decision_rules"] = repaired_rules
+        return dt_data
+
     def _strict_check_step2_ai_output(self, dt_data: Dict[str, Any]) -> None:
-        """Kiểm tra Step 2 theo schema strict, không tự sửa output AI."""
+        """
+        Kiểm tra Step 2 theo schema strict sau normalize.
+
+        Step 2 chỉ là Reduced Decision Logic Table:
+        - không full_decision_rules
+        - không reduction_steps
+        - không coverage_refs
+        - không testcase/testdata
+        """
         required_top_keys = {
             "feature",
             "description",
@@ -883,16 +1403,30 @@ class GenerationPipeline:
             "actions",
             "decision_rules",
         }
+        forbidden_top_keys = {
+            "full_decision_rules",
+            "reduction_steps",
+            "testcases",
+            "items",
+            "coverage_refs",
+            "final_output",
+        }
+
         actual_top_keys = set(dt_data.keys())
         missing = sorted(required_top_keys - actual_top_keys)
-        extra = sorted(actual_top_keys - required_top_keys)
+        forbidden = sorted(actual_top_keys & forbidden_top_keys)
+        extra = sorted(actual_top_keys - required_top_keys - forbidden_top_keys)
         errors: List[str] = []
 
         if missing:
             errors.append(f"Missing top-level keys: {missing}")
+        if forbidden:
+            errors.append(f"Forbidden top-level keys in Step 2: {forbidden}")
         if extra:
-            errors.append(f"Unexpected top-level keys: {extra}. Step 2 must not output full_decision_rules/reduction_steps or other extra keys.")
+            errors.append(f"Unexpected top-level keys: {extra}")
 
+        if not isinstance(dt_data.get("decision_summary"), dict):
+            errors.append("decision_summary must be an object.")
         if not isinstance(dt_data.get("conditions"), list) or not dt_data.get("conditions"):
             errors.append("conditions must be a non-empty list.")
         if not isinstance(dt_data.get("actions"), list) or not dt_data.get("actions"):
@@ -907,30 +1441,66 @@ class GenerationPipeline:
                 if not isinstance(cond, dict):
                     errors.append(f"{prefix} must be an object.")
                     continue
-                if "description" in cond:
-                    errors.append(f"{prefix} must use key 'name', not 'description'.")
+
+                allowed = {"id", "name", "source_fields", "values", "meaning_when_y", "meaning_when_n"}
+                extra_keys = sorted(set(cond.keys()) - allowed)
+                if extra_keys:
+                    errors.append(f"{prefix} contains unexpected keys: {extra_keys}.")
+
                 cid = self._clean_text(cond.get("id"))
-                if cid:
+                if not cid:
+                    errors.append(f"{prefix}.id is missing or empty.")
+                elif not re.match(r"^C\d+$", cid):
+                    errors.append(f"{prefix}.id must match C1, C2, ... got '{cid}'.")
+                else:
+                    if cid in condition_ids:
+                        errors.append(f"Duplicate condition id: {cid}")
                     condition_ids.add(cid)
-                for key in ("id", "name", "source_fields", "values", "meaning_when_y", "meaning_when_n"):
-                    if key not in cond:
-                        errors.append(f"{prefix} missing key '{key}'.")
+
+                for key in ("name", "meaning_when_y", "meaning_when_n"):
+                    if not self._clean_text(cond.get(key)):
+                        errors.append(f"{prefix}.{key} is missing or empty.")
+
+                source_fields = cond.get("source_fields")
+                if not isinstance(source_fields, list) or not source_fields:
+                    errors.append(f"{prefix}.source_fields must be a non-empty list.")
+
+                values = cond.get("values")
+                if not isinstance(values, list) or set(values) != {"Y", "N"}:
+                    errors.append(f"{prefix}.values must be exactly ['Y', 'N'] or ['N', 'Y'].")
 
         action_ids: Set[str] = set()
+        action_expected: Dict[str, str] = {}
         if isinstance(dt_data.get("actions"), list):
             for idx, action in enumerate(dt_data["actions"], start=1):
                 prefix = f"actions[{idx}]"
                 if not isinstance(action, dict):
                     errors.append(f"{prefix} must be an object.")
                     continue
-                if "description" in action:
-                    errors.append(f"{prefix} must use key 'name', not 'description'.")
+
+                allowed = {"id", "name", "expected"}
+                extra_keys = sorted(set(action.keys()) - allowed)
+                if extra_keys:
+                    errors.append(f"{prefix} contains unexpected keys: {extra_keys}.")
+
                 aid = self._clean_text(action.get("id"))
-                if aid:
+                if not aid:
+                    errors.append(f"{prefix}.id is missing or empty.")
+                elif not re.match(r"^A\d+$", aid):
+                    errors.append(f"{prefix}.id must match A1, A2, ... got '{aid}'.")
+                else:
+                    if aid in action_ids:
+                        errors.append(f"Duplicate action id: {aid}")
                     action_ids.add(aid)
-                for key in ("id", "name", "expected"):
-                    if key not in action:
-                        errors.append(f"{prefix} missing key '{key}'.")
+                    action_expected[aid] = self._clean_text(action.get("expected"))
+
+                for key in ("name", "expected"):
+                    if not self._clean_text(action.get(key)):
+                        errors.append(f"{prefix}.{key} is missing or empty.")
+
+        allowed_rule_types = {"happy_path", "single_fault", "boundary", "business_rule"}
+        happy_path_count = 0
+        rule_ids: Set[str] = set()
 
         if isinstance(dt_data.get("decision_rules"), list):
             for idx, rule in enumerate(dt_data["decision_rules"], start=1):
@@ -938,15 +1508,32 @@ class GenerationPipeline:
                 if not isinstance(rule, dict):
                     errors.append(f"{prefix} must be an object.")
                     continue
-                if "conditions" in rule:
-                    errors.append(f"{prefix} must use key 'condition_states', not 'conditions'.")
-                if "coverage_refs" in rule:
-                    errors.append(f"{prefix} must not contain 'coverage_refs' according to Step 2 schema.")
-                for key in ("id", "type", "condition_states", "action_refs", "expected", "reduction_note"):
-                    if key not in rule:
-                        errors.append(f"{prefix} missing key '{key}'.")
+
+                allowed = {"id", "type", "condition_states", "action_refs", "expected", "reduction_note"}
+                extra_keys = sorted(set(rule.keys()) - allowed)
+                if extra_keys:
+                    errors.append(f"{prefix} contains unexpected keys: {extra_keys}.")
+
+                rid = self._clean_text(rule.get("id"))
+                if not rid:
+                    errors.append(f"{prefix}.id is missing or empty.")
+                elif not re.match(r"^DT_\d{3,}$", rid):
+                    errors.append(f"{prefix}.id must match DT_001, DT_002, ... got '{rid}'.")
+                else:
+                    if rid in rule_ids:
+                        errors.append(f"Duplicate decision rule id: {rid}")
+                    rule_ids.add(rid)
+
+                rule_type = self._clean_text(rule.get("type"))
+                if rule_type not in allowed_rule_types:
+                    errors.append(f"{prefix}.type must be one of {sorted(allowed_rule_types)}, got '{rule_type}'.")
+                if rule_type == "happy_path":
+                    happy_path_count += 1
+
                 states = rule.get("condition_states")
-                if isinstance(states, dict) and condition_ids:
+                if not isinstance(states, dict) or not states:
+                    errors.append(f"{prefix}.condition_states must be a non-empty object.")
+                else:
                     state_keys = {self._clean_text(k) for k in states.keys()}
                     missing_states = sorted(condition_ids - state_keys)
                     extra_states = sorted(state_keys - condition_ids)
@@ -954,47 +1541,102 @@ class GenerationPipeline:
                         errors.append(f"{prefix}.condition_states missing condition ids: {missing_states}.")
                     if extra_states:
                         errors.append(f"{prefix}.condition_states contains unknown condition ids: {extra_states}.")
-                refs = rule.get("coverage_refs")
-                if isinstance(refs, list):
-                    for ref in refs:
-                        if not isinstance(ref, str):
-                            errors.append(f"{prefix}.coverage_refs must contain string ids, got {type(ref).__name__}.")
+                    for cid, state in states.items():
+                        if self._normalize_dt_state(state) not in {"Y", "N", "-"}:
+                            errors.append(f"{prefix}.condition_states[{cid}] must be Y/N/-.")
+
+                    if rule_type == "happy_path" and condition_ids:
+                        not_y = [cid for cid in condition_ids if states.get(cid) != "Y"]
+                        if not_y:
+                            errors.append(f"{prefix} happy_path must have all condition_states = Y. Not Y: {sorted(not_y)}")
+
+                    if rule_type == "single_fault":
+                        n_count = sum(1 for v in states.values() if self._normalize_dt_state(v) == "N")
+                        if n_count != 1:
+                            errors.append(f"{prefix} single_fault must contain exactly one N, got {n_count}.")
+
+                action_refs = rule.get("action_refs")
+                if not isinstance(action_refs, list) or not action_refs:
+                    errors.append(f"{prefix}.action_refs must be a non-empty list.")
+                else:
+                    for ref in action_refs:
+                        ref_clean = self._clean_text(ref)
+                        if ref_clean not in action_ids:
+                            errors.append(f"{prefix}.action_refs references unknown action id '{ref_clean}'.")
+
+                expected = self._clean_text(rule.get("expected"))
+                if not expected:
+                    errors.append(f"{prefix}.expected is missing or empty.")
+                elif isinstance(action_refs, list) and action_refs:
+                    first_ref = self._clean_text(action_refs[0])
+                    action_exp = action_expected.get(first_ref, "")
+                    if action_exp and expected != action_exp:
+                        errors.append(f"{prefix}.expected must equal expected of action_refs[0] ({first_ref}).")
+
+                if not self._clean_text(rule.get("reduction_note")):
+                    errors.append(f"{prefix}.reduction_note is missing or empty.")
+
+        if happy_path_count != 1:
+            errors.append(f"Step2 must contain exactly 1 happy_path rule, got {happy_path_count}.")
 
         if errors:
             raise RuntimeError("Step2 output does not match strict schema:\n- " + "\n- ".join(errors))
 
     def _normalize_step2_data(self, dt_data: Dict[str, Any]) -> Dict[str, Any]:
+        # =========================================================
+        # STEP 2 WHITELIST FILTER
+        # Chỉ giữ đúng schema chuẩn.
+        # AI sinh thêm key nào cũng tự loại bỏ.
+        # =========================================================
+        allowed_top_keys = {
+            "feature",
+            "description",
+            "decision_summary",
+            "conditions",
+            "actions",
+            "decision_rules",
+        }
+
+        if isinstance(dt_data, dict):
+            dt_data = {
+                key: value
+                for key, value in dt_data.items()
+                if key in allowed_top_keys
+            }
+
         # Normalize conditions
         raw_conditions = dt_data.get("conditions")
         conditions: List[Dict[str, Any]] = []
         if isinstance(raw_conditions, list):
-            for cond in raw_conditions:
+            for idx, cond in enumerate(raw_conditions, start=1):
                 if not isinstance(cond, dict):
                     continue
-                normalized = dict(cond)
-                normalized["id"] = self._clean_text(normalized.get("id"))
-                normalized["name"] = self._clean_text(normalized.get("name") or normalized.get("description"))
-                normalized.pop("description", None)
-                source_fields = normalized.get("source_fields")
-                if not isinstance(source_fields, list):
-                    source_fields = []
-                normalized["source_fields"] = [
-                    self._clean_text(x) for x in source_fields if self._clean_text(x)
-                ]
+                normalized = {
+                    "id": self._clean_text(cond.get("id")) or f"C{idx}",
+                    "name": self._clean_text(cond.get("name") or cond.get("description")),
+                    "source_fields": [],
+                    "values": ["Y", "N"],
+                    "meaning_when_y": self._clean_text(cond.get("meaning_when_y")),
+                    "meaning_when_n": self._clean_text(cond.get("meaning_when_n")),
+                }
+
+                source_fields = cond.get("source_fields")
+                if isinstance(source_fields, list):
+                    normalized["source_fields"] = [
+                        self._clean_text(x) for x in source_fields if self._clean_text(x)
+                    ]
+                elif self._clean_text(source_fields):
+                    normalized["source_fields"] = [self._clean_text(source_fields)]
+
+                if not normalized["name"]:
+                    normalized["name"] = f"Điều kiện {normalized['id']}"
                 if not normalized["source_fields"]:
-                    name_text = self._clean_text(normalized.get("name") or normalized.get("description"))
-                    inferred_fields = []
-                    for field_name in ("Username", "Phone", "Password", "ConfirmPassword"):
-                        if field_name.lower() in name_text.lower():
-                            inferred_fields.append(field_name)
-                    normalized["source_fields"] = inferred_fields or ["Nghiệp vụ"]
-                normalized["values"] = ["Y", "N"]
-                normalized["meaning_when_y"] = self._clean_text(normalized.get("meaning_when_y"))
-                normalized["meaning_when_n"] = self._clean_text(normalized.get("meaning_when_n"))
-                if not normalized["meaning_when_y"] and normalized["name"]:
-                    normalized["meaning_when_y"] = f"Điều kiện '{normalized['name']}' được thỏa mãn"
-                if not normalized["meaning_when_n"] and normalized["name"]:
-                    normalized["meaning_when_n"] = f"Điều kiện '{normalized['name']}' bị vi phạm"
+                    normalized["source_fields"] = ["Nghiệp vụ"]
+                if not normalized["meaning_when_y"]:
+                    normalized["meaning_when_y"] = f"{normalized['name']} được thỏa mãn"
+                if not normalized["meaning_when_n"]:
+                    normalized["meaning_when_n"] = f"{normalized['name']} không được thỏa mãn"
+
                 conditions.append(normalized)
         dt_data["conditions"] = conditions
 
@@ -1002,29 +1644,27 @@ class GenerationPipeline:
         raw_actions = dt_data.get("actions")
         actions: List[Dict[str, Any]] = []
         if isinstance(raw_actions, list):
-            for action in raw_actions:
+            for idx, action in enumerate(raw_actions, start=1):
                 if not isinstance(action, dict):
                     continue
-                normalized = dict(action)
-                normalized["id"] = self._clean_text(normalized.get("id"))
-                description_fallback = self._clean_text(normalized.get("description"))
-                normalized["name"] = self._clean_text(normalized.get("name") or description_fallback)
-                normalized["expected"] = self._clean_text(normalized.get("expected") or description_fallback or normalized.get("name"))
-                normalized.pop("description", None)
-                actions.append(normalized)
+                name = self._clean_text(action.get("name") or action.get("description"))
+                expected = self._clean_text(action.get("expected") or action.get("description") or name)
+                actions.append({
+                    "id": self._clean_text(action.get("id")) or f"A{idx}",
+                    "name": name or expected or f"Hành động {idx}",
+                    "expected": expected,
+                })
         dt_data["actions"] = actions
+
         action_expected_map = {
             self._clean_text(action.get("id")): self._clean_text(action.get("expected"))
             for action in actions
             if self._clean_text(action.get("id"))
         }
 
-        # Luồng Step 2 mới: AI chỉ sinh bảng rút gọn Bước 7.
-        # Nếu AI lỡ sinh full_decision_rules/reduction_steps thì bỏ qua để tránh quá tải 2^n.
-        dt_data["full_decision_rules"] = []
-        dt_data["reduction_steps"] = []
+        condition_ids = [self._clean_text(c.get("id")) for c in conditions if self._clean_text(c.get("id"))]
 
-        # Normalize decision_rules (Step 7 - reduced, kept for Step 3 compatibility)
+        # Normalize decision rules
         raw_rules = dt_data.get("decision_rules")
         rules: List[Dict[str, Any]] = []
         if isinstance(raw_rules, list):
@@ -1032,22 +1672,25 @@ class GenerationPipeline:
                 if not isinstance(rule, dict):
                     continue
 
-                normalized_rule = self._normalize_step2_rule(rule, full_table=False)
+                normalized_rule = self._normalize_step2_rule(rule)
 
-                # Chống lỗi phổ biến từ AI: DR1/DR_001/R1 -> DT_001
                 if not re.match(r"^DT_\d{3,}$", normalized_rule.get("id", "")):
                     normalized_rule["id"] = f"DT_{idx:03d}"
 
                 states = normalized_rule.get("condition_states")
                 if not isinstance(states, dict):
                     states = {}
+                # Bảo đảm đủ condition id để Step 3 map được ổn định.
+                normalized_states: Dict[str, str] = {}
+                for cid in condition_ids:
+                    normalized_states[cid] = self._normalize_dt_state(states.get(cid, "-"))
+                normalized_rule["condition_states"] = normalized_states
 
-                state_values = [str(v).strip().upper() for v in states.values()]
+                state_values = list(normalized_states.values())
                 n_count = state_values.count("N")
                 all_y = bool(state_values) and all(v == "Y" for v in state_values)
 
-                # Chống lỗi phổ biến từ AI: type = simplified/reduced/...
-                if normalized_rule.get("type") not in {"happy_path", "single_fault", "boundary", "boundary_valid", "business_rule"}:
+                if normalized_rule.get("type") not in {"happy_path", "single_fault", "boundary", "business_rule"}:
                     if all_y:
                         normalized_rule["type"] = "happy_path"
                     elif n_count == 1:
@@ -1055,15 +1698,19 @@ class GenerationPipeline:
                     else:
                         normalized_rule["type"] = "business_rule"
 
+                if not normalized_rule.get("action_refs") and actions:
+                    normalized_rule["action_refs"] = [actions[0]["id"]]
+
                 if not normalized_rule.get("expected") and normalized_rule.get("action_refs"):
                     normalized_rule["expected"] = action_expected_map.get(normalized_rule["action_refs"][0], "")
 
                 if not normalized_rule.get("reduction_note"):
-                    normalized_rule["reduction_note"] = "Bảng quyết định rút gọn Bước 7; các điều kiện '-' là không ảnh hưởng đến kết quả của rule này."
+                    normalized_rule["reduction_note"] = "Rule được chuẩn hóa theo trạng thái điều kiện và expected được tham chiếu."
 
                 rules.append(normalized_rule)
 
         dt_data["decision_rules"] = rules
+        dt_data = self._rebuild_step2_summary(dt_data)
         return dt_data
 
     def _hard_check_step2_structure(self, dt_data: Dict[str, Any]) -> None:
@@ -1076,6 +1723,10 @@ class GenerationPipeline:
         if not self._clean_text(dt_data.get("description")):
             raise RuntimeError("Step2 missing 'description'.")
 
+        for forbidden_key in ("full_decision_rules", "reduction_steps", "coverage_refs", "testcases", "items"):
+            if forbidden_key in dt_data:
+                raise RuntimeError(f"Step2 must not contain '{forbidden_key}'.")
+
         conditions = dt_data.get("conditions")
         if not isinstance(conditions, list) or not conditions:
             raise RuntimeError("Step2 must contain non-empty 'conditions'.")
@@ -1083,13 +1734,6 @@ class GenerationPipeline:
         actions = dt_data.get("actions")
         if not isinstance(actions, list) or not actions:
             raise RuntimeError("Step2 must contain non-empty 'actions'.")
-
-        full_rules = dt_data.get("full_decision_rules")
-        if full_rules is None:
-            dt_data["full_decision_rules"] = []
-            full_rules = []
-        elif not isinstance(full_rules, list):
-            raise RuntimeError("Step2 'full_decision_rules' must be a list if provided.")
 
         rules = dt_data.get("decision_rules")
         if not isinstance(rules, list) or not rules:
@@ -1107,6 +1751,12 @@ class GenerationPipeline:
             condition_ids.add(cid)
             if not self._clean_text(cond.get("name")):
                 raise RuntimeError(f"Step2 conditions[{idx}] missing 'name'.")
+            if not isinstance(cond.get("source_fields"), list) or not cond.get("source_fields"):
+                raise RuntimeError(f"Step2 conditions[{idx}] missing non-empty 'source_fields'.")
+            if not self._clean_text(cond.get("meaning_when_y")):
+                raise RuntimeError(f"Step2 conditions[{idx}] missing 'meaning_when_y'.")
+            if not self._clean_text(cond.get("meaning_when_n")):
+                raise RuntimeError(f"Step2 conditions[{idx}] missing 'meaning_when_n'.")
 
         action_ids = set()
         for idx, action in enumerate(actions, start=1):
@@ -1118,32 +1768,12 @@ class GenerationPipeline:
             if aid in action_ids:
                 raise RuntimeError(f"Step2 duplicate action id: '{aid}'.")
             action_ids.add(aid)
+            if not self._clean_text(action.get("name")):
+                raise RuntimeError(f"Step2 actions[{idx}] missing 'name'.")
             if not self._clean_text(action.get("expected")):
                 raise RuntimeError(f"Step2 actions[{idx}] missing 'expected'.")
 
-        full_rule_ids = set()
-        for idx, rule in enumerate(full_rules, start=1):
-            if not isinstance(rule, dict):
-                raise RuntimeError(f"Step2 full_decision_rules[{idx}] must be an object.")
-
-            rid = self._clean_text(rule.get("id"))
-            if not rid:
-                raise RuntimeError(f"Step2 full_decision_rules[{idx}] missing 'id'.")
-            if rid in full_rule_ids:
-                raise RuntimeError(f"Step2 duplicate full decision rule id: '{rid}'.")
-            full_rule_ids.add(rid)
-
-            states = rule.get("condition_states")
-            if not isinstance(states, dict) or not states:
-                raise RuntimeError(f"Step2 full_decision_rules[{idx}] must have non-empty 'condition_states'.")
-
-            action_refs = rule.get("action_refs")
-            if not isinstance(action_refs, list) or not action_refs:
-                raise RuntimeError(f"Step2 full_decision_rules[{idx}] must have non-empty 'action_refs'.")
-
-            if not self._clean_text(rule.get("expected")):
-                raise RuntimeError(f"Step2 full_decision_rules[{idx}] missing 'expected'.")
-
+        happy_path_count = 0
         rule_ids = set()
         for idx, rule in enumerate(rules, start=1):
             if not isinstance(rule, dict):
@@ -1156,19 +1786,37 @@ class GenerationPipeline:
                 raise RuntimeError(f"Step2 duplicate decision rule id: '{rid}'.")
             rule_ids.add(rid)
 
-            if not self._clean_text(rule.get("type")):
+            rule_type = self._clean_text(rule.get("type"))
+            if not rule_type:
                 raise RuntimeError(f"Step2 decision_rules[{idx}] missing 'type'.")
+            if rule_type == "happy_path":
+                happy_path_count += 1
 
             states = rule.get("condition_states")
             if not isinstance(states, dict) or not states:
                 raise RuntimeError(f"Step2 decision_rules[{idx}] must have non-empty 'condition_states'.")
 
+            state_keys = {self._clean_text(k) for k in states.keys()}
+            if state_keys != condition_ids:
+                raise RuntimeError(
+                    f"Step2 decision_rules[{idx}].condition_states must contain exactly all condition ids. "
+                    f"Missing={sorted(condition_ids - state_keys)}, Extra={sorted(state_keys - condition_ids)}"
+                )
+
             action_refs = rule.get("action_refs")
             if not isinstance(action_refs, list) or not action_refs:
                 raise RuntimeError(f"Step2 decision_rules[{idx}] must have non-empty 'action_refs'.")
+            for ref in action_refs:
+                if self._clean_text(ref) not in action_ids:
+                    raise RuntimeError(f"Step2 decision_rules[{idx}] references unknown action id: {ref}")
 
             if not self._clean_text(rule.get("expected")):
                 raise RuntimeError(f"Step2 decision_rules[{idx}] missing 'expected'.")
+            if not self._clean_text(rule.get("reduction_note")):
+                raise RuntimeError(f"Step2 decision_rules[{idx}] missing 'reduction_note'.")
+
+        if happy_path_count != 1:
+            raise RuntimeError(f"Step2 must contain exactly 1 happy_path rule, got {happy_path_count}.")
 
     # ==========================================================================
     # STEP 3 NORMALIZATION / HARD CHECK
@@ -1411,16 +2059,14 @@ class GenerationPipeline:
     ) -> Dict[str, Any]:
         step_start = time.perf_counter()
 
-        self._log("STEP 2: build prompt cho Decision Table trung gian")
-        # Step 2 dùng feature spec + lý thuyết Decision Table + schema output.
-        # Nếu có Step 1, truyền bản compact để AI hiểu field/ràng buộc/kết quả và giữ prompt ngắn.
+        self._log("STEP 2: build prompt cho Reduced Decision Logic Table")
         compact_step1 = self._compact_step1_for_step2(step1_data) if isinstance(step1_data, dict) else None
         step2_prompt = self.prompt_loader.build_step2_prompt(feature, compact_step1)
         feature_key = self._resolve_feature_key_from_prompt(step2_prompt, feature)
         self._log(f"STEP 2: feature chuẩn hóa = '{feature_key}'")
         self._log(f"STEP 2: độ dài prompt = {len(step2_prompt):,} ký tự")
 
-        self._log("STEP 2: gọi AI để sinh decision_rules ...")
+        self._log("STEP 2: gọi AI để sinh reduced decision rules ...")
         llm_start = time.perf_counter()
         raw_output = self.llm_client.generate(step2_prompt)
         raw_txt_path = self._save_raw_output(exporter, "step2_dt_raw.txt", raw_output)
@@ -1440,7 +2086,13 @@ class GenerationPipeline:
         if not isinstance(dt_data, dict):
             raise RuntimeError("Step2 DT output must be a JSON object.")
 
-        self._log("STEP 2: strict schema check, không auto-repair ...")
+        self._log("STEP 2: normalize + rebuild summary ...")
+        dt_data = self._force_step2_feature(dt_data, feature_key)
+        dt_data = self._normalize_step2_data(dt_data)
+        dt_data = self._align_step2_with_expected_contract(dt_data, step1_data, feature_key)
+        dt_data = self._rebuild_step2_summary(dt_data)
+
+        self._log("STEP 2: strict schema check + validate ...")
         try:
             self._strict_check_step2_ai_output(dt_data)
             self._hard_check_step2_structure(dt_data)
@@ -1455,8 +2107,14 @@ class GenerationPipeline:
                     raise RuntimeError(
                         "Step2 validation produced severe warnings:\n- " + "\n- ".join(severe)
                     )
-        except Exception as exc:
-            self._log(f"STEP 2: output chưa chuẩn, không ghi step2_dt_invalid.json. Lỗi: {exc}")
+        except Exception:
+            self._log("STEP 2: validate failed, ghi step2_dt_invalid.json")
+            invalid_json_path = exporter.write_raw_json(dt_data, filename="step2_dt_invalid.json")
+            try:
+                self._export_step2_excel_safely(dt_data, exporter)
+            except Exception:
+                pass
+            self._log(f"STEP 2: invalid JSON tại {invalid_json_path}")
             raise
 
         dt_json_path = exporter.write_raw_json(dt_data, filename="step2_dt.json")
@@ -1469,6 +2127,464 @@ class GenerationPipeline:
         return dt_data
 
     # ==========================================================================
+    # STEP 3 COVERAGE-PRESERVING BUILDER (CODE-ONLY MAPPING)
+    # ==========================================================================
+    def _get_step3_happy_rule(self, dt_data: Dict[str, Any]) -> Dict[str, Any]:
+        rules = dt_data.get("decision_rules", [])
+        if isinstance(rules, list):
+            for rule in rules:
+                if isinstance(rule, dict) and self._clean_text(rule.get("type")) == "happy_path":
+                    return rule
+        return {}
+
+    def _build_condition_index_for_step3(self, dt_data: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
+        out: Dict[str, Dict[str, Any]] = {}
+        conditions = dt_data.get("conditions", [])
+        if not isinstance(conditions, list):
+            return out
+
+        for cond in conditions:
+            if not isinstance(cond, dict):
+                continue
+            cid = self._clean_text(cond.get("id"))
+            if not cid:
+                continue
+            source_fields = cond.get("source_fields")
+            if not isinstance(source_fields, list):
+                source_fields = []
+            out[cid] = {
+                "id": cid,
+                "name": self._clean_text(cond.get("name")),
+                "source_fields": [self._clean_text(f) for f in source_fields if self._clean_text(f)],
+                "meaning_when_y": self._clean_text(cond.get("meaning_when_y")),
+                "meaning_when_n": self._clean_text(cond.get("meaning_when_n")),
+            }
+        return out
+
+    def _build_step1_value_index_for_step3(
+        self,
+        feature: str,
+        step1_data: Dict[str, Any],
+    ) -> Dict[str, Dict[str, List[Dict[str, Any]]]]:
+        fields = get_feature_item_fields(feature)
+        index: Dict[str, Dict[str, List[Dict[str, Any]]]] = {
+            field: {"valid": [], "invalid": []}
+            for field in fields
+        }
+
+        items = step1_data.get("coverage_items", [])
+        if not isinstance(items, list):
+            return index
+
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            field = self._clean_text(item.get("field"))
+            validity = self._clean_text(item.get("validity")).lower()
+            if field not in index or validity not in {"valid", "invalid"}:
+                continue
+            index[field][validity].append(item)
+        return index
+
+    def _representative_value(self, coverage_item: Dict[str, Any]) -> str:
+        value = coverage_item.get("representative_value")
+        return "" if value is None else str(value)
+
+    def _coverage_text_for_step3(self, coverage_item: Dict[str, Any]) -> str:
+        boundary = coverage_item.get("boundary") if isinstance(coverage_item.get("boundary"), dict) else {}
+        return " ".join([
+            self._clean_text(coverage_item.get("description")),
+            self._clean_text(coverage_item.get("rule")),
+            self._clean_text(coverage_item.get("expected_class")),
+            self._clean_text(boundary.get("kind")),
+            self._clean_text(boundary.get("point")),
+        ]).lower()
+
+    def _pick_valid_value_for_step3(
+        self,
+        field: str,
+        value_index: Dict[str, Dict[str, List[Dict[str, Any]]]],
+    ) -> str:
+        candidates = value_index.get(field, {}).get("valid", [])
+        if not candidates:
+            return ""
+
+        for item in candidates:
+            if self._clean_text(item.get("technique")).upper() == "EP":
+                return self._representative_value(item)
+
+        for point in ("N", "MIN", "MAX", "MIN+1", "MAX-1"):
+            for item in candidates:
+                boundary = item.get("boundary") if isinstance(item.get("boundary"), dict) else {}
+                if self._clean_text(boundary.get("point")).upper() == point:
+                    return self._representative_value(item)
+
+        return self._representative_value(candidates[0])
+
+    def _build_default_valid_row_for_step3(
+        self,
+        feature: str,
+        value_index: Dict[str, Dict[str, List[Dict[str, Any]]]],
+    ) -> Dict[str, Any]:
+        fields = get_feature_item_fields(feature)
+        row: Dict[str, Any] = {}
+        for field in fields:
+            row[field] = self._pick_valid_value_for_step3(field, value_index)
+
+        # Rule quan hệ phổ biến: nếu có Password và ConfirmPassword thì mặc định phải khớp nhau.
+        if "Password" in row and "ConfirmPassword" in row:
+            row["ConfirmPassword"] = row["Password"]
+        return row
+
+    def _condition_text_for_step3(self, condition: Dict[str, Any], state: str) -> str:
+        state = self._clean_text(state).upper()
+        if state == "Y":
+            return " ".join([
+                self._clean_text(condition.get("name")),
+                self._clean_text(condition.get("meaning_when_y")),
+            ]).lower()
+        if state == "N":
+            return " ".join([
+                self._clean_text(condition.get("name")),
+                self._clean_text(condition.get("meaning_when_n")),
+            ]).lower()
+        return self._clean_text(condition.get("name")).lower()
+
+    def _filter_invalid_coverages_for_condition(
+        self,
+        *,
+        field: str,
+        expected: str,
+        condition: Dict[str, Any],
+        state: str,
+        value_index: Dict[str, Dict[str, List[Dict[str, Any]]]],
+    ) -> List[Dict[str, Any]]:
+        """
+        Lấy TẤT CẢ coverage invalid phù hợp với condition của Decision Table.
+        Đây là phần giúp Step 3 bảo toàn EP/BVA coverage.
+        """
+        candidates = list(value_index.get(field, {}).get("invalid", []))
+        if not candidates:
+            return []
+
+        expected_clean = self._clean_text(expected)
+        expected_lower = expected_clean.lower()
+        condition_text = self._condition_text_for_step3(condition, state)
+
+        exact_expected_matches = [
+            item for item in candidates
+            if self._clean_text(item.get("expected_class")) == expected_clean
+        ]
+        if exact_expected_matches:
+            candidates = exact_expected_matches
+
+        empty_markers = (
+            "rỗng", "trống", "không được để trống", "bắt buộc", "được nhập",
+            "empty", "required", "blank",
+        )
+        duplicate_markers = ("tồn tại", "đã đăng ký", "trùng", "exist", "duplicate")
+        mismatch_markers = ("không khớp", "khác", "không trùng", "mismatch", "not match")
+
+        asks_empty = any(marker in condition_text for marker in empty_markers) or any(
+            marker in expected_lower for marker in ("điền", "trống", "rỗng", "required", "empty", "blank")
+        )
+        asks_duplicate = any(marker in condition_text for marker in duplicate_markers) or any(
+            marker in expected_lower for marker in duplicate_markers
+        )
+        asks_mismatch = any(marker in condition_text for marker in mismatch_markers) or any(
+            marker in expected_lower for marker in mismatch_markers
+        )
+
+        if asks_empty:
+            empty_items = [item for item in candidates if self._representative_value(item) == ""]
+            if empty_items:
+                return empty_items
+
+        if asks_duplicate:
+            duplicate_items = [
+                item for item in candidates
+                if any(marker in self._coverage_text_for_step3(item) for marker in duplicate_markers)
+            ]
+            if duplicate_items:
+                return duplicate_items
+
+        if asks_mismatch:
+            mismatch_items = [
+                item for item in candidates
+                if any(marker in self._coverage_text_for_step3(item) for marker in mismatch_markers)
+            ]
+            if mismatch_items:
+                return mismatch_items
+
+        return candidates
+
+    def _get_changed_conditions_for_rule(
+        self,
+        rule: Dict[str, Any],
+        happy_states: Dict[str, Any],
+    ) -> List[Tuple[str, str]]:
+        states = rule.get("condition_states")
+        if not isinstance(states, dict):
+            return []
+
+        changed: List[Tuple[str, str]] = []
+        for cid, state in states.items():
+            cid_clean = self._clean_text(cid)
+            state_clean = self._normalize_dt_state(state)
+            if not cid_clean or state_clean == "-":
+                continue
+
+            happy_state = self._normalize_dt_state(happy_states.get(cid_clean))
+            if happy_state and state_clean == happy_state:
+                continue
+
+            changed.append((cid_clean, state_clean))
+        return changed
+
+    def _build_variants_for_changed_condition(
+        self,
+        *,
+        condition_id: str,
+        state: str,
+        expected: str,
+        fields: List[str],
+        condition_index: Dict[str, Dict[str, Any]],
+        value_index: Dict[str, Dict[str, List[Dict[str, Any]]]],
+    ) -> List[Dict[str, Any]]:
+        condition = condition_index.get(condition_id, {})
+        source_fields = condition.get("source_fields", [])
+        if not isinstance(source_fields, list):
+            source_fields = []
+
+        variants: List[Dict[str, Any]] = []
+        for field in source_fields:
+            field_clean = self._clean_text(field)
+            if field_clean not in fields:
+                continue
+
+            coverages = self._filter_invalid_coverages_for_condition(
+                field=field_clean,
+                expected=expected,
+                condition=condition,
+                state=state,
+                value_index=value_index,
+            )
+
+            for coverage in coverages:
+                if not isinstance(coverage, dict):
+                    continue
+                variants.append({
+                    "field": field_clean,
+                    "value": self._representative_value(coverage),
+                    "coverage_id": self._clean_text(coverage.get("id")),
+                    "coverage_description": self._clean_text(coverage.get("description")),
+                })
+        return variants
+
+    def _resolve_expected_for_step3(self, expected: str, row: Dict[str, Any]) -> str:
+        expected_clean = self._clean_text(expected)
+        if expected_clean in row:
+            return "" if row.get(expected_clean) is None else str(row.get(expected_clean))
+        return expected_clean
+
+    def _make_final_row_for_step3(
+        self,
+        *,
+        feature: str,
+        fields: List[str],
+        row_values: Dict[str, Any],
+        expected: str,
+        index: int,
+    ) -> Dict[str, Any]:
+        final_row: Dict[str, Any] = {
+            "Testcase": build_default_testcase_id(feature, index)
+        }
+        for field in fields:
+            final_row[field] = row_values.get(field, "")
+        final_row["Expected"] = self._resolve_expected_for_step3(expected, final_row)
+        return final_row
+
+    def _build_happy_path_rows_for_step3(
+        self,
+        *,
+        feature: str,
+        rule: Dict[str, Any],
+        fields: List[str],
+        value_index: Dict[str, Dict[str, List[Dict[str, Any]]]],
+    ) -> List[Dict[str, Any]]:
+        """
+        Happy path sinh:
+        - 1 dòng all-valid mặc định
+        - thêm biến thể valid để giữ các coverage valid/BVA hợp lệ của Step 1
+        """
+        expected = self._clean_text(rule.get("expected"))
+        base_row = self._build_default_valid_row_for_step3(feature, value_index)
+        rows: List[Dict[str, Any]] = []
+
+        def append_row(row_values: Dict[str, Any]) -> None:
+            row = {field: row_values.get(field, "") for field in fields}
+            row["Expected"] = self._resolve_expected_for_step3(expected, row)
+            rows.append(row)
+
+        append_row(dict(base_row))
+
+        for field in fields:
+            valid_items = value_index.get(field, {}).get("valid", [])
+            for coverage in valid_items:
+                if not isinstance(coverage, dict):
+                    continue
+
+                value = self._representative_value(coverage)
+                if str(base_row.get(field, "")) == value:
+                    continue
+
+                row_values = dict(base_row)
+                row_values[field] = value
+
+                if field == "Password" and "ConfirmPassword" in row_values:
+                    row_values["ConfirmPassword"] = value
+
+                if field == "ConfirmPassword" and "Password" in row_values:
+                    if row_values.get("ConfirmPassword") != row_values.get("Password"):
+                        continue
+
+                append_row(row_values)
+
+        return rows
+
+    def _build_final_items_fallback_from_step1_step2(
+        self,
+        feature: str,
+        step1_data: Dict[str, Any],
+        dt_data: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        """
+        Coverage-preserving mapping giữa EP/BVA và Decision Table.
+
+        Khác mapping 1-1 cũ, một decision_rule có thể sinh nhiều testcase nếu condition lỗi
+        tương ứng với nhiều coverage_items của Step 1.
+        """
+        from itertools import product
+
+        feature_key = normalize_feature_name(feature)
+        fields = get_feature_item_fields(feature_key)
+        value_index = self._build_step1_value_index_for_step3(feature_key, step1_data)
+        condition_index = self._build_condition_index_for_step3(dt_data)
+
+        happy_rule = self._get_step3_happy_rule(dt_data)
+        happy_states = happy_rule.get("condition_states") if isinstance(happy_rule.get("condition_states"), dict) else {}
+
+        rules = dt_data.get("decision_rules", [])
+        if not isinstance(rules, list) or not rules:
+            raise RuntimeError("Cannot build Step3 by code: Step2 decision_rules is empty.")
+
+        rows: List[Dict[str, Any]] = []
+        seen_signatures: Set[tuple] = set()
+
+        def append_final_row(row: Dict[str, Any]) -> None:
+            signature = tuple(
+                (key, "" if row.get(key) is None else str(row.get(key)))
+                for key in [*fields, "Expected"]
+            )
+            if signature in seen_signatures:
+                return
+            seen_signatures.add(signature)
+            row["Testcase"] = build_default_testcase_id(feature_key, len(rows) + 1)
+            rows.append(row)
+
+        for rule in rules:
+            if not isinstance(rule, dict):
+                continue
+
+            rule_type = self._clean_text(rule.get("type"))
+            expected = self._clean_text(rule.get("expected"))
+
+            if rule_type == "happy_path":
+                happy_rows = self._build_happy_path_rows_for_step3(
+                    feature=feature_key,
+                    rule=rule,
+                    fields=fields,
+                    value_index=value_index,
+                )
+                for row_values in happy_rows:
+                    final_row = self._make_final_row_for_step3(
+                        feature=feature_key,
+                        fields=fields,
+                        row_values=row_values,
+                        expected=expected,
+                        index=len(rows) + 1,
+                    )
+                    append_final_row(final_row)
+                continue
+
+            changed_conditions = self._get_changed_conditions_for_rule(rule, happy_states)
+            base_row = self._build_default_valid_row_for_step3(feature_key, value_index)
+
+            if not changed_conditions:
+                final_row = self._make_final_row_for_step3(
+                    feature=feature_key,
+                    fields=fields,
+                    row_values=base_row,
+                    expected=expected,
+                    index=len(rows) + 1,
+                )
+                append_final_row(final_row)
+                continue
+
+            variant_groups: List[List[Dict[str, Any]]] = []
+            for condition_id, state in changed_conditions:
+                variants = self._build_variants_for_changed_condition(
+                    condition_id=condition_id,
+                    state=state,
+                    expected=expected,
+                    fields=fields,
+                    condition_index=condition_index,
+                    value_index=value_index,
+                )
+
+                if not variants:
+                    variants = [{"field": "", "value": "", "coverage_id": "", "coverage_description": ""}]
+                variant_groups.append(variants)
+
+            for combination in product(*variant_groups):
+                row_values = dict(base_row)
+
+                for variant in combination:
+                    field = self._clean_text(variant.get("field"))
+                    if not field or field not in fields:
+                        continue
+
+                    row_values[field] = variant.get("value", "")
+
+                    if (
+                        field == "ConfirmPassword"
+                        and "Password" in row_values
+                        and row_values.get("ConfirmPassword") == row_values.get("Password")
+                    ):
+                        row_values["ConfirmPassword"] = str(row_values.get("Password", "")) + "x"
+
+                final_row = self._make_final_row_for_step3(
+                    feature=feature_key,
+                    fields=fields,
+                    row_values=row_values,
+                    expected=expected,
+                    index=len(rows) + 1,
+                )
+                append_final_row(final_row)
+
+        if not rows:
+            raise RuntimeError("Cannot build Step3 by code: no final items generated.")
+
+        return {
+            "feature": feature_key,
+            "description": (
+                "Bộ test data cuối cùng được sinh bằng coverage-preserving mapping "
+                "giữa Step 1 EP/BVA và Step 2 Decision Table."
+            ),
+            "items": rows,
+        }
+
+    # ==========================================================================
     # STEP 3: FINAL TESTCASES
     # ==========================================================================
     def _generate_step3_final(
@@ -1478,60 +2594,38 @@ class GenerationPipeline:
         dt_data: Dict[str, Any],
         exporter: DataExporter,
     ) -> Tuple[Path, Dict[str, Any]]:
+        """
+        STEP 3 code-only:
+        - Không gọi AI.
+        - Sinh final.json bằng coverage-preserving mapping giữa Step 1 và Step 2.
+        - Output schema phẳng: feature, description, items.
+        """
         step_start = time.perf_counter()
-
-        self._log("STEP 3: build prompt cho final testcases")
-        step3_prompt = self.prompt_loader.build_step3_prompt(feature, step1_data, dt_data)
-        self._log(f"STEP 3: độ dài prompt = {len(step3_prompt):,} ký tự")
-
-        self._log("STEP 3: gọi AI để sinh final testcases ...")
-        llm_start = time.perf_counter()
-        raw_output = self.llm_client.generate(step3_prompt)
-        raw_txt_path = self._save_raw_output(exporter, "final_raw.txt", raw_output)
-        self._raise_if_llm_output_empty(raw_output, "Step3 final", raw_txt_path)
-        llm_elapsed = time.perf_counter() - llm_start
-        self._log(f"STEP 3: AI trả kết quả sau {self._format_seconds(llm_elapsed)}")
-        self._log(f"STEP 3: lưu raw output tại {raw_txt_path}")
-
-        self._log("STEP 3: parse JSON ...")
-        parsed = self.parser.parse_json(raw_output)
-        if not parsed.ok:
-            raise RuntimeError(
-                f"Step3 final parse error: {parsed.error}. Raw output saved at: {raw_txt_path}"
-            )
-
-        final_data = parsed.data
-        if not isinstance(final_data, dict):
-            raise RuntimeError("Step3 final output must be a JSON object.")
-
         feature_key = normalize_feature_name(step1_data.get("feature", feature))
 
-        self._log("STEP 3: normalize + rebuild summary ...")
+        self._log("STEP 3: bỏ gọi AI, sinh final testcases bằng coverage-preserving mapping Step1 + Step2 ...")
+
+        final_data = self._build_final_items_fallback_from_step1_step2(
+            feature=feature_key,
+            step1_data=step1_data,
+            dt_data=dt_data,
+        )
+
         final_data = self._force_step3_feature(final_data, feature_key)
         final_data = self._normalize_step3_data(feature_key, final_data)
-        final_data = self._rebuild_step3_summary(final_data)
 
-        self._log("STEP 3: hard-check structure ...")
-        try:
-            self._hard_check_step3_structure(final_data)
-        except Exception:
-            self._log("STEP 3: hard-check failed, ghi final_invalid.json")
-            exporter.write_raw_json(final_data, filename="final_invalid.json")
-            raise
+        self._log("STEP 3: hard-check output ...")
+        self._hard_check_step3_structure(final_data, feature_key)
 
-        try:
-            self._log("STEP 3: validate output ...")
-            result = self.step3_validator.validate_or_raise(final_data, step1_data, dt_data)
-            if result.warnings:
-                self._log(f"STEP 3: có {len(result.warnings)} warning")
-                self._raise_if_step3_warnings_are_severe(result.warnings)
-
-            self._log("STEP 3: kiểm tra coverage trace đầy đủ ...")
-            self._ensure_all_step1_coverage_used(final_data, step1_data)
-        except Exception:
-            self._log("STEP 3: validate failed, ghi final_invalid.json")
-            exporter.write_raw_json(final_data, filename="final_invalid.json")
-            raise
+        exporter.write_raw_json(
+            {
+                "fallback_used": True,
+                "mode": "code_only_coverage_preserving",
+                "reason": "Step 3 sinh bằng code coverage-preserving mapping, không gọi AI.",
+                "total_items": len(final_data.get("items", [])),
+            },
+            filename="final_fallback_info.json",
+        )
 
         self._log("STEP 3: ghi final JSON ...")
         final_json_path = exporter.write_raw_json(final_data, filename="final.json")
@@ -1555,13 +2649,32 @@ class GenerationPipeline:
         export_start = time.perf_counter()
 
         self._log("EXPORT: bắt đầu export processed files ...")
-        testcases = final_data.get("testcases")
-        if not isinstance(testcases, list) or not testcases:
-            raise RuntimeError("Final JSON is invalid: 'testcases' must be a non-empty list.")
+
+        items = final_data.get("items")
+        if not isinstance(items, list) or not items:
+            raise RuntimeError("Final JSON is invalid: 'items' must be a non-empty list.")
+
+        # Tương thích exporter hiện tại nếu exporter vẫn nhận schema cũ id/inputs/expected.
+        fields = get_feature_item_fields(feature)
+        exporter_rows: List[Dict[str, Any]] = []
+        for idx, item in enumerate(items, start=1):
+            if not isinstance(item, dict):
+                continue
+            testcase_id = self._clean_text(item.get("Testcase")) or build_default_testcase_id(feature, idx)
+            exporter_rows.append(
+                {
+                    "id": testcase_id,
+                    "inputs": {
+                        field: item.get(field, "")
+                        for field in fields
+                    },
+                    "expected": item.get("Expected", ""),
+                }
+            )
 
         paths = exporter.export_feature_items(
             feature=feature,
-            items=testcases,
+            items=exporter_rows,
             formats=formats,
         )
 
