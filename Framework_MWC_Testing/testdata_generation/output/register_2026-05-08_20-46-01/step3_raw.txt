@@ -1,0 +1,54 @@
+{
+  "feature": "registration_form",
+  "description": "Bộ test data kiểm thử đăng ký với các trường hợp hợp lệ và không hợp lệ theo decision rules",
+  "items": [
+    {
+      "Testcase": "TC-001",
+      "Username": "user123",
+      "Phone": "0909123456",
+      "Password": "Pass1234567890",
+      "ConfirmPassword": "Pass1234567890",
+      "Expected": "Đăng ký thành công"
+    },
+    {
+      "Testcase": "TC-002",
+      "Username": "user123",
+      "Phone": "0909123456",
+      "Password": "Pass1234567890",
+      "ConfirmPassword": "Pass123456789",
+      "Expected": "Mật khẩu không khớp"
+    },
+    {
+      "Testcase": "TC-003",
+      "Username": "user12",
+      "Phone": "0909123456",
+      "Password": "Pass1234567890",
+      "ConfirmPassword": "Pass1234567890",
+      "Expected": "Tên người dùng không hợp lệ"
+    },
+    {
+      "Testcase": "TC-004",
+      "Username": "user123",
+      "Phone": "090912345",
+      "Password": "Pass1234567890",
+      "ConfirmPassword": "Pass1234567890",
+      "Expected": "Số điện thoại không hợp lệ"
+    },
+    {
+      "Testcase": "TC-005",
+      "Username": "user123",
+      "Phone": "0909123456",
+      "Password": "Pass123",
+      "ConfirmPassword": "Pass123",
+      "Expected": "Mật khẩu phải từ 8 đến 20 ký tự"
+    },
+    {
+      "Testcase": "TC-006",
+      "Username": "user123",
+      "Phone": "0909123456",
+      "Password": "Pass1234567890",
+      "ConfirmPassword": "",
+      "Expected": "Vui lòng điền vào trường này"
+    }
+  ]
+}

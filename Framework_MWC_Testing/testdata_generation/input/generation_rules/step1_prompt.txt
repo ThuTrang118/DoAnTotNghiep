@@ -99,9 +99,17 @@ ATOMIC RULE
 -----------------------
 EXPECTED_CLASS
 -----------------------
-- Không dùng: valid, invalid, error, success
-- Phải dùng message đúng đặc tả
-- Nếu không có message cụ thể cho item valid → dùng "Dữ liệu hợp lệ"
+expected_class là kết quả/classification của coverage atomic, KHÔNG phải Expected cuối cùng của testcase hoàn chỉnh.
+
+Với coverage invalid:
+- expected_class phải là message lỗi đúng theo KỲ VỌNG NGHIỆP VỤ.
+- Không tự diễn giải lại message lỗi.
+- Không dùng: valid, invalid, error, success.
+
+Với coverage valid:
+- Nếu coverage chỉ kiểm tra riêng 1 field hoặc 1 rule atomic, expected_class = "Dữ liệu hợp lệ".
+- Không dùng representative_value làm expected_class.
+- Không dùng Expected nghiệp vụ cuối cùng cho coverage valid riêng lẻ.
 
 -----------------------
 CHECK TRƯỚC OUTPUT

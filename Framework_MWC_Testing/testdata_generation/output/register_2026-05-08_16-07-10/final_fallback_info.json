@@ -2,5 +2,5 @@
   "fallback_used": true,
   "mode": "code_only_coverage_preserving",
   "reason": "Step 3 sinh bằng code coverage-preserving mapping, không gọi AI.",
-  "total_items": 22
+  "total_items": 21
 }

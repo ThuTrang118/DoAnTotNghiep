@@ -4,23 +4,78 @@
   "items": [
     {
       "Testcase": "mã testcase",
-      "<InputField1>": "giá trị input lấy từ Step 1",
-      "<InputField2>": "giá trị input lấy từ Step 1",
-      "Expected": "kết quả mong đợi theo Step 2"
+      "<InputField1>": "giá trị input lấy từ representative_value của Step 1",
+      "<InputField2>": "giá trị input lấy từ representative_value của Step 1",
+      "Expected": "kết quả mong đợi lấy từ decision_rule.expected của Step 2"
     }
   ]
 }
 
-RÀNG BUỘC OUTPUT:
-1. Chỉ output 1 JSON object.
-2. Top-level chỉ có đúng 3 key: feature, description, items.
-3. items là list không rỗng.
-4. Mỗi item là 1 dòng test data phẳng để truyền trực tiếp vào framework.
-5. Mỗi item bắt buộc có: Testcase, toàn bộ input fields của feature, Expected.
-6. Không có key trung gian: id, name, objective, coverage_refs, decision_basis, inputs, priority, expected, testcase.
-7. Không dùng placeholder: <InputField1>, string, number, valid, invalid, null.
-8. Testcase không trùng.
-9. Input value phải ưu tiên lấy từ representative_value của Step 1.
-10. Expected phải khớp decision_rule.expected của Step 2.
-11. Nếu Step 2 expected là tên field, Expected phải bằng giá trị thực tế của field đó.
-12. Không markdown, không ```json, không giải thích, không text ngoài JSON.
+RÀNG BUỘC OUTPUT BẮT BUỘC:
+
+1. Chỉ output đúng 1 JSON object.
+2. Top-level chỉ được có đúng 3 key:
+   - feature
+   - description
+   - items
+3. Không được sinh thêm top-level key khác như:
+   - testcases
+   - testcase_summary
+   - coverage_refs
+   - decision_basis
+   - metadata
+   - notes
+   - examples
+   - schema_version
+
+4. items phải là list không rỗng.
+5. Mỗi item là 1 dòng test data phẳng để truyền trực tiếp vào framework.
+6. Mỗi item bắt buộc có đúng các key:
+   - Testcase
+   - toàn bộ input fields của feature
+   - Expected
+
+7. Mỗi item không được có key trung gian hoặc key schema cũ:
+   - id
+   - name
+   - description
+   - objective
+   - coverage_refs
+   - decision_basis
+   - inputs
+   - priority
+   - expected
+   - testcase
+
+8. Input field trong mỗi item:
+   - phải đúng tên field của feature.
+   - phải có đủ tất cả field.
+   - không được thừa field lạ.
+   - giá trị phải ưu tiên lấy từ representative_value của Step 1.
+
+9. Expected:
+   - phải khớp decision_rule.expected của Step 2.
+   - nếu decision_rule.expected là tên field, Expected phải bằng giá trị thực tế của field đó trong item.
+   - không được tự bịa Expected mới.
+
+10. Testcase:
+   - không được rỗng.
+   - không được trùng.
+   - nên đánh số tăng dần theo prefix của feature.
+
+11. Không dùng placeholder hoặc pseudo-value:
+   - <InputField1>
+   - <InputField2>
+   - string
+   - number
+   - valid
+   - invalid
+   - error
+   - success
+   - null
+
+12. Không tạo 2 item có cùng toàn bộ input values và Expected.
+13. Không markdown.
+14. Không ```json.
+15. Không giải thích.
+16. Không text ngoài JSON.

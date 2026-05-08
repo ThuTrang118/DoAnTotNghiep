@@ -1125,112 +1125,6 @@ class GenerationPipeline:
             return ""
         return self._canonical_step2_expected(best_expected, expected_sources)
 
-    # --------------------------------------------------------------------------
-    # STEP 2 CONDITION DEPENDENCY REPAIR
-    # --------------------------------------------------------------------------
-    PRESENCE_CONDITION_MARKERS = (
-        "không rỗng",
-        "khong rong",
-        "không trống",
-        "khong trong",
-        "được nhập",
-        "duoc nhap",
-        "bắt buộc",
-        "bat buoc",
-        "required",
-        "not empty",
-        "not blank",
-    )
-
-    @classmethod
-    def _is_step2_presence_condition(cls, condition: Dict[str, Any]) -> bool:
-        """
-        Nhận diện condition tiền đề kiểu "field đã được nhập / không rỗng".
-
-        Luật này dùng chung cho mọi feature: không dựa vào tên field cụ thể,
-        chỉ dựa vào ý nghĩa của condition và source_fields.
-        """
-        if not isinstance(condition, dict):
-            return False
-
-        source_fields = condition.get("source_fields")
-        if not isinstance(source_fields, list) or len([f for f in source_fields if str(f).strip()]) != 1:
-            return False
-
-        text = " ".join([
-            str(condition.get("name", "")),
-            str(condition.get("meaning_when_y", "")),
-            str(condition.get("meaning_when_n", "")),
-        ]).strip().lower()
-
-        return any(marker in text for marker in cls.PRESENCE_CONDITION_MARKERS)
-
-    def _build_step2_presence_condition_by_field(
-        self,
-        conditions: List[Dict[str, Any]],
-    ) -> Dict[str, str]:
-        """Map field -> condition id của điều kiện tiền đề không rỗng/được nhập."""
-        out: Dict[str, str] = {}
-        for condition in conditions:
-            if not isinstance(condition, dict):
-                continue
-            if not self._is_step2_presence_condition(condition):
-                continue
-
-            cid = self._clean_text(condition.get("id"))
-            source_fields = condition.get("source_fields")
-            if not cid or not isinstance(source_fields, list):
-                continue
-
-            field = next((self._clean_text(f) for f in source_fields if self._clean_text(f)), "")
-            if field and field not in out:
-                out[field] = cid
-        return out
-
-    def _repair_step2_condition_dependencies(
-        self,
-        states: Dict[str, str],
-        condition_map: Dict[str, Dict[str, Any]],
-        presence_condition_by_field: Dict[str, str],
-    ) -> Dict[str, str]:
-        """
-        Sửa mâu thuẫn trong bảng quyết định rút gọn.
-
-        Nếu một condition kiểm tra sâu hơn của field đang = N thì field đó phải
-        có dữ liệu trước, nên condition tiền đề "field không rỗng" phải = Y.
-        Với condition quan hệ nhiều field, tất cả field liên quan phải có tiền đề = Y.
-        """
-        if not isinstance(states, dict):
-            return {}
-
-        repaired = dict(states)
-
-        for cid, state in list(repaired.items()):
-            if self._normalize_dt_state(state) != "N":
-                continue
-
-            condition = condition_map.get(cid, {})
-            if self._is_step2_presence_condition(condition):
-                continue
-
-            source_fields = condition.get("source_fields")
-            if not isinstance(source_fields, list):
-                continue
-
-            for field in source_fields:
-                field_clean = self._clean_text(field)
-                if not field_clean:
-                    continue
-
-                presence_cid = presence_condition_by_field.get(field_clean)
-                if not presence_cid or presence_cid == cid:
-                    continue
-
-                # Ép tiền đề thành Y. Đây là sửa logic, không tạo thêm lỗi mới.
-                repaired[presence_cid] = "Y"
-
-        return repaired
-
     def _align_step2_with_expected_contract(
         self,
         dt_data: Dict[str, Any],
@@ -1258,7 +1152,6 @@ class GenerationPipeline:
         expected_sources = self._extract_step2_expected_sources(feature, step1_data)
         condition_ids = [self._clean_text(c.get("id")) for c in conditions if isinstance(c, dict) and self._clean_text(c.get("id"))]
         condition_map = {self._clean_text(c.get("id")): c for c in conditions if isinstance(c, dict) and self._clean_text(c.get("id"))}
-        presence_condition_by_field = self._build_step2_presence_condition_by_field(conditions)
         all_y_states = {cid: "Y" for cid in condition_ids}
 
         normalized_actions: List[Dict[str, Any]] = []
@@ -1301,7 +1194,6 @@ class GenerationPipeline:
             if not isinstance(rule, dict):
                 continue
             states = normalize_states(rule.get("condition_states"))
-            states = self._repair_step2_condition_dependencies(states, condition_map, presence_condition_by_field)
             all_y = bool(condition_ids) and all(states.get(cid) == "Y" for cid in condition_ids)
             n_conditions = [cid for cid, state in states.items() if state == "N"]
             action_refs = self._dedupe_string_list(rule.get("action_refs"))
@@ -1366,7 +1258,6 @@ class GenerationPipeline:
                 continue
             states = dict(all_y_states)
             states[cid] = "N"
-            states = self._repair_step2_condition_dependencies(states, condition_map, presence_condition_by_field)
             action_id = action_by_condition[cid]
             repaired_rules.append({
                 "id": "",
@@ -1583,26 +1474,23 @@ class GenerationPipeline:
             raise RuntimeError("Step2 output does not match strict schema:\n- " + "\n- ".join(errors))
 
     def _normalize_step2_data(self, dt_data: Dict[str, Any]) -> Dict[str, Any]:
-        # =========================================================
-        # STEP 2 WHITELIST FILTER
-        # Chỉ giữ đúng schema chuẩn.
-        # AI sinh thêm key nào cũng tự loại bỏ.
-        # =========================================================
-        allowed_top_keys = {
-            "feature",
-            "description",
-            "decision_summary",
-            "conditions",
-            "actions",
-            "decision_rules",
-        }
+        """
+        Normalize nhẹ Step 2 để tăng khả năng chạy ổn định với LLM.
 
-        if isinstance(dt_data, dict):
-            dt_data = {
-                key: value
-                for key, value in dt_data.items()
-                if key in allowed_top_keys
-            }
+        Không tự thêm full_decision_rules/reduction_steps.
+        Không sửa Step 1/Step 3.
+        """
+        # Xóa các key cũ nếu AI lỡ sinh ra; Step 2 hiện chỉ lưu reduced rules.
+        for key in (
+            "full_decision_rules",
+            "reduction_steps",
+            "coverage_refs",
+            "testcases",
+            "items",
+            "final_output",
+            "decision_table",
+        ):
+            dt_data.pop(key, None)
 
         # Normalize conditions
         raw_conditions = dt_data.get("conditions")
@@ -1819,132 +1707,8 @@ class GenerationPipeline:
             raise RuntimeError(f"Step2 must contain exactly 1 happy_path rule, got {happy_path_count}.")
 
     # ==========================================================================
-    # STEP 3 NORMALIZATION / HARD CHECK
+    # STEP 3 WARNING CHECK
     # ==========================================================================
-    def _force_step3_feature(self, step3_data: Dict[str, Any], feature_key: str) -> Dict[str, Any]:
-        step3_data["feature"] = feature_key
-        return step3_data
-
-    def _rebuild_step3_summary(self, step3_data: Dict[str, Any]) -> Dict[str, Any]:
-        testcases = step3_data.get("testcases", [])
-        total = len(testcases) if isinstance(testcases, list) else 0
-        step3_data["testcase_summary"] = {"total_testcases": total}
-        return step3_data
-
-    def _normalize_step3_data(self, feature: str, step3_data: Dict[str, Any]) -> Dict[str, Any]:
-        testcases = step3_data.get("testcases")
-        if not isinstance(testcases, list):
-            step3_data["testcases"] = []
-            return step3_data
-
-        normalized_testcases: List[Dict[str, Any]] = []
-
-        for idx, tc in enumerate(testcases, start=1):
-            if not isinstance(tc, dict):
-                continue
-
-            normalized = dict(tc)
-
-            tc_id = self._clean_text(normalized.get("id"))
-            if not tc_id:
-                tc_id = build_default_testcase_id(feature, idx)
-            normalized["id"] = tc_id
-
-            normalized["name"] = self._clean_text(normalized.get("name"))
-            normalized["description"] = self._clean_text(normalized.get("description"))
-            normalized["objective"] = self._clean_text(normalized.get("objective"))
-            normalized["expected"] = self._clean_text(normalized.get("expected"))
-            normalized["priority"] = self._normalize_priority(normalized.get("priority"))
-            normalized.pop("coverage_refs", None)
-
-            inputs = normalized.get("inputs")
-            if not isinstance(inputs, dict):
-                inputs = {}
-            cleaned_inputs: Dict[str, Any] = {}
-            for k, v in inputs.items():
-                key = str(k).strip()
-                if not key:
-                    continue
-                cleaned_inputs[key] = "" if v is None else v
-            normalized["inputs"] = cleaned_inputs
-
-            decision_basis = normalized.get("decision_basis")
-            if not isinstance(decision_basis, dict):
-                decision_basis = {}
-
-            decision_basis["rule_id"] = self._clean_text(decision_basis.get("rule_id"))
-
-            states = decision_basis.get("condition_states")
-            if not isinstance(states, dict):
-                states = {}
-            decision_basis["condition_states"] = {
-                self._clean_text(k): self._normalize_dt_state(v)
-                for k, v in states.items()
-                if self._clean_text(k)
-            }
-
-            decision_basis["reduction_note"] = self._clean_text(
-                decision_basis.get("reduction_note") or decision_basis.get("optimization_note")
-            )
-            normalized["decision_basis"] = decision_basis
-
-            normalized_testcases.append(normalized)
-
-        step3_data["testcases"] = normalized_testcases
-        return step3_data
-
-    def _hard_check_step3_structure(self, step3_data: Dict[str, Any]) -> None:
-        if not isinstance(step3_data, dict):
-            raise RuntimeError("Step3 output must be a JSON object.")
-
-        if not self._clean_text(step3_data.get("feature")):
-            raise RuntimeError("Step3 missing 'feature'.")
-
-        if not self._clean_text(step3_data.get("description")):
-            raise RuntimeError("Step3 missing 'description'.")
-
-        testcases = step3_data.get("testcases")
-        if not isinstance(testcases, list) or not testcases:
-            raise RuntimeError("Step3 must contain non-empty 'testcases'.")
-
-        ids = set()
-        for idx, tc in enumerate(testcases, start=1):
-            if not isinstance(tc, dict):
-                raise RuntimeError(f"Step3 testcases[{idx}] must be an object.")
-
-            tc_id = self._clean_text(tc.get("id"))
-            if not tc_id:
-                raise RuntimeError(f"Step3 testcases[{idx}] missing 'id'.")
-            if tc_id in ids:
-                raise RuntimeError(f"Step3 duplicate testcase id: '{tc_id}'.")
-            ids.add(tc_id)
-
-            for key in ("name", "description", "objective", "expected"):
-                if not self._clean_text(tc.get(key)):
-                    raise RuntimeError(f"Step3 testcases[{idx}] missing '{key}'.")
-
-            coverage_refs = tc.get("coverage_refs")
-            if not isinstance(coverage_refs, list) or not coverage_refs:
-                raise RuntimeError(f"Step3 testcases[{idx}] must have non-empty 'coverage_refs'.")
-
-            inputs = tc.get("inputs")
-            if not isinstance(inputs, dict) or not inputs:
-                raise RuntimeError(f"Step3 testcases[{idx}] must have non-empty 'inputs'.")
-
-            decision_basis = tc.get("decision_basis")
-            if not isinstance(decision_basis, dict):
-                raise RuntimeError(f"Step3 testcases[{idx}] missing 'decision_basis'.")
-
-            rule_id = decision_basis.get("rule_id")
-            if not isinstance(rule_id, str) or not rule_id.strip():
-                raise RuntimeError(f"Step3 testcases[{idx}] decision_basis.rule_id must be non-empty.")
-
-            condition_states = decision_basis.get("condition_states")
-            if not isinstance(condition_states, dict) or not condition_states:
-                raise RuntimeError(
-                    f"Step3 testcases[{idx}] decision_basis.condition_states must be non-empty."
-                )
-
     def _raise_if_step3_warnings_are_severe(self, warnings: List[str]) -> None:
         severe = [
             w for w in warnings
@@ -1953,28 +1717,6 @@ class GenerationPipeline:
         if severe:
             raise RuntimeError(
                 "Step3 validation produced severe warnings:\n- " + "\n- ".join(severe)
-            )
-
-    def _ensure_all_step1_coverage_used(self, step3_data: Dict[str, Any], step1_data: Dict[str, Any]) -> None:
-        step1_ids = {
-            str(item.get("id")).strip()
-            for item in step1_data.get("coverage_items", [])
-            if isinstance(item, dict) and str(item.get("id", "")).strip()
-        }
-
-        used_ids = set()
-        for tc in step3_data.get("testcases", []):
-            if not isinstance(tc, dict):
-                continue
-            for ref in tc.get("coverage_refs", []):
-                ref_clean = str(ref).strip()
-                if ref_clean:
-                    used_ids.add(ref_clean)
-
-        missing = sorted(step1_ids - used_ids)
-        if missing:
-            raise RuntimeError(
-                "Step3 is missing coverage from Step1:\n- " + "\n- ".join(missing)
             )
 
     # ==========================================================================
@@ -2127,17 +1869,13 @@ class GenerationPipeline:
         return dt_data
 
     # ==========================================================================
-    # STEP 3 COVERAGE-PRESERVING BUILDER (CODE-ONLY MAPPING)
+    # STEP 3 COMPACT INPUT HELPERS
     # ==========================================================================
-    def _get_step3_happy_rule(self, dt_data: Dict[str, Any]) -> Dict[str, Any]:
-        rules = dt_data.get("decision_rules", [])
-        if isinstance(rules, list):
-            for rule in rules:
-                if isinstance(rule, dict) and self._clean_text(rule.get("type")) == "happy_path":
-                    return rule
-        return {}
-
     def _build_condition_index_for_step3(self, dt_data: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
+        """
+        Rút gọn conditions của Step 2 thành index theo id để build packet Step 3.
+        Hàm này chỉ chuẩn bị dữ liệu đầu vào cho AI, không sinh test data.
+        """
         out: Dict[str, Dict[str, Any]] = {}
         conditions = dt_data.get("conditions", [])
         if not isinstance(conditions, list):
@@ -2149,9 +1887,11 @@ class GenerationPipeline:
             cid = self._clean_text(cond.get("id"))
             if not cid:
                 continue
+
             source_fields = cond.get("source_fields")
             if not isinstance(source_fields, list):
                 source_fields = []
+
             out[cid] = {
                 "id": cid,
                 "name": self._clean_text(cond.get("name")),
@@ -2166,6 +1906,10 @@ class GenerationPipeline:
         feature: str,
         step1_data: Dict[str, Any],
     ) -> Dict[str, Dict[str, List[Dict[str, Any]]]]:
+        """
+        Rút gọn Step 1 thành candidate values theo field và validity.
+        Chỉ giữ coverage_items cần cho AI chọn representative_value ở Step 3.
+        """
         fields = get_feature_item_fields(feature)
         index: Dict[str, Dict[str, List[Dict[str, Any]]]] = {
             field: {"valid": [], "invalid": []}
@@ -2179,414 +1923,379 @@ class GenerationPipeline:
         for item in items:
             if not isinstance(item, dict):
                 continue
+
             field = self._clean_text(item.get("field"))
             validity = self._clean_text(item.get("validity")).lower()
             if field not in index or validity not in {"valid", "invalid"}:
                 continue
+
             index[field][validity].append(item)
+
         return index
 
     def _representative_value(self, coverage_item: Dict[str, Any]) -> str:
         value = coverage_item.get("representative_value")
         return "" if value is None else str(value)
 
-    def _coverage_text_for_step3(self, coverage_item: Dict[str, Any]) -> str:
-        boundary = coverage_item.get("boundary") if isinstance(coverage_item.get("boundary"), dict) else {}
-        return " ".join([
-            self._clean_text(coverage_item.get("description")),
-            self._clean_text(coverage_item.get("rule")),
-            self._clean_text(coverage_item.get("expected_class")),
-            self._clean_text(boundary.get("kind")),
-            self._clean_text(boundary.get("point")),
-        ]).lower()
-
-    def _pick_valid_value_for_step3(
+    # ==========================================================================
+    # STEP 3: FINAL TESTCASES
+    # ==========================================================================     
+    def _build_step3_mapping_packet(
         self,
-        field: str,
-        value_index: Dict[str, Dict[str, List[Dict[str, Any]]]],
-    ) -> str:
-        candidates = value_index.get(field, {}).get("valid", [])
-        if not candidates:
-            return ""
-
-        for item in candidates:
-            if self._clean_text(item.get("technique")).upper() == "EP":
-                return self._representative_value(item)
-
-        for point in ("N", "MIN", "MAX", "MIN+1", "MAX-1"):
-            for item in candidates:
-                boundary = item.get("boundary") if isinstance(item.get("boundary"), dict) else {}
-                if self._clean_text(boundary.get("point")).upper() == point:
-                    return self._representative_value(item)
-
-        return self._representative_value(candidates[0])
-
-    def _build_default_valid_row_for_step3(
-        self,
+        *,
         feature: str,
-        value_index: Dict[str, Dict[str, List[Dict[str, Any]]]],
-    ) -> Dict[str, Any]:
-        fields = get_feature_item_fields(feature)
-        row: Dict[str, Any] = {}
-        for field in fields:
-            row[field] = self._pick_valid_value_for_step3(field, value_index)
-
-        # Rule quan hệ phổ biến: nếu có Password và ConfirmPassword thì mặc định phải khớp nhau.
-        if "Password" in row and "ConfirmPassword" in row:
-            row["ConfirmPassword"] = row["Password"]
-        return row
-
-    def _condition_text_for_step3(self, condition: Dict[str, Any], state: str) -> str:
-        state = self._clean_text(state).upper()
-        if state == "Y":
-            return " ".join([
-                self._clean_text(condition.get("name")),
-                self._clean_text(condition.get("meaning_when_y")),
-            ]).lower()
-        if state == "N":
-            return " ".join([
-                self._clean_text(condition.get("name")),
-                self._clean_text(condition.get("meaning_when_n")),
-            ]).lower()
-        return self._clean_text(condition.get("name")).lower()
-
-    def _filter_invalid_coverages_for_condition(
-        self,
-        *,
-        field: str,
-        expected: str,
-        condition: Dict[str, Any],
-        state: str,
-        value_index: Dict[str, Dict[str, List[Dict[str, Any]]]],
-    ) -> List[Dict[str, Any]]:
-        """
-        Lấy TẤT CẢ coverage invalid phù hợp với condition của Decision Table.
-        Đây là phần giúp Step 3 bảo toàn EP/BVA coverage.
-        """
-        candidates = list(value_index.get(field, {}).get("invalid", []))
-        if not candidates:
-            return []
-
-        expected_clean = self._clean_text(expected)
-        expected_lower = expected_clean.lower()
-        condition_text = self._condition_text_for_step3(condition, state)
-
-        exact_expected_matches = [
-            item for item in candidates
-            if self._clean_text(item.get("expected_class")) == expected_clean
-        ]
-        if exact_expected_matches:
-            candidates = exact_expected_matches
-
-        empty_markers = (
-            "rỗng", "trống", "không được để trống", "bắt buộc", "được nhập",
-            "empty", "required", "blank",
-        )
-        duplicate_markers = ("tồn tại", "đã đăng ký", "trùng", "exist", "duplicate")
-        mismatch_markers = ("không khớp", "khác", "không trùng", "mismatch", "not match")
-
-        asks_empty = any(marker in condition_text for marker in empty_markers) or any(
-            marker in expected_lower for marker in ("điền", "trống", "rỗng", "required", "empty", "blank")
-        )
-        asks_duplicate = any(marker in condition_text for marker in duplicate_markers) or any(
-            marker in expected_lower for marker in duplicate_markers
-        )
-        asks_mismatch = any(marker in condition_text for marker in mismatch_markers) or any(
-            marker in expected_lower for marker in mismatch_markers
-        )
-
-        if asks_empty:
-            empty_items = [item for item in candidates if self._representative_value(item) == ""]
-            if empty_items:
-                return empty_items
-
-        if asks_duplicate:
-            duplicate_items = [
-                item for item in candidates
-                if any(marker in self._coverage_text_for_step3(item) for marker in duplicate_markers)
-            ]
-            if duplicate_items:
-                return duplicate_items
-
-        if asks_mismatch:
-            mismatch_items = [
-                item for item in candidates
-                if any(marker in self._coverage_text_for_step3(item) for marker in mismatch_markers)
-            ]
-            if mismatch_items:
-                return mismatch_items
-
-        return candidates
-
-    def _get_changed_conditions_for_rule(
-        self,
-        rule: Dict[str, Any],
-        happy_states: Dict[str, Any],
-    ) -> List[Tuple[str, str]]:
-        states = rule.get("condition_states")
-        if not isinstance(states, dict):
-            return []
-
-        changed: List[Tuple[str, str]] = []
-        for cid, state in states.items():
-            cid_clean = self._clean_text(cid)
-            state_clean = self._normalize_dt_state(state)
-            if not cid_clean or state_clean == "-":
-                continue
-
-            happy_state = self._normalize_dt_state(happy_states.get(cid_clean))
-            if happy_state and state_clean == happy_state:
-                continue
-
-            changed.append((cid_clean, state_clean))
-        return changed
-
-    def _build_variants_for_changed_condition(
-        self,
-        *,
-        condition_id: str,
-        state: str,
-        expected: str,
         fields: List[str],
+        rule: Dict[str, Any],
         condition_index: Dict[str, Dict[str, Any]],
         value_index: Dict[str, Dict[str, List[Dict[str, Any]]]],
-    ) -> List[Dict[str, Any]]:
-        condition = condition_index.get(condition_id, {})
-        source_fields = condition.get("source_fields", [])
-        if not isinstance(source_fields, list):
-            source_fields = []
+    ) -> Dict[str, Any]:
+        """
+        Tạo packet nhỏ cho AI ở Step 3.
 
-        variants: List[Dict[str, Any]] = []
-        for field in source_fields:
-            field_clean = self._clean_text(field)
-            if field_clean not in fields:
+        Code KHÔNG quyết định mapping thay AI.
+        Code chỉ:
+        - lấy đúng 1 decision_rule;
+        - đưa condition liên quan;
+        - đưa danh sách representative_value valid/invalid theo từng field;
+        - đưa danh sách field bắt buộc để AI sinh đủ cột.
+        """
+        states = rule.get("condition_states") if isinstance(rule.get("condition_states"), dict) else {}
+
+        related_conditions: List[Dict[str, Any]] = []
+        related_fields: List[str] = []
+
+        for cid, state in states.items():
+            cid_clean = self._clean_text(cid)
+            condition = condition_index.get(cid_clean)
+            if not isinstance(condition, dict):
                 continue
 
-            coverages = self._filter_invalid_coverages_for_condition(
-                field=field_clean,
-                expected=expected,
-                condition=condition,
-                state=state,
-                value_index=value_index,
-            )
+            condition_payload = {
+                "id": cid_clean,
+                "state": self._normalize_dt_state(state),
+                "name": self._clean_text(condition.get("name")),
+                "source_fields": condition.get("source_fields", []),
+                "meaning_when_y": self._clean_text(condition.get("meaning_when_y")),
+                "meaning_when_n": self._clean_text(condition.get("meaning_when_n")),
+            }
+            related_conditions.append(condition_payload)
 
-            for coverage in coverages:
-                if not isinstance(coverage, dict):
-                    continue
-                variants.append({
-                    "field": field_clean,
-                    "value": self._representative_value(coverage),
-                    "coverage_id": self._clean_text(coverage.get("id")),
-                    "coverage_description": self._clean_text(coverage.get("description")),
-                })
-        return variants
+            source_fields = condition.get("source_fields")
+            if isinstance(source_fields, list):
+                for field in source_fields:
+                    field_clean = self._clean_text(field)
+                    if field_clean in fields and field_clean not in related_fields:
+                        related_fields.append(field_clean)
 
-    def _resolve_expected_for_step3(self, expected: str, row: Dict[str, Any]) -> str:
-        expected_clean = self._clean_text(expected)
-        if expected_clean in row:
-            return "" if row.get(expected_clean) is None else str(row.get(expected_clean))
-        return expected_clean
-
-    def _make_final_row_for_step3(
-        self,
-        *,
-        feature: str,
-        fields: List[str],
-        row_values: Dict[str, Any],
-        expected: str,
-        index: int,
-    ) -> Dict[str, Any]:
-        final_row: Dict[str, Any] = {
-            "Testcase": build_default_testcase_id(feature, index)
-        }
+        # Bảo đảm AI luôn có dữ liệu cho toàn bộ input fields để sinh row phẳng đủ cột.
+        candidate_values: Dict[str, Dict[str, List[Dict[str, Any]]]] = {}
         for field in fields:
-            final_row[field] = row_values.get(field, "")
-        final_row["Expected"] = self._resolve_expected_for_step3(expected, final_row)
-        return final_row
-
-    def _build_happy_path_rows_for_step3(
-        self,
-        *,
-        feature: str,
-        rule: Dict[str, Any],
-        fields: List[str],
-        value_index: Dict[str, Dict[str, List[Dict[str, Any]]]],
-    ) -> List[Dict[str, Any]]:
-        """
-        Happy path sinh:
-        - 1 dòng all-valid mặc định
-        - thêm biến thể valid để giữ các coverage valid/BVA hợp lệ của Step 1
-        """
-        expected = self._clean_text(rule.get("expected"))
-        base_row = self._build_default_valid_row_for_step3(feature, value_index)
-        rows: List[Dict[str, Any]] = []
-
-        def append_row(row_values: Dict[str, Any]) -> None:
-            row = {field: row_values.get(field, "") for field in fields}
-            row["Expected"] = self._resolve_expected_for_step3(expected, row)
-            rows.append(row)
-
-        append_row(dict(base_row))
-
-        for field in fields:
-            valid_items = value_index.get(field, {}).get("valid", [])
-            for coverage in valid_items:
-                if not isinstance(coverage, dict):
-                    continue
-
-                value = self._representative_value(coverage)
-                if str(base_row.get(field, "")) == value:
-                    continue
-
-                row_values = dict(base_row)
-                row_values[field] = value
-
-                if field == "Password" and "ConfirmPassword" in row_values:
-                    row_values["ConfirmPassword"] = value
-
-                if field == "ConfirmPassword" and "Password" in row_values:
-                    if row_values.get("ConfirmPassword") != row_values.get("Password"):
+            candidate_values[field] = {"valid": [], "invalid": []}
+            for validity in ("valid", "invalid"):
+                for item in value_index.get(field, {}).get(validity, []):
+                    if not isinstance(item, dict):
                         continue
+                    boundary = item.get("boundary") if isinstance(item.get("boundary"), dict) else None
+                    candidate_values[field][validity].append({
+                        "coverage_id": self._clean_text(item.get("id")),
+                        "value": self._representative_value(item),
+                        "technique": self._clean_text(item.get("technique")),
+                        "validity": self._clean_text(item.get("validity")),
+                        "description": self._clean_text(item.get("description")),
+                        "rule": self._clean_text(item.get("rule")),
+                        "expected_class": self._clean_text(item.get("expected_class")),
+                        "boundary": {
+                            "kind": self._clean_text(boundary.get("kind")),
+                            "point": self._clean_text(boundary.get("point")),
+                        } if boundary else None,
+                    })
 
-                append_row(row_values)
+        return {
+            "feature": feature,
+            "required_output_fields": ["Testcase", *fields, "Expected"],
+            "input_fields": fields,
+            "decision_rule": {
+                "id": self._clean_text(rule.get("id")),
+                "type": self._clean_text(rule.get("type")),
+                "condition_states": states,
+                "action_refs": rule.get("action_refs", []),
+                "expected": self._clean_text(rule.get("expected")),
+                "reduction_note": self._clean_text(rule.get("reduction_note")),
+            },
+            "related_conditions": related_conditions,
+            "related_fields": related_fields,
+            "candidate_values": candidate_values,
+            "instruction_for_ai": (
+                "Phân tích decision_rule này, tự quyết định sinh bao nhiêu testcase, "
+                "chọn representative_value phù hợp từ candidate_values, field không gây lỗi dùng valid, "
+                "field gây lỗi dùng invalid phù hợp. Không tạo expected mới."
+            ),
+        }
 
-        return rows
-
-    def _build_final_items_fallback_from_step1_step2(
+    def _build_step3_mapping_packet_all_rules(
         self,
+        *,
         feature: str,
-        step1_data: Dict[str, Any],
-        dt_data: Dict[str, Any],
+        fields: List[str],
+        rules: List[Dict[str, Any]],
+        condition_index: Dict[str, Dict[str, Any]],
+        value_index: Dict[str, Dict[str, List[Dict[str, Any]]]],
     ) -> Dict[str, Any]:
         """
-        Coverage-preserving mapping giữa EP/BVA và Decision Table.
+        Tạo 1 packet compact cho toàn bộ Step 3.
 
-        Khác mapping 1-1 cũ, một decision_rule có thể sinh nhiều testcase nếu condition lỗi
-        tương ứng với nhiều coverage_items của Step 1.
+        Dùng khi số decision_rules nhỏ. Code chỉ rút gọn dữ liệu đầu vào:
+        - giữ toàn bộ decision_rules cần AI phân tích;
+        - giữ condition liên quan;
+        - giữ representative_value valid/invalid từ Step 1;
+        - không tự quyết định testcase thay AI.
         """
-        from itertools import product
+        condition_ids_used: Set[str] = set()
+        rules_payload: List[Dict[str, Any]] = []
 
-        feature_key = normalize_feature_name(feature)
-        fields = get_feature_item_fields(feature_key)
-        value_index = self._build_step1_value_index_for_step3(feature_key, step1_data)
-        condition_index = self._build_condition_index_for_step3(dt_data)
-
-        happy_rule = self._get_step3_happy_rule(dt_data)
-        happy_states = happy_rule.get("condition_states") if isinstance(happy_rule.get("condition_states"), dict) else {}
-
-        rules = dt_data.get("decision_rules", [])
-        if not isinstance(rules, list) or not rules:
-            raise RuntimeError("Cannot build Step3 by code: Step2 decision_rules is empty.")
-
-        rows: List[Dict[str, Any]] = []
-        seen_signatures: Set[tuple] = set()
-
-        def append_final_row(row: Dict[str, Any]) -> None:
-            signature = tuple(
-                (key, "" if row.get(key) is None else str(row.get(key)))
-                for key in [*fields, "Expected"]
-            )
-            if signature in seen_signatures:
-                return
-            seen_signatures.add(signature)
-            row["Testcase"] = build_default_testcase_id(feature_key, len(rows) + 1)
-            rows.append(row)
-
-        for rule in rules:
+        for idx, rule in enumerate(rules, start=1):
             if not isinstance(rule, dict):
                 continue
 
-            rule_type = self._clean_text(rule.get("type"))
-            expected = self._clean_text(rule.get("expected"))
+            states = rule.get("condition_states") if isinstance(rule.get("condition_states"), dict) else {}
+            normalized_states = {
+                self._clean_text(cid): self._normalize_dt_state(state)
+                for cid, state in states.items()
+                if self._clean_text(cid)
+            }
 
-            if rule_type == "happy_path":
-                happy_rows = self._build_happy_path_rows_for_step3(
-                    feature=feature_key,
-                    rule=rule,
-                    fields=fields,
-                    value_index=value_index,
-                )
-                for row_values in happy_rows:
-                    final_row = self._make_final_row_for_step3(
-                        feature=feature_key,
-                        fields=fields,
-                        row_values=row_values,
-                        expected=expected,
-                        index=len(rows) + 1,
-                    )
-                    append_final_row(final_row)
+            for cid in normalized_states.keys():
+                condition_ids_used.add(cid)
+
+            rules_payload.append({
+                "id": self._clean_text(rule.get("id")) or f"DT_{idx:03d}",
+                "type": self._clean_text(rule.get("type")),
+                "condition_states": normalized_states,
+                "action_refs": rule.get("action_refs", []),
+                "expected": self._clean_text(rule.get("expected")),
+                "reduction_note": self._clean_text(rule.get("reduction_note")),
+            })
+
+        related_conditions: List[Dict[str, Any]] = []
+        for cid in sorted(condition_ids_used, key=lambda x: int(x[1:]) if re.match(r"^C\d+$", x) else 9999):
+            condition = condition_index.get(cid)
+            if not isinstance(condition, dict):
                 continue
+            related_conditions.append({
+                "id": cid,
+                "name": self._clean_text(condition.get("name")),
+                "source_fields": condition.get("source_fields", []),
+                "meaning_when_y": self._clean_text(condition.get("meaning_when_y")),
+                "meaning_when_n": self._clean_text(condition.get("meaning_when_n")),
+            })
 
-            changed_conditions = self._get_changed_conditions_for_rule(rule, happy_states)
-            base_row = self._build_default_valid_row_for_step3(feature_key, value_index)
+        default_valid_values: Dict[str, Any] = {}
+        candidate_values: Dict[str, Dict[str, List[Dict[str, Any]]]] = {}
 
-            if not changed_conditions:
-                final_row = self._make_final_row_for_step3(
-                    feature=feature_key,
-                    fields=fields,
-                    row_values=base_row,
-                    expected=expected,
-                    index=len(rows) + 1,
-                )
-                append_final_row(final_row)
-                continue
+        for field in fields:
+            candidate_values[field] = {"valid": [], "invalid": []}
 
-            variant_groups: List[List[Dict[str, Any]]] = []
-            for condition_id, state in changed_conditions:
-                variants = self._build_variants_for_changed_condition(
-                    condition_id=condition_id,
-                    state=state,
-                    expected=expected,
-                    fields=fields,
-                    condition_index=condition_index,
-                    value_index=value_index,
-                )
-
-                if not variants:
-                    variants = [{"field": "", "value": "", "coverage_id": "", "coverage_description": ""}]
-                variant_groups.append(variants)
-
-            for combination in product(*variant_groups):
-                row_values = dict(base_row)
-
-                for variant in combination:
-                    field = self._clean_text(variant.get("field"))
-                    if not field or field not in fields:
+            for validity in ("valid", "invalid"):
+                for item in value_index.get(field, {}).get(validity, []):
+                    if not isinstance(item, dict):
                         continue
+                    boundary = item.get("boundary") if isinstance(item.get("boundary"), dict) else None
+                    row = {
+                        "coverage_id": self._clean_text(item.get("id")),
+                        "value": self._representative_value(item),
+                        "technique": self._clean_text(item.get("technique")),
+                        "validity": self._clean_text(item.get("validity")),
+                        "description": self._clean_text(item.get("description")),
+                        "rule": self._clean_text(item.get("rule")),
+                        "expected_class": self._clean_text(item.get("expected_class")),
+                    }
+                    if boundary:
+                        row["boundary"] = {
+                            "kind": self._clean_text(boundary.get("kind")),
+                            "point": self._clean_text(boundary.get("point")),
+                        }
+                    candidate_values[field][validity].append(row)
 
-                    row_values[field] = variant.get("value", "")
+            valid_values = candidate_values[field]["valid"]
+            default_valid_values[field] = valid_values[0]["value"] if valid_values else ""
 
-                    if (
-                        field == "ConfirmPassword"
-                        and "Password" in row_values
-                        and row_values.get("ConfirmPassword") == row_values.get("Password")
-                    ):
-                        row_values["ConfirmPassword"] = str(row_values.get("Password", "")) + "x"
-
-                final_row = self._make_final_row_for_step3(
-                    feature=feature_key,
-                    fields=fields,
-                    row_values=row_values,
-                    expected=expected,
-                    index=len(rows) + 1,
-                )
-                append_final_row(final_row)
-
-        if not rows:
-            raise RuntimeError("Cannot build Step3 by code: no final items generated.")
+        # Mặc định các field xác nhận mật khẩu phải khớp nếu feature có cặp này.
+        if "Password" in default_valid_values and "ConfirmPassword" in default_valid_values:
+            default_valid_values["ConfirmPassword"] = default_valid_values["Password"]
 
         return {
-            "feature": feature_key,
-            "description": (
-                "Bộ test data cuối cùng được sinh bằng coverage-preserving mapping "
-                "giữa Step 1 EP/BVA và Step 2 Decision Table."
+            "feature": feature,
+            "required_output_fields": ["Testcase", *fields, "Expected"],
+            "input_fields": fields,
+            "default_valid_values": default_valid_values,
+            "decision_rules": rules_payload,
+            "related_conditions": related_conditions,
+            "candidate_values": candidate_values,
+            "instruction_for_ai": (
+                "Phân tích toàn bộ decision_rules trong packet này và sinh final test data. "
+                "Mỗi decision_rule phải có ít nhất 1 testcase nếu map được. "
+                "Nếu một rule tương ứng nhiều coverage khác bản chất, có thể sinh nhiều testcase. "
+                "Field không gây lỗi dùng default_valid_values hoặc candidate valid. "
+                "Field gây lỗi dùng candidate invalid phù hợp. "
+                "Expected phải lấy theo decision_rule.expected; nếu expected là tên field thì dùng giá trị thực tế của field đó. "
+                "Không tạo expected mới, không dùng placeholder, không sinh testcase trùng."
             ),
-            "items": rows,
         }
 
-    # ==========================================================================
-    # STEP 3: FINAL TESTCASES
-    # ==========================================================================
+    def _extract_input_fields_from_feature_spec_for_step3(self, feature_key: str) -> List[str]:
+        """
+        Đọc FEATURE SPECIFICATION để lấy danh sách INPUT field nếu đặc tả viết theo dạng:
+        1. FieldName: ...
+        2. FieldName: ...
+
+        Hàm này chỉ dùng để khóa field ở Step 3, không sửa Step 1/Step 2.
+        Nếu không parse được thì trả về [] để không phá các đặc tả có format khác.
+        """
+        try:
+            spec = self.prompt_loader.load_feature_description(feature_key)
+        except Exception:
+            return []
+
+        fields: List[str] = []
+        in_input_block = False
+
+        for raw_line in spec.splitlines():
+            line = raw_line.strip()
+            if not line:
+                continue
+
+            upper = line.upper()
+            if upper.startswith("INPUT") or "INPUT:" in upper:
+                in_input_block = True
+                continue
+
+            if in_input_block and re.match(r"^[A-ZÀ-Ỹ0-9 _/-]+:?$", line) and not re.match(r"^\d+\.", line):
+                # Gặp tiêu đề section mới sau INPUT thì dừng.
+                if not any(marker in upper for marker in ("FIELD", "TRƯỜNG", "TRUONG")):
+                    break
+
+            if not in_input_block:
+                continue
+
+            match = re.match(r"^\s*\d+\.\s*([A-Za-z_][A-Za-z0-9_]*)\s*:", line)
+            if match:
+                field_name = match.group(1).strip()
+                if field_name and field_name not in fields:
+                    fields.append(field_name)
+
+        return fields
+
+    def _assert_step3_packet_contract(
+        self,
+        packet: Dict[str, Any],
+        feature_key: str,
+    ) -> None:
+        """
+        Kiểm tra packet trước khi đưa vào Step 3 prompt.
+
+        Step 3 chỉ được sinh output theo required_output_fields/input_fields
+        đã khóa trong packet. Hàm này không sinh test data.
+        """
+        if not isinstance(packet, dict):
+            raise RuntimeError("Step3 mapping packet must be a JSON object.")
+
+        packet_feature = normalize_feature_name(self._clean_text(packet.get("feature")))
+        if packet_feature != feature_key:
+            raise RuntimeError(
+                f"Step3 packet feature mismatch: expected '{feature_key}', got '{packet_feature}'."
+            )
+
+        input_fields = packet.get("input_fields")
+        required_output_fields = packet.get("required_output_fields")
+
+        if not isinstance(input_fields, list) or not input_fields:
+            raise RuntimeError("Step3 packet must contain non-empty input_fields.")
+        if not all(isinstance(field, str) and field.strip() for field in input_fields):
+            raise RuntimeError("Step3 packet input_fields must contain only non-empty strings.")
+
+        schema_fields = get_feature_item_fields(feature_key)
+        if input_fields != schema_fields:
+            raise RuntimeError(
+                "Step3 packet input_fields must exactly match feature schema. "
+                f"Expected={schema_fields}, got={input_fields}."
+            )
+
+        spec_fields = self._extract_input_fields_from_feature_spec_for_step3(feature_key)
+        if spec_fields and input_fields != spec_fields:
+            raise RuntimeError(
+                "Step3 packet input_fields must exactly match INPUT fields in FEATURE SPECIFICATION. "
+                f"Expected from spec={spec_fields}, got={input_fields}."
+            )
+
+        expected_required = ["Testcase", *schema_fields, "Expected"]
+        if required_output_fields != expected_required:
+            raise RuntimeError(
+                "Step3 packet required_output_fields must exactly match final schema. "
+                f"Expected={expected_required}, got={required_output_fields}."
+            )
+
+    def _assert_step3_ai_output_locked_to_packet(
+        self,
+        data: Dict[str, Any],
+        packet: Dict[str, Any],
+    ) -> None:
+        """
+        Chặn AI tự sinh field ngoài packet trước khi normalize.
+
+        Nếu AI sinh field lạ như Email/OTP/Captcha, pipeline phải fail rõ ràng
+        thay vì âm thầm bỏ field đó trong normalize.
+        """
+        if not isinstance(data, dict):
+            raise RuntimeError("Step3 output must be a JSON object.")
+
+        allowed_top_keys = {"feature", "description", "items"}
+        extra_top_keys = sorted(set(data.keys()) - allowed_top_keys)
+        if extra_top_keys:
+            raise RuntimeError(
+                f"Step3 output contains unexpected top-level keys: {extra_top_keys}."
+            )
+
+        packet_feature = normalize_feature_name(self._clean_text(packet.get("feature")))
+        ai_feature = self._clean_text(data.get("feature"))
+        if ai_feature and normalize_feature_name(ai_feature) != packet_feature:
+            raise RuntimeError(
+                f"Step3 output feature must match packet feature '{packet_feature}', got '{ai_feature}'."
+            )
+
+        required_output_fields = packet.get("required_output_fields")
+        input_fields = packet.get("input_fields")
+        if not isinstance(required_output_fields, list) or not required_output_fields:
+            raise RuntimeError("Step3 packet missing required_output_fields.")
+        if not isinstance(input_fields, list) or not input_fields:
+            raise RuntimeError("Step3 packet missing input_fields.")
+
+        required_keys = [self._clean_text(x) for x in required_output_fields if self._clean_text(x)]
+        input_field_set = {self._clean_text(x) for x in input_fields if self._clean_text(x)}
+        allowed_item_keys = set(required_keys)
+
+        items = data.get("items")
+        if not isinstance(items, list) or not items:
+            raise RuntimeError("Step3 output must contain non-empty 'items'.")
+
+        for idx, item in enumerate(items, start=1):
+            if not isinstance(item, dict):
+                raise RuntimeError(f"Step3 items[{idx}] must be an object.")
+
+            actual_keys = set(item.keys())
+            missing = [key for key in required_keys if key not in actual_keys]
+            extra = sorted(actual_keys - allowed_item_keys)
+
+            if missing:
+                raise RuntimeError(
+                    f"Step3 items[{idx}] missing required keys from packet: {missing}."
+                )
+            if extra:
+                raise RuntimeError(
+                    f"Step3 items[{idx}] contains field(s) outside packet schema: {extra}. "
+                    f"Allowed item keys: {required_keys}. "
+                    f"Allowed input_fields: {sorted(input_field_set)}."
+                )
+
     def _generate_step3_final(
         self,
         feature: str,
@@ -2595,37 +2304,104 @@ class GenerationPipeline:
         exporter: DataExporter,
     ) -> Tuple[Path, Dict[str, Any]]:
         """
-        STEP 3 code-only:
-        - Không gọi AI.
-        - Sinh final.json bằng coverage-preserving mapping giữa Step 1 và Step 2.
-        - Output schema phẳng: feature, description, items.
+        STEP 3 AI single-call compact mapping.
+
+        Dùng 1 lần gọi AI cho toàn bộ decision_rules compact khi số rule nhỏ.
+        Code chỉ rút gọn dữ liệu, gọi AI, normalize, dedupe, hard-check và export.
+        AI phân tích các decision_rules và sinh bộ final.json.
         """
         step_start = time.perf_counter()
         feature_key = normalize_feature_name(step1_data.get("feature", feature))
 
-        self._log("STEP 3: bỏ gọi AI, sinh final testcases bằng coverage-preserving mapping Step1 + Step2 ...")
+        self._log("STEP 3: build compact mapping packet cho toàn bộ decision_rules ...")
 
-        final_data = self._build_final_items_fallback_from_step1_step2(
+        fields = get_feature_item_fields(feature_key)
+        condition_index = self._build_condition_index_for_step3(dt_data)
+        value_index = self._build_step1_value_index_for_step3(feature_key, step1_data)
+
+        rules = dt_data.get("decision_rules", [])
+        if not isinstance(rules, list) or not rules:
+            raise RuntimeError("Step3: decision_rules is empty.")
+
+        packet = self._build_step3_mapping_packet_all_rules(
             feature=feature_key,
-            step1_data=step1_data,
-            dt_data=dt_data,
+            fields=fields,
+            rules=rules,
+            condition_index=condition_index,
+            value_index=value_index,
         )
+        self._assert_step3_packet_contract(packet, feature_key)
+
+        packet_path = exporter.write_raw_json(packet, filename="step3_mapping_packet.json")
+
+        step3_prompt = self.prompt_loader.build_step3_prompt(
+            feature=feature_key,
+            mapping_packet=packet,
+        )
+
+        self._log(
+            f"STEP 3: gọi AI map toàn bộ {len(rules)} decision_rules "
+            f"(prompt {len(step3_prompt):,} ký tự) ..."
+        )
+
+        llm_start = time.perf_counter()
+        raw_output = self.llm_client.generate(step3_prompt)
+        raw_txt_path = self._save_raw_output(exporter, "step3_raw.txt", raw_output)
+        self._raise_if_llm_output_empty(raw_output, "Step3", raw_txt_path)
+        llm_elapsed = time.perf_counter() - llm_start
+        self._log(f"STEP 3: AI trả kết quả sau {self._format_seconds(llm_elapsed)}")
+
+        parsed = self.parser.parse_json(raw_output)
+        if not parsed.ok:
+            raise RuntimeError(
+                f"Step3 parse error: {parsed.error}. Raw output saved at: {raw_txt_path}"
+            )
+
+        data = parsed.data
+        if not isinstance(data, dict):
+            raise RuntimeError("Step3 output must be a JSON object.")
+
+        self._assert_step3_ai_output_locked_to_packet(data, packet)
+
+        final_data = {
+            "feature": feature_key,
+            "description": self._clean_text(data.get("description")) or (
+                "Final framework-ready test data generated by one AI mapping call "
+                "from Step3 mapping packet."
+            ),
+            "items": data.get("items", []),
+        }
 
         final_data = self._force_step3_feature(final_data, feature_key)
         final_data = self._normalize_step3_data(feature_key, final_data)
 
-        self._log("STEP 3: hard-check output ...")
-        self._hard_check_step3_structure(final_data, feature_key)
-
         exporter.write_raw_json(
             {
-                "fallback_used": True,
-                "mode": "code_only_coverage_preserving",
-                "reason": "Step 3 sinh bằng code coverage-preserving mapping, không gọi AI.",
-                "total_items": len(final_data.get("items", [])),
+                "mode": "ai_single_call_all_rules_compact",
+                "total_rules": len(rules),
+                "total_items_after_dedupe": len(final_data.get("items", [])),
+                "packet": str(packet_path),
+                "raw": str(raw_txt_path),
+                "prompt_length": len(step3_prompt),
             },
-            filename="final_fallback_info.json",
+            filename="final_generation_info.json",
         )
+
+        self._log("STEP 3: hard-check + validate output ...")
+        try:
+            self._hard_check_step3_structure(final_data, feature_key)
+            result = self.step3_validator.validate_or_raise(
+                final_data,
+                step1_data=step1_data,
+                dt_data=dt_data,
+            )
+            if result.warnings:
+                self._log(f"STEP 3: có {len(result.warnings)} warning")
+                self._raise_if_step3_warnings_are_severe(result.warnings)
+        except Exception:
+            self._log("STEP 3: validate failed, ghi final_invalid.json")
+            exporter.write_raw_json(final_data, filename="final_invalid.json")
+            raise
 
         self._log("STEP 3: ghi final JSON ...")
         final_json_path = exporter.write_raw_json(final_data, filename="final.json")
@@ -2708,8 +2484,7 @@ class GenerationPipeline:
             self._log(f"Warning: Step1 Excel export failed: {exc}")
 
     # ===========================================================================
-    # OVERRIDE STEP 3 FRAMEWORK-READY METHODS
-    # Added at end of class to override older duplicate Step 3 methods above.
+    # STEP 3 FRAMEWORK-READY NORMALIZATION / HARD CHECK
     # ===========================================================================
     def _normalize_framework_item(self, feature: str, item: Dict[str, Any], index: int) -> Dict[str, Any]:
         fields = get_feature_item_fields(feature)
@@ -2755,6 +2530,18 @@ class GenerationPipeline:
         step3_data["items"] = normalized_items
         step3_data.pop("testcases", None)
         step3_data.pop("testcase_summary", None)
+        return step3_data
+
+    def _force_step3_feature(
+        self,
+        step3_data: Dict[str, Any],
+        feature_key: str,
+    ) -> Dict[str, Any]:
+
+        if not isinstance(step3_data, dict):
+            raise RuntimeError("Step3 output must be a JSON object.")
+
+        step3_data["feature"] = feature_key
         return step3_data
 
     def _hard_check_step3_structure(self, step3_data: Dict[str, Any], feature: str) -> None:

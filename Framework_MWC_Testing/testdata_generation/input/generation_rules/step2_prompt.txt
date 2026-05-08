@@ -18,27 +18,17 @@ LƯU Ý BẮT BUỘC:
 - Step 2 chỉ sinh logic quyết định rút gọn.
 
 ==================================================
-NGUYÊN TẮC EXPECTED/ACTION
-==================================================
-
-Actions phải bám đúng KỲ VỌNG NGHIỆP VỤ trong FEATURE SPECIFICATION.
-
-Với mọi action:
-- action.expected PHẢI dùng đúng giá trị sau "Expected = ..." trong FEATURE SPECIFICATION.
-- Không tự diễn giải lại expected.
-- Không đổi wording của expected.
-- Không dùng expected chung chung nếu FEATURE SPECIFICATION đã nêu expected cụ thể.
-
-Với mọi decision rule:
-- rule.expected PHẢI bằng expected của action đầu tiên trong action_refs.
-- happy_path phải dùng expected thành công được nêu trong FEATURE SPECIFICATION.
-- invalid rule phải dùng expected lỗi tương ứng được nêu trong FEATURE SPECIFICATION.
-
-==================================================
 QUY TẮC CONDITIONS
 ==================================================
 
-Mỗi condition phải có:
+Condition là một điều kiện logic nghiệp vụ ảnh hưởng trực tiếp tới expected hoặc business behavior.
+
+Mỗi condition phải:
+- chỉ đại diện cho đúng 1 logic kiểm tra;
+- có thể đánh giá theo 2 trạng thái đúng/sai;
+- tham gia ít nhất 1 decision rule.
+
+Mỗi condition bắt buộc có:
 - id duy nhất dạng C1, C2, ...
 - name rõ nghĩa
 - source_fields là danh sách field liên quan
@@ -46,10 +36,16 @@ Mỗi condition phải có:
 - meaning_when_y
 - meaning_when_n
 
-Chỉ dùng trạng thái:
-- Y = condition đúng
-- N = condition sai
-- - = don't care
+Không được:
+- gộp nhiều logic độc lập vào cùng một condition;
+- tạo nhiều condition cho cùng một logic;
+- tạo condition không ảnh hưởng tới expected hoặc business behavior;
+- tạo condition chỉ để mô tả test data.
+
+Trong decision rule:
+* Y = condition đúng
+* N = condition sai
+* - = condition không cần xét trong rule hiện tại
 
 ==================================================
 QUY TẮC PHỤ THUỘC ĐIỀU KIỆN
@@ -75,13 +71,36 @@ Khi một field rỗng:
 - các condition kiểm tra sâu hơn của chính field đó được để "-" vì không còn ý nghĩa kiểm tra.
 
 ==================================================
-QUY TẮC ACTIONS
+QUY TẮC ACTIONS / EXPECTED
 ==================================================
+
+Action là kết quả/hành vi của hệ thống tương ứng với expected nghiệp vụ.
 
 Mỗi action phải có:
 - id duy nhất dạng A1, A2, ...
 - name rõ nghĩa
-- expected lấy đúng từ FEATURE SPECIFICATION
+- expected lấy đúng từ giá trị sau "Expected = ..." trong FEATURE SPECIFICATION
+
+Quy tắc bắt buộc:
+- Chỉ tạo action từ KỲ VỌNG NGHIỆP VỤ trong FEATURE SPECIFICATION.
+- Không tạo action từ expected_class của Step 1.
+- Không tạo action từ representative_value.
+- Không tự diễn giải lại expected.
+- Không đổi wording của expected.
+- Không dùng expected chung chung nếu FEATURE SPECIFICATION đã nêu expected cụ thể.
+- Không tạo nhiều action có cùng expected.
+- Số lượng action không được vượt quá số expected nghiệp vụ khác nhau trong FEATURE SPECIFICATION.
+
+Nếu expected là giá trị động phụ thuộc input field:
+- giữ nguyên dạng mô tả động trong FEATURE SPECIFICATION.
+- không resolve thành giá trị cụ thể ở Step 2.
+
+Với mọi decision rule:
+- rule.expected phải bằng expected của action đầu tiên trong action_refs.
+- happy_path phải dùng expected thành công trong FEATURE SPECIFICATION.
+- invalid rule phải dùng expected lỗi tương ứng trong FEATURE SPECIFICATION.
+
+Expected động chỉ được resolve thành giá trị thật ở Step 3 khi đã có test data cụ thể.
 
 Không dùng key description thay cho expected.
 
@@ -95,7 +114,7 @@ Mỗi decision rule phải có:
 - condition_states
 - action_refs
 - expected
-- reduction_note
+
 
 ALLOWED TYPE:
 - happy_path
@@ -109,9 +128,6 @@ Bắt buộc:
 - Không bỏ sót rule nếu condition N tạo ra expected khác happy_path.
 - Không gộp các lỗi có expected khác nhau vào cùng một rule.
 - Không sinh rule dư nếu không tạo expected hoặc business behavior mới.
-
-reduction_note phải ngắn và có ý nghĩa theo rule cụ thể.
-Không dùng câu mô tả chung chung về bảng quyết định hoặc dấu "-".
 
 ==================================================
 OUTPUT
