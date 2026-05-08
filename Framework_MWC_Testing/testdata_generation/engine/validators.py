@@ -71,7 +71,7 @@ class _ValidationCommon:
         feature = normalize_feature_name(feature)
         try:
             expected_fields = get_feature_item_fields(feature)
-        except ValueError as exc:
+        except Exception as exc:
             errors.append(str(exc))
             return None, []
 
@@ -269,30 +269,14 @@ class ConditionsValidator(_ValidationCommon):
         per_field_bva_rules: Dict[str, Set[str]],
         errors: List[str],
     ) -> None:
-        if feature != "register":
-            return
+        """
+        Không còn luật riêng theo feature/field.
 
-        if per_field_bva_rules.get("Phone") and per_field_exact_points.get("Phone", set()) != _EXACT_POINTS:
-            missing = sorted(_EXACT_POINTS - per_field_exact_points.get("Phone", set()))
-            errors.append(
-                f"Field 'Phone' must include exact boundary points {sorted(_EXACT_POINTS)}. Missing: {missing}."
-            )
-
-        if per_field_bva_rules.get("Password") and per_field_range_points.get("Password", set()) != _RANGE_POINTS:
-            missing = sorted(_RANGE_POINTS - per_field_range_points.get("Password", set()))
-            errors.append(
-                f"Field 'Password' must include range boundary points {sorted(_RANGE_POINTS)}. Missing: {missing}."
-            )
-
-        if per_field_bva_rules.get("Username"):
-            errors.append(
-                "Field 'Username' must not use BVA for register because the specification does not define a numeric boundary for Username."
-            )
-
-        if per_field_bva_rules.get("ConfirmPassword"):
-            errors.append(
-                "Field 'ConfirmPassword' must not use BVA for register because this field is validated by match/not-match relation, not by numeric boundary."
-            )
+        Danh sách field hợp lệ được lấy động từ FEATURE SPECIFICATION qua
+        get_feature_item_fields(feature). Validator chỉ kiểm tra theo luật chung
+        của EP/BVA và schema output.
+        """
+        return
 
     def validate(self, data: Dict[str, Any]) -> ValidationResult:
         top_level_error = self._validate_top_level_object(data)

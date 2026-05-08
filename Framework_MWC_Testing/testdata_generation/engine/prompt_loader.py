@@ -4,7 +4,10 @@ import json
 from pathlib import Path
 from typing import Any, Dict
 
-from testdata_generation.engine.feature_item_schema import normalize_feature_name
+from testdata_generation.engine.feature_item_schema import (
+    extract_input_fields_from_spec_text,
+    normalize_feature_name,
+)
 
 
 class PromptLoader:
@@ -151,6 +154,9 @@ class PromptLoader:
         for _, path in paths.items():
             self._read_required(path)
 
+        feature_spec = self._read_required(paths["feature_description"])
+        extract_input_fields_from_spec_text(feature_spec)
+
         return {k: str(v) for k, v in paths.items()}
 
     # ==========================================================================
@@ -260,18 +266,6 @@ class PromptLoader:
         feature: str,
         mapping_packet: Dict[str, Any],
     ) -> str:
-        """
-        Build prompt cho Step 3 theo kiến trúc packet-based.
-
-        Step 3 chỉ nhận đúng 4 nguồn trong prompt:
-        1. FEATURE SPECIFICATION tương ứng;
-        2. STEP 3 PROMPT;
-        3. STEP 3 MAPPING PACKET;
-        4. FINAL OUTPUT FORMAT.
-
-        Không đưa toàn bộ step1.json hoặc toàn bộ step2_dt.json vào prompt.
-        mapping_packet là bản compact đã được pipeline dựng từ Step 1 + Step 2.
-        """
         feature_name = normalize_feature_name(feature)
 
         if not isinstance(mapping_packet, dict):
@@ -284,52 +278,33 @@ class PromptLoader:
         packet_json = json.dumps(
             mapping_packet,
             ensure_ascii=False,
-            indent=2,
+            separators=(",", ":"),
         )
-
-        required_output_fields = mapping_packet.get("required_output_fields", [])
-        input_fields = mapping_packet.get("input_fields", [])
 
         parts = [
             "/no_think",
-            prompt_template,
+
             "================================================================================",
             "FEATURE SPECIFICATION",
             "================================================================================",
             feature_spec,
+
             "================================================================================",
-            "STEP 3 MAPPING PACKET - LOCKED INPUT",
+            "STEP 3 AI-LIGHT PROMPT",
+            "================================================================================",
+            prompt_template,
+
+            "================================================================================",
+            "STEP 3 MAPPING PACKET",
             "================================================================================",
             packet_json,
+
             "================================================================================",
             "OUTPUT FORMAT REQUIREMENT",
             "================================================================================",
             final_schema,
-            "================================================================================",
-            "FINAL CONTRACT",
-            "================================================================================",
-            "Chỉ trả về đúng 1 JSON object theo OUTPUT FORMAT REQUIREMENT.",
-            "Step 3 chỉ được dùng đúng 4 nguồn trong prompt này: FEATURE SPECIFICATION, STEP 3 PROMPT, STEP 3 MAPPING PACKET, OUTPUT FORMAT REQUIREMENT.",
-            "Không truyền, không yêu cầu, không tái tạo toàn bộ step1.json hoặc toàn bộ step2_dt.json trong Step 3 prompt.",
-            "STEP 3 MAPPING PACKET là nguồn compact duy nhất để chọn decision_rule, condition, candidate value và expected.",
-            "FEATURE SPECIFICATION chỉ dùng để đối chiếu tên field nghiệp vụ, không dùng để tự bịa field mới.",
-            "Tên input field phải lấy tuyệt đối theo input_fields trong packet và phải khớp FEATURE SPECIFICATION.",
-            f"required_output_fields cố định = {json.dumps(required_output_fields, ensure_ascii=False)}",
-            f"input_fields cố định = {json.dumps(input_fields, ensure_ascii=False)}",
-            "Mỗi item bắt buộc có đúng các key trong required_output_fields, không thiếu và không thừa.",
-            "Tuyệt đối không sinh thêm input field ngoài input_fields.",
-            "Tuyệt đối không tự thêm field không có trong FEATURE SPECIFICATION.",
-            "Tuyệt đối không sinh field lạ như Email/OTP/Captcha/Address nếu không nằm trong input_fields.",
-            "Nếu một field không nằm trong input_fields thì không được xuất hiện ở bất kỳ item nào.",
-            "Không sửa decision_rules trong packet.",
-            "Không tạo expected mới.",
-            "Không dùng placeholder.",
-            "Không markdown.",
-            "Không comment.",
-            "Không giải thích.",
-            "Không text ngoài JSON.",
-            "Không <think> hoặc </think>.",
         ]
+
         return "\n\n".join(parts).strip()
 
     # ==========================================================================

@@ -1,7 +1,9 @@
 {
+  "feature": "register",
+  "description": "Bộ test data kiểm thử chức năng đăng ký với các trường hợp hợp lệ và không hợp lệ theo yêu cầu",
   "items": [
     {
-      "Testcase": "RE01",
+      "Testcase": "T001",
       "Username": "NewUser123",
       "Phone": "0123456789",
       "Password": "Pass1234",
@@ -9,7 +11,7 @@
       "Expected": "NewUser123"
     },
     {
-      "Testcase": "RE02",
+      "Testcase": "T002",
       "Username": "",
       "Phone": "0123456789",
       "Password": "Pass1234",
@@ -17,7 +19,7 @@
       "Expected": "Vui lòng điền vào trường này"
     },
     {
-      "Testcase": "RE03",
+      "Testcase": "T003",
       "Username": "AnhDuong11",
       "Phone": "0123456789",
       "Password": "Pass1234",
@@ -25,7 +27,7 @@
       "Expected": "tài khoản đã tồn tại trong hệ thống"
     },
     {
-      "Testcase": "RE04",
+      "Testcase": "T004",
       "Username": "NewUser123",
       "Phone": "",
       "Password": "Pass1234",
@@ -33,7 +35,7 @@
       "Expected": "Vui lòng điền vào trường này"
     },
     {
-      "Testcase": "RE05",
+      "Testcase": "T005",
       "Username": "NewUser123",
       "Phone": "012345678",
       "Password": "Pass1234",
@@ -41,7 +43,7 @@
       "Expected": "Số điện thoại không hợp lệ"
     },
     {
-      "Testcase": "RE06",
+      "Testcase": "T006",
       "Username": "NewUser123",
       "Phone": "01234567890",
       "Password": "Pass1234",
@@ -49,7 +51,7 @@
       "Expected": "Số điện thoại không hợp lệ"
     },
     {
-      "Testcase": "RE07",
+      "Testcase": "T007",
       "Username": "NewUser123",
       "Phone": "1234567890",
       "Password": "Pass1234",
@@ -57,7 +59,7 @@
       "Expected": "Số điện thoại không hợp lệ"
     },
     {
-      "Testcase": "RE08",
+      "Testcase": "T008",
       "Username": "NewUser123",
       "Phone": "01234a6789",
       "Password": "Pass1234",
@@ -65,7 +67,7 @@
       "Expected": "Số điện thoại không hợp lệ"
     },
     {
-      "Testcase": "RE09",
+      "Testcase": "T009",
       "Username": "NewUser123",
       "Phone": "01234!6789",
       "Password": "Pass1234",
@@ -73,7 +75,7 @@
       "Expected": "Số điện thoại không hợp lệ"
     },
     {
-      "Testcase": "RE10",
+      "Testcase": "T010",
       "Username": "NewUser123",
       "Phone": "01234 6789",
       "Password": "Pass1234",
@@ -81,7 +83,7 @@
       "Expected": "Số điện thoại không hợp lệ"
     },
     {
-      "Testcase": "RE11",
+      "Testcase": "T011",
       "Username": "NewUser123",
       "Phone": "0123456789",
       "Password": "",
@@ -89,7 +91,7 @@
       "Expected": "Vui lòng điền vào trường này"
     },
     {
-      "Testcase": "RE12",
+      "Testcase": "T012",
       "Username": "NewUser123",
       "Phone": "0123456789",
       "Password": "Pass123",
@@ -97,7 +99,7 @@
       "Expected": "Mật khẩu phải từ 8 đến 20 ký tự"
     },
     {
-      "Testcase": "RE13",
+      "Testcase": "T013",
       "Username": "NewUser123",
       "Phone": "0123456789",
       "Password": "Pass123456789012345678901",
@@ -105,7 +107,7 @@
       "Expected": "Mật khẩu phải từ 8 đến 20 ký tự"
     },
     {
-      "Testcase": "RE14",
+      "Testcase": "T014",
       "Username": "NewUser123",
       "Phone": "0123456789",
       "Password": "Pass1234",
@@ -113,7 +115,7 @@
       "Expected": "Vui lòng điền vào trường này"
     },
     {
-      "Testcase": "RE15",
+      "Testcase": "T015",
       "Username": "NewUser123",
       "Phone": "0123456789",
       "Password": "Pass1234",

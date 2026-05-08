@@ -412,11 +412,15 @@ class GenerationPipeline:
         return raw_feature
 
     def _resolve_feature_key_from_prompt(self, prompt: str, fallback_feature: str) -> str:
-        try:
-            raw_feature = self._extract_feature_from_spec(prompt)
-            return normalize_feature_name(raw_feature)
-        except Exception:
-            return normalize_feature_name(fallback_feature)
+        """
+        Feature key dùng để tìm file và đặt thư mục output phải bám theo tên file
+        feature người dùng truyền vào.
+
+        Dòng "CHỨC NĂNG: ..." trong mô tả nghiệp vụ có thể là tên hiển thị
+        tiếng Việt, không nhất thiết trùng tên file trong input/features. Vì vậy
+        không dùng tiêu đề này để đổi feature key.
+        """
+        return normalize_feature_name(fallback_feature)
 
     # ==========================================================================
     # COMMON NORMALIZERS
@@ -1940,99 +1944,293 @@ class GenerationPipeline:
     # ==========================================================================
     # STEP 3: FINAL TESTCASES
     # ==========================================================================     
-    def _build_step3_mapping_packet(
+
+    def _find_default_valid_value(
         self,
-        *,
-        feature: str,
-        fields: List[str],
-        rule: Dict[str, Any],
-        condition_index: Dict[str, Dict[str, Any]],
+        field: str,
         value_index: Dict[str, Dict[str, List[Dict[str, Any]]]],
+    ) -> Any:
+        """
+        Lấy giá trị valid mặc định cho một field từ Step 1.
+
+        Chỉ đọc coverage_items đã được parse/normalize từ step1.json.
+        Không đọc txt/xlsx và không tự bịa giá trị mới.
+        """
+        valid_items = value_index.get(field, {}).get("valid", [])
+
+        for item in valid_items:
+            if not isinstance(item, dict):
+                continue
+            value = item.get("representative_value")
+            if value is not None and str(value) != "":
+                return value
+
+        return ""
+
+    @staticmethod
+    def _step3_relation_markers() -> Tuple[str, ...]:
+        return (
+            "khớp",
+            "khop",
+            "trùng",
+            "trung",
+            "giống",
+            "giong",
+            "bằng",
+            "bang",
+            "match",
+            "same",
+            "equal",
+            "equals",
+        )
+
+    @staticmethod
+    def _step3_confirmation_field_markers() -> Tuple[str, ...]:
+        return (
+            "confirm",
+            "confirmation",
+            "retype",
+            "repeat",
+            "verify",
+            "xác nhận",
+            "xac nhan",
+            "nhập lại",
+            "nhap lai",
+        )
+
+    def _step3_text_has_any_marker(self, text: Any, markers: Tuple[str, ...]) -> bool:
+        normalized = self._clean_text(text).lower()
+        return any(marker in normalized for marker in markers)
+
+    def _is_step3_relation_condition(self, condition: Dict[str, Any]) -> bool:
+        """
+        Nhận diện điều kiện quan hệ giữa nhiều field theo metadata Step 2.
+
+        Đây là luật dùng chung: chỉ dựa vào source_fields và mô tả condition do Step 2 sinh,
+        không phụ thuộc feature/register hay tên field cụ thể.
+        """
+        source_fields = condition.get("source_fields")
+        if not isinstance(source_fields, list) or len(source_fields) < 2:
+            return False
+
+        text = " ".join([
+            self._clean_text(condition.get("name")),
+            self._clean_text(condition.get("meaning_when_y")),
+            self._clean_text(condition.get("meaning_when_n")),
+        ])
+        return self._step3_text_has_any_marker(text, self._step3_relation_markers())
+
+    def _choose_relation_base_field(
+        self,
+        source_fields: List[str],
+        default_valid_values: Dict[str, Any],
+    ) -> str:
+        """
+        Chọn field gốc trong quan hệ bằng/trùng/khớp.
+
+        Ưu tiên field không mang nghĩa xác nhận/nhập lại để các field xác nhận
+        copy theo field gốc. Nếu không nhận diện được, chọn field đầu tiên có
+        default value khác rỗng.
+        """
+        clean_fields = [self._clean_text(f) for f in source_fields if self._clean_text(f)]
+        if not clean_fields:
+            return ""
+
+        confirm_markers = self._step3_confirmation_field_markers()
+
+        for field in clean_fields:
+            if not self._step3_text_has_any_marker(field, confirm_markers):
+                value = default_valid_values.get(field, "")
+                if value is not None and str(value) != "":
+                    return field
+
+        for field in clean_fields:
+            value = default_valid_values.get(field, "")
+            if value is not None and str(value) != "":
+                return field
+
+        return clean_fields[0]
+
+    def _repair_default_valid_values_by_dt_conditions(
+        self,
+        default_valid_values: Dict[str, Any],
+        condition_index: Dict[str, Dict[str, Any]],
     ) -> Dict[str, Any]:
         """
-        Tạo packet nhỏ cho AI ở Step 3.
+        Sửa valid defaults theo các điều kiện quan hệ do Step 2 sinh.
 
-        Code KHÔNG quyết định mapping thay AI.
-        Code chỉ:
-        - lấy đúng 1 decision_rule;
-        - đưa condition liên quan;
-        - đưa danh sách representative_value valid/invalid theo từng field;
-        - đưa danh sách field bắt buộc để AI sinh đủ cột.
+        Ví dụ tổng quát: nếu Step 2 có condition thể hiện field A phải khớp field B,
+        thì default_valid_values phải làm cho A và B thỏa mãn quan hệ đó. Hàm này
+        không sinh dữ liệu mới từ ngoài Step 1; nó chỉ copy một valid representative
+        value đã có sang các field cùng quan hệ.
         """
-        states = rule.get("condition_states") if isinstance(rule.get("condition_states"), dict) else {}
+        repaired = dict(default_valid_values)
 
-        related_conditions: List[Dict[str, Any]] = []
-        related_fields: List[str] = []
-
-        for cid, state in states.items():
-            cid_clean = self._clean_text(cid)
-            condition = condition_index.get(cid_clean)
+        for condition in condition_index.values():
             if not isinstance(condition, dict):
                 continue
-
-            condition_payload = {
-                "id": cid_clean,
-                "state": self._normalize_dt_state(state),
-                "name": self._clean_text(condition.get("name")),
-                "source_fields": condition.get("source_fields", []),
-                "meaning_when_y": self._clean_text(condition.get("meaning_when_y")),
-                "meaning_when_n": self._clean_text(condition.get("meaning_when_n")),
-            }
-            related_conditions.append(condition_payload)
+            if not self._is_step3_relation_condition(condition):
+                continue
 
             source_fields = condition.get("source_fields")
-            if isinstance(source_fields, list):
-                for field in source_fields:
-                    field_clean = self._clean_text(field)
-                    if field_clean in fields and field_clean not in related_fields:
-                        related_fields.append(field_clean)
+            if not isinstance(source_fields, list) or len(source_fields) < 2:
+                continue
 
-        # Bảo đảm AI luôn có dữ liệu cho toàn bộ input fields để sinh row phẳng đủ cột.
-        candidate_values: Dict[str, Dict[str, List[Dict[str, Any]]]] = {}
-        for field in fields:
-            candidate_values[field] = {"valid": [], "invalid": []}
-            for validity in ("valid", "invalid"):
-                for item in value_index.get(field, {}).get(validity, []):
-                    if not isinstance(item, dict):
-                        continue
-                    boundary = item.get("boundary") if isinstance(item.get("boundary"), dict) else None
-                    candidate_values[field][validity].append({
-                        "coverage_id": self._clean_text(item.get("id")),
-                        "value": self._representative_value(item),
-                        "technique": self._clean_text(item.get("technique")),
-                        "validity": self._clean_text(item.get("validity")),
-                        "description": self._clean_text(item.get("description")),
-                        "rule": self._clean_text(item.get("rule")),
-                        "expected_class": self._clean_text(item.get("expected_class")),
-                        "boundary": {
-                            "kind": self._clean_text(boundary.get("kind")),
-                            "point": self._clean_text(boundary.get("point")),
-                        } if boundary else None,
-                    })
+            clean_fields = [self._clean_text(f) for f in source_fields if self._clean_text(f) in repaired]
+            if len(clean_fields) < 2:
+                continue
 
-        return {
-            "feature": feature,
-            "required_output_fields": ["Testcase", *fields, "Expected"],
-            "input_fields": fields,
-            "decision_rule": {
-                "id": self._clean_text(rule.get("id")),
-                "type": self._clean_text(rule.get("type")),
-                "condition_states": states,
-                "action_refs": rule.get("action_refs", []),
-                "expected": self._clean_text(rule.get("expected")),
-                "reduction_note": self._clean_text(rule.get("reduction_note")),
-            },
-            "related_conditions": related_conditions,
-            "related_fields": related_fields,
-            "candidate_values": candidate_values,
-            "instruction_for_ai": (
-                "Phân tích decision_rule này, tự quyết định sinh bao nhiêu testcase, "
-                "chọn representative_value phù hợp từ candidate_values, field không gây lỗi dùng valid, "
-                "field gây lỗi dùng invalid phù hợp. Không tạo expected mới."
-            ),
+            base_field = self._choose_relation_base_field(clean_fields, repaired)
+            if not base_field or base_field not in repaired:
+                continue
+
+            base_value = repaired.get(base_field, "")
+            for field in clean_fields:
+                repaired[field] = base_value
+
+        return repaired
+
+    def _find_invalid_candidates_for_condition(
+        self,
+        *,
+        condition: Dict[str, Any],
+        value_index: Dict[str, Dict[str, List[Dict[str, Any]]]],
+        expected: str,
+    ) -> List[Dict[str, Any]]:
+        """
+        Map condition Step 2 với coverage_items invalid từ Step 1.
+
+        Luật map chính:
+        - source_fields của condition phải chứa field của coverage item;
+        - coverage item phải là invalid;
+        - ưu tiên match expected_class == decision_rule.expected.
+
+        Luật bổ sung cho quan hệ nhiều field:
+        - nếu condition Step 2 mô tả quan hệ bằng/trùng/khớp giữa nhiều field,
+          cho phép nhận coverage item có rule/description cùng bản chất quan hệ,
+          kể cả khi expected_class ở Step 1 bị AI sinh sai;
+        - Expected cuối vẫn khóa theo Step 2 decision_rule.expected, không lấy từ Step 1.
+        """
+        source_fields = condition.get("source_fields", [])
+        if not isinstance(source_fields, list):
+            return []
+
+        clean_source_fields = [self._clean_text(f) for f in source_fields if self._clean_text(f)]
+        if not clean_source_fields:
+            return []
+
+        condition_text = " ".join([
+            self._clean_text(condition.get("name")),
+            self._clean_text(condition.get("meaning_when_y")),
+            self._clean_text(condition.get("meaning_when_n")),
+        ])
+
+        is_relation_condition = self._is_step3_relation_condition(condition)
+        relation_markers = self._step3_relation_markers()
+
+        out: List[Dict[str, Any]] = []
+        seen_ids: Set[str] = set()
+
+        for field in clean_source_fields:
+            invalid_items = value_index.get(field, {}).get("invalid", [])
+
+            for item in invalid_items:
+                if not isinstance(item, dict):
+                    continue
+
+                coverage_id = self._clean_text(item.get("id"))
+                if not coverage_id or coverage_id in seen_ids:
+                    continue
+
+                item_expected = self._clean_text(item.get("expected_class"))
+                item_text = " ".join([
+                    self._clean_text(item.get("description")),
+                    self._clean_text(item.get("rule")),
+                    item_expected,
+                ])
+
+                strict_expected_match = item_expected == expected
+                relation_match = (
+                    is_relation_condition
+                    and self._step3_text_has_any_marker(condition_text, relation_markers)
+                    and self._step3_text_has_any_marker(item_text, relation_markers)
+                )
+
+                if not strict_expected_match and not relation_match:
+                    continue
+
+                seen_ids.add(coverage_id)
+                out.append({
+                    "coverage_item_id": coverage_id,
+                    "field": field,
+                    "value": item.get("representative_value"),
+                    "description": self._clean_text(item.get("description")),
+                    "expected_class": item_expected,
+                })
+
+        return out
+
+    def _build_step3_mapping_plan_from_templates(
+        self,
+        testcase_templates: List[Dict[str, Any]],
+    ) -> List[Dict[str, Any]]:
+        """Tạo bảng mapping ngắn gọn để debug/đối chiếu trước khi AI fill JSON."""
+        grouped: Dict[str, Dict[str, Any]] = {}
+        order: List[str] = []
+
+        for template in testcase_templates:
+            if not isinstance(template, dict):
+                continue
+
+            rule_id = self._clean_text(template.get("decision_rule_id"))
+            group = self._clean_text(template.get("group")) or rule_id or "Unknown"
+            key = f"{rule_id}::{group}"
+
+            if key not in grouped:
+                grouped[key] = {
+                    "group": group,
+                    "decision_rule_id": rule_id,
+                    "coverage_item_ids": [],
+                    "testdata_count": 0,
+                }
+                order.append(key)
+
+            grouped[key]["testdata_count"] += 1
+            candidate = template.get("selected_invalid_candidate")
+            if isinstance(candidate, dict):
+                coverage_id = self._clean_text(candidate.get("coverage_item_id"))
+                if coverage_id and coverage_id not in grouped[key]["coverage_item_ids"]:
+                    grouped[key]["coverage_item_ids"].append(coverage_id)
+
+        return [grouped[key] for key in order]
+
+    def _assert_step3_templates_cover_rules(
+        self,
+        *,
+        rules: List[Dict[str, Any]],
+        testcase_templates: List[Dict[str, Any]],
+    ) -> None:
+        """Fail fast nếu bất kỳ decision_rule nào của Step 2 không có testcase_template."""
+        rule_ids = [
+            self._clean_text(rule.get("id"))
+            for rule in rules
+            if isinstance(rule, dict) and self._clean_text(rule.get("id"))
+        ]
+        covered_rule_ids = {
+            self._clean_text(t.get("decision_rule_id"))
+            for t in testcase_templates
+            if isinstance(t, dict) and self._clean_text(t.get("decision_rule_id"))
         }
 
-    def _build_step3_mapping_packet_all_rules(
+        missing = [rid for rid in rule_ids if rid not in covered_rule_ids]
+        if missing:
+            raise RuntimeError(
+                "Step3 mapper did not create testcase_template for decision_rule(s): "
+                + ", ".join(missing)
+                + ". Check Step1 coverage_items expected_class/rule/description versus Step2 condition expected."
+            )
+
+    def _build_step3_testcase_templates(
         self,
         *,
         feature: str,
@@ -2042,148 +2240,123 @@ class GenerationPipeline:
         value_index: Dict[str, Dict[str, List[Dict[str, Any]]]],
     ) -> Dict[str, Any]:
         """
-        Tạo 1 packet compact cho toàn bộ Step 3.
+        Code-heavy mapper cho Step 3.
 
-        Dùng khi số decision_rules nhỏ. Code chỉ rút gọn dữ liệu đầu vào:
-        - giữ toàn bộ decision_rules cần AI phân tích;
-        - giữ condition liên quan;
-        - giữ representative_value valid/invalid từ Step 1;
-        - không tự quyết định testcase thay AI.
+        Input bắt buộc là JSON đã parse từ step1.json và step2_dt.json.
+        Hàm này tự quyết định:
+        - default_valid_values;
+        - decision_rule nào sinh bao nhiêu testcase;
+        - coverage_item nào được dùng;
+        - expected cuối khóa theo Step 2.
+
+        AI ở Step 3 chỉ được fill final JSON từ testcase_templates.
         """
-        condition_ids_used: Set[str] = set()
-        rules_payload: List[Dict[str, Any]] = []
+        default_valid_values = {
+            field: self._find_default_valid_value(field, value_index)
+            for field in fields
+        }
+        default_valid_values = self._repair_default_valid_values_by_dt_conditions(
+            default_valid_values,
+            condition_index,
+        )
 
-        for idx, rule in enumerate(rules, start=1):
+        testcase_templates: List[Dict[str, Any]] = []
+        template_counter = 1
+
+        for rule in rules:
             if not isinstance(rule, dict):
                 continue
 
-            states = rule.get("condition_states") if isinstance(rule.get("condition_states"), dict) else {}
-            normalized_states = {
-                self._clean_text(cid): self._normalize_dt_state(state)
-                for cid, state in states.items()
-                if self._clean_text(cid)
-            }
+            rule_id = self._clean_text(rule.get("id"))
+            rule_type = self._clean_text(rule.get("type"))
+            expected = self._clean_text(rule.get("expected"))
 
-            for cid in normalized_states.keys():
-                condition_ids_used.add(cid)
+            states = rule.get("condition_states", {})
+            if not isinstance(states, dict):
+                states = {}
 
-            rules_payload.append({
-                "id": self._clean_text(rule.get("id")) or f"DT_{idx:03d}",
-                "type": self._clean_text(rule.get("type")),
-                "condition_states": normalized_states,
-                "action_refs": rule.get("action_refs", []),
-                "expected": self._clean_text(rule.get("expected")),
-                "reduction_note": self._clean_text(rule.get("reduction_note")),
-            })
+            invalid_conditions: List[Dict[str, Any]] = []
+            for cid, state in states.items():
+                if self._normalize_dt_state(state) != "N":
+                    continue
 
-        related_conditions: List[Dict[str, Any]] = []
-        for cid in sorted(condition_ids_used, key=lambda x: int(x[1:]) if re.match(r"^C\d+$", x) else 9999):
-            condition = condition_index.get(cid)
-            if not isinstance(condition, dict):
+                condition = condition_index.get(self._clean_text(cid))
+                if not isinstance(condition, dict):
+                    raise RuntimeError(
+                        f"Step3 mapper cannot find condition '{cid}' for decision_rule '{rule_id}'."
+                    )
+                invalid_conditions.append(condition)
+
+            # Happy path: tất cả điều kiện thỏa mãn hoặc không có N.
+            if not invalid_conditions:
+                testcase_templates.append({
+                    "template_id": f"T{template_counter:03d}",
+                    "group": "Happy path",
+                    "decision_rule_id": rule_id,
+                    "rule_type": rule_type,
+                    "selected_invalid_field": None,
+                    "selected_invalid_candidate": None,
+                    "expected": expected,
+                })
+                template_counter += 1
                 continue
-            related_conditions.append({
-                "id": cid,
-                "name": self._clean_text(condition.get("name")),
-                "source_fields": condition.get("source_fields", []),
-                "meaning_when_y": self._clean_text(condition.get("meaning_when_y")),
-                "meaning_when_n": self._clean_text(condition.get("meaning_when_n")),
-            })
 
-        default_valid_values: Dict[str, Any] = {}
-        candidate_values: Dict[str, Dict[str, List[Dict[str, Any]]]] = {}
+            produced_for_rule = 0
 
-        for field in fields:
-            candidate_values[field] = {"valid": [], "invalid": []}
+            for condition in invalid_conditions:
+                candidates = self._find_invalid_candidates_for_condition(
+                    condition=condition,
+                    value_index=value_index,
+                    expected=expected,
+                )
 
-            for validity in ("valid", "invalid"):
-                for item in value_index.get(field, {}).get(validity, []):
-                    if not isinstance(item, dict):
-                        continue
-                    boundary = item.get("boundary") if isinstance(item.get("boundary"), dict) else None
-                    row = {
-                        "coverage_id": self._clean_text(item.get("id")),
-                        "value": self._representative_value(item),
-                        "technique": self._clean_text(item.get("technique")),
-                        "validity": self._clean_text(item.get("validity")),
-                        "description": self._clean_text(item.get("description")),
-                        "rule": self._clean_text(item.get("rule")),
-                        "expected_class": self._clean_text(item.get("expected_class")),
-                    }
-                    if boundary:
-                        row["boundary"] = {
-                            "kind": self._clean_text(boundary.get("kind")),
-                            "point": self._clean_text(boundary.get("point")),
-                        }
-                    candidate_values[field][validity].append(row)
+                for candidate in candidates:
+                    testcase_templates.append({
+                        "template_id": f"T{template_counter:03d}",
+                        "group": self._clean_text(condition.get("name")) or rule_id,
+                        "decision_rule_id": rule_id,
+                        "rule_type": rule_type,
+                        "selected_invalid_field": candidate["field"],
+                        "selected_invalid_candidate": candidate,
+                        "expected": expected,
+                    })
+                    template_counter += 1
+                    produced_for_rule += 1
 
-            valid_values = candidate_values[field]["valid"]
-            default_valid_values[field] = valid_values[0]["value"] if valid_values else ""
+            if produced_for_rule == 0:
+                condition_ids = [self._clean_text(c.get("id")) for c in invalid_conditions]
+                raise RuntimeError(
+                    f"Step3 mapper cannot map decision_rule '{rule_id}' "
+                    f"to any Step1 invalid coverage item. "
+                    f"condition_ids={condition_ids}, expected='{expected}'."
+                )
 
-        # Mặc định các field xác nhận mật khẩu phải khớp nếu feature có cặp này.
-        if "Password" in default_valid_values and "ConfirmPassword" in default_valid_values:
-            default_valid_values["ConfirmPassword"] = default_valid_values["Password"]
+        self._assert_step3_templates_cover_rules(
+            rules=rules,
+            testcase_templates=testcase_templates,
+        )
+
+        mapping_plan = self._build_step3_mapping_plan_from_templates(testcase_templates)
 
         return {
             "feature": feature,
             "required_output_fields": ["Testcase", *fields, "Expected"],
             "input_fields": fields,
             "default_valid_values": default_valid_values,
-            "decision_rules": rules_payload,
-            "related_conditions": related_conditions,
-            "candidate_values": candidate_values,
-            "instruction_for_ai": (
-                "Phân tích toàn bộ decision_rules trong packet này và sinh final test data. "
-                "Mỗi decision_rule phải có ít nhất 1 testcase nếu map được. "
-                "Nếu một rule tương ứng nhiều coverage khác bản chất, có thể sinh nhiều testcase. "
-                "Field không gây lỗi dùng default_valid_values hoặc candidate valid. "
-                "Field gây lỗi dùng candidate invalid phù hợp. "
-                "Expected phải lấy theo decision_rule.expected; nếu expected là tên field thì dùng giá trị thực tế của field đó. "
-                "Không tạo expected mới, không dùng placeholder, không sinh testcase trùng."
-            ),
+            "mapping_plan": mapping_plan,
+            "testcase_templates": testcase_templates,
         }
 
     def _extract_input_fields_from_feature_spec_for_step3(self, feature_key: str) -> List[str]:
         """
-        Đọc FEATURE SPECIFICATION để lấy danh sách INPUT field nếu đặc tả viết theo dạng:
-        1. FieldName: ...
-        2. FieldName: ...
-
-        Hàm này chỉ dùng để khóa field ở Step 3, không sửa Step 1/Step 2.
-        Nếu không parse được thì trả về [] để không phá các đặc tả có format khác.
+        Lấy INPUT fields trực tiếp từ FEATURE SPECIFICATION thông qua schema động.
+        Không duy trì parser riêng trong pipeline để tránh lệch logic với
+        feature_item_schema.py.
         """
         try:
-            spec = self.prompt_loader.load_feature_description(feature_key)
+            return get_feature_item_fields(feature_key)
         except Exception:
             return []
-
-        fields: List[str] = []
-        in_input_block = False
-
-        for raw_line in spec.splitlines():
-            line = raw_line.strip()
-            if not line:
-                continue
-
-            upper = line.upper()
-            if upper.startswith("INPUT") or "INPUT:" in upper:
-                in_input_block = True
-                continue
-
-            if in_input_block and re.match(r"^[A-ZÀ-Ỹ0-9 _/-]+:?$", line) and not re.match(r"^\d+\.", line):
-                # Gặp tiêu đề section mới sau INPUT thì dừng.
-                if not any(marker in upper for marker in ("FIELD", "TRƯỜNG", "TRUONG")):
-                    break
-
-            if not in_input_block:
-                continue
-
-            match = re.match(r"^\s*\d+\.\s*([A-Za-z_][A-Za-z0-9_]*)\s*:", line)
-            if match:
-                field_name = match.group(1).strip()
-                if field_name and field_name not in fields:
-                    fields.append(field_name)
-
-        return fields
 
     def _assert_step3_packet_contract(
         self,
@@ -2323,7 +2496,7 @@ class GenerationPipeline:
         if not isinstance(rules, list) or not rules:
             raise RuntimeError("Step3: decision_rules is empty.")
 
-        packet = self._build_step3_mapping_packet_all_rules(
+        packet = self._build_step3_testcase_templates(
             feature=feature_key,
             fields=fields,
             rules=rules,

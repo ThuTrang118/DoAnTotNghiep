@@ -1,0 +1,8 @@
+{
+  "mode": "ai_single_call_all_rules_compact",
+  "total_rules": 9,
+  "total_items_after_dedupe": 15,
+  "packet": "C:\\Users\\HP\\Desktop\\ThuTrang\\Framework_MWC_Testing\\testdata_generation\\output\\register_2026-05-08_23-45-48\\step3_mapping_packet.json",
+  "raw": "C:\\Users\\HP\\Desktop\\ThuTrang\\Framework_MWC_Testing\\testdata_generation\\output\\register_2026-05-08_23-45-48\\step3_raw.txt",
+  "prompt_length": 14871
+}

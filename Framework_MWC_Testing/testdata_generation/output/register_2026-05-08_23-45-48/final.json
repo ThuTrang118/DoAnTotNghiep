@@ -1,4 +1,6 @@
 {
+  "feature": "register",
+  "description": "Bộ test data kiểm thử chức năng đăng ký với các trường hợp hợp lệ và không hợp lệ theo yêu cầu",
   "items": [
     {
       "Testcase": "RE01",
