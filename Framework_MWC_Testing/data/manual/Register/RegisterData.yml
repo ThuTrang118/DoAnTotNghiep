@@ -1,0 +1,104 @@
+- Testcase: DK1
+  Username: NguyenAnh_6
+  Phone: "0359693333"
+  Password: Abcde12345
+  PasswordConfirm: Abcde12345
+  Expected: NguyenAnh_6
+
+- Testcase: DK2
+  Username: user_demo_2
+  Phone: ""
+  Password: Abcde12345
+  PasswordConfirm: Abcde12345
+  Expected: "Vui lòng điền vào trường này."
+
+- Testcase: DK3
+  Username: ""
+  Phone: "0912345678"
+  Password: Abcde12345
+  PasswordConfirm: Abcde12345
+  Expected: "Vui lòng điền vào trường này."
+
+- Testcase: DK4
+  Username: user_demo_3
+  Phone: "0912345678"
+  Password: ""
+  PasswordConfirm: Abcde12345
+  Expected: "Vui lòng điền vào trường này."
+
+- Testcase: DK5
+  Username: user_demo_4
+  Phone: "0912345678"
+  Password: Abcde12345
+  PasswordConfirm: ""
+  Expected: "Vui lòng điền vào trường này."
+
+- Testcase: DK6
+  Username: user_demo_5
+  Phone: "1234567890"
+  Password: Abcde12345
+  PasswordConfirm: Abcde12345
+  Expected: "Số điện thoại không đúng định dạng!"
+
+- Testcase: DK7
+  Username: user_demo_6
+  Phone: "091234567"
+  Password: Abcde12345
+  PasswordConfirm: Abcde12345
+  Expected: "Số điện thoại không đúng định dạng!"
+
+- Testcase: DK8
+  Username: user_demo_7
+  Phone: "09123456789"
+  Password: Abcde12345
+  PasswordConfirm: Abcde12345
+  Expected: "Số điện thoại không đúng định dạng!"
+
+- Testcase: DK9
+  Username: user_demo_8
+  Phone: "09!2345678"
+  Password: Abcde12345
+  PasswordConfirm: Abcde12345
+  Expected: "Số điện thoại không đúng định dạng!"
+
+- Testcase: DK10
+  Username: user_demo_9
+  Phone: "03 4521678"
+  Password: Abcde12345
+  PasswordConfirm: Abcde12345
+  Expected: "Số điện thoại không đúng định dạng!"
+
+- Testcase: DK11
+  Username: user_demo_10
+  Phone: "09a2345678"
+  Password: Abcde12345
+  PasswordConfirm: Abcde12345
+  Expected: "Số điện thoại không đúng định dạng!"
+
+- Testcase: DK12
+  Username: user_demo_11
+  Phone: "0912345678"
+  Password: abcd123
+  PasswordConfirm: abcd123
+  Expected: "Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!"
+
+- Testcase: DK13
+  Username: user_demo_12
+  Phone: "0912345678"
+  Password: abcd12345678901234567
+  PasswordConfirm: abcd12345678901234567
+  Expected: "Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!"
+
+- Testcase: DK14
+  Username: user_demo_13
+  Phone: "0912345679"
+  Password: "12345678"
+  PasswordConfirm: "123"
+  Expected: "mật khẩu không giống nhau"
+
+- Testcase: DK15
+  Username: "Ánh Dương Phạm"
+  Phone: "035214679"
+  Password: "123456789"
+  PasswordConfirm: "123456789"
+  Expected: "tài khoản đã tồn tại trong hệ thống"

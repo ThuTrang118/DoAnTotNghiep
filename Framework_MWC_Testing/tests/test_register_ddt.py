@@ -15,40 +15,57 @@ def _auto_log_data_source(pytestconfig):
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 SHEET = "Register"
-DATA_ROOT_DIR   = os.path.join(BASE_DIR, "data")
-MANUAL_DATA_DIR = os.path.join(DATA_ROOT_DIR, "manual")
-AI_DATA_DIR     = os.path.join(DATA_ROOT_DIR, "ai_generated", "processed")
+
+DATA_ROOT_DIR = os.path.join(BASE_DIR, "data")
+
+MANUAL_ROOT_DIR = os.path.join(DATA_ROOT_DIR, "manual")
+MANUAL_FEATURE_DIR = os.path.join(MANUAL_ROOT_DIR, "Register")
+
+AI_DATA_DIR = os.path.join(DATA_ROOT_DIR, "ai_processed", "register")
 
 DEFAULT_FILES = {
-    "excel": "TestData.xlsx",
-    "csv":   "RegisterData.csv",
-    "json":  "RegisterData.json",
+    "xlsx": "TestData.xlsx",
+    "xls": "TestData.xls",
+    "csv": "RegisterData.csv",
+    "json": "RegisterData.json",
+    "yaml": "RegisterData.yaml",
+    "yml": "RegisterData.yml",
+    "xml": "RegisterData.xml",
+    "db": "RegisterData.db",
 }
 
 def get_test_data(pytestconfig):
-    source = (pytestconfig.getoption("--data-source") or "manual").lower()
-    mode   = (pytestconfig.getoption("--data-mode") or "excel").lower()
+    source = (pytestconfig.getoption("--data-source") or "manual").lower().strip()
+    mode = (pytestconfig.getoption("--data-mode") or "excel").lower().strip()
     data_file = (pytestconfig.getoption("--data-file") or "").strip()
 
-    base_dir = MANUAL_DATA_DIR if source == "manual" else AI_DATA_DIR
+    if mode == "sqlite":
+        mode = "db"
 
-    if data_file:
-        file_name = os.path.basename(data_file)
-        full_path = os.path.join(base_dir, file_name)
-        return load_data(
-            full_path,
-            sheet_name=SHEET if file_name.endswith((".xlsx", ".xls")) else None
-        )
+    db_table = (pytestconfig.getoption("--db-table") or "register").strip()
+    xml_item_tag = (pytestconfig.getoption("--xml-item-tag") or "item").strip()
+
+    if source == "manual":
+        base_dir = MANUAL_ROOT_DIR if mode in ("excel", "xlsx", "xls") else MANUAL_FEATURE_DIR
+    else:
+        base_dir = AI_DATA_DIR
 
     file_name = DEFAULT_FILES.get(mode)
     if not file_name:
         raise ValueError("data-mode không hợp lệ")
 
-    file_path = os.path.join(base_dir, file_name)
+    if data_file:
+        full_path = data_file if os.path.isabs(data_file) else os.path.join(BASE_DIR, data_file)
+    else:
+        full_path = os.path.join(base_dir, file_name)
 
-    if mode == "excel":
-        return load_data(file_path, sheet_name=SHEET)
-    return load_data(file_path)
+    if not os.path.exists(full_path):
+        raise pytest.UsageError(f"Không tìm thấy file data:\n  {full_path}")
+
+    if full_path.endswith((".xlsx", ".xls")):
+        return load_data(full_path, sheet_name=SHEET, db_table=db_table, xml_item_tag=xml_item_tag)
+
+    return load_data(full_path, db_table=db_table, xml_item_tag=xml_item_tag)
 
 def pytest_generate_tests(metafunc):
     if {"tc", "username", "phone", "password", "repass", "expected_raw"}.issubset(metafunc.fixturenames):

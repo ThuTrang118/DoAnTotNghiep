@@ -3,37 +3,51 @@ CHỨC NĂNG: ĐĂNG NHẬP
 ==================================================================================
 MÔ TẢ
 ==================================================================================
-- Chức năng đăng nhập cho phép người dùng truy cập vào hệ thống bằng Username và Password đã đăng ký trước đó.
-- Sau khi người dùng nhấn nút Đăng nhập, hệ thống kiểm tra dữ liệu đầu vào và xác thực thông tin tài khoản.
-- Nếu thông tin đúng, hệ thống đăng nhập thành công.
-- Nếu thông tin không hợp lệ hoặc không đúng, hệ thống hiển thị thông báo lỗi tương ứng.
+Chức năng đăng nhập cho phép người dùng truy cập vào hệ thống bằng tài khoản đã tồn tại.
+
+Sau khi người dùng nhập Username và Password rồi nhấn nút Đăng nhập,
+hệ thống sẽ kiểm tra:
+- dữ liệu bắt buộc của từng field
+- tính tồn tại của tài khoản
+- tính đúng đắn của cặp Username và Password
+
+Hệ thống chỉ cho phép đăng nhập thành công khi:
+- Username tồn tại trong hệ thống
+- Password đúng với Username tương ứng
+Nếu dữ liệu không hợp lệ, hệ thống hiển thị thông báo lỗi tương ứng.
 
 ==================================================================================
-INPUT: gồm 2 field
+INPUT: gồm đúng 2 field
 ==================================================================================
-1. Username: bắt buộc 
-2. Password: bắt buộc 
+1. Username: bắt buộc
+2. Password: bắt buộc
+Lưu ý:
+- Step 1 phải phân tích coverage đầy đủ cho cả Username và Password.
+- Rule "Password phải đúng với Username tương ứng" phải được xem là rule quan hệ giữa Username và Password.
 
 ==================================================================================
 CONSTRAINT
 ==================================================================================
-Username: gồm 1 yêu cầu
-- Phải đúng tài khoản Username đã đăng ký 
-Username: AnhDuong11
 
-Password: gồm 1 yêu cầu
-- Phải đúng Password đã đăng ký với Username 
-Password: AnhDuong@123
+Username: gồm 2 yêu cầu
+1. Bắt buộc nhập
+2. Chỉ hợp lệ khi bằng đúng Username đã đăng ký trong hệ thống
+VD: Username hợp lệ: "AnhDuong11"
+
+Password: gồm 2 yêu cầu
+1. Bắt buộc nhập
+2. Chỉ hợp lệ khi bằng đúng Password tương ứng với Username đã đăng ký
+VD: Password hợp lệ của Username "AnhDuong11" là: "AnhDuong@123"
 
 ==================================================================================
-EXPECTED
+KỲ VỌNG NGHIỆP VỤ
 ==================================================================================
 
-1. Nếu Username rỗng hoặc Password rỗng
-   - Expected = "Vui lòng điền vào trường này"
+1. Nếu bất kỳ field nào rỗng
+→ Expected = "Vui lòng điền vào trường này"
 
-2. Nếu Username = AnhDuong11 và Password = AnhDuong@123
-   -> Expected = "AnhDuong11"
+2. Nếu Username hoặc Password không hợp lệ 
+   → Expected = "Username hoặc Password không đúng!"
 
-3. Các trường hợp còn lại
-   -> Expected = "Username hoặc Password không đúng!"
+3. Nếu Username = AnhDuong11 và Password = AnhDuong@123
+   → Expected = Username

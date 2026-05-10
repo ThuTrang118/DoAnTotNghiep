@@ -1,0 +1,32 @@
+<items>
+  <item>
+    <Testcase>T001</Testcase>
+    <Username>AnhDuong11</Username>
+    <Password>AnhDuong@123</Password>
+    <Expected>AnhDuong11</Expected>
+  </item>
+  <item>
+    <Testcase>T002</Testcase>
+    <Username></Username>
+    <Password>AnhDuong@123</Password>
+    <Expected>Vui lòng điền vào trường này</Expected>
+  </item>
+  <item>
+    <Testcase>T003</Testcase>
+    <Username>wronguser</Username>
+    <Password>AnhDuong@123</Password>
+    <Expected>Username hoặc Password không đúng!</Expected>
+  </item>
+  <item>
+    <Testcase>T004</Testcase>
+    <Username>AnhDuong11</Username>
+    <Password></Password>
+    <Expected>Vui lòng điền vào trường này</Expected>
+  </item>
+  <item>
+    <Testcase>T005</Testcase>
+    <Username>AnhDuong11</Username>
+    <Password>wrongpass</Password>
+    <Expected>Username hoặc Password không đúng!</Expected>
+  </item>
+</items>

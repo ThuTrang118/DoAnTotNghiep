@@ -1,10 +1,16 @@
 ﻿Testcase,Username,Phone,Password,ConfirmPassword,Expected
-RG01,,0123456789,Pass1234567890,Pass1234567890,Vui lòng điền vào trường này
-RG02,NewUser123,,Pass1234567890,Pass1234567890,Vui lòng điền vào trường này
-RG03,NewUser123,0123456789,,Pass1234567890,Vui lòng điền vào trường này
-RG04,NewUser123,0123456789,Pass1234567890,,Vui lòng điền vào trường này
-RG05,NewUser123,0123456789,Pass1234567890,Pass1234567890,NewUser123
-RG06,NewUser123,0123456789,Pass1234,Pass1234,NewUser123
-RG07,NewUser123,0123456789,Pass12345,Pass12345,NewUser123
-RG08,NewUser123,0123456789,Pass1234567890123456789,Pass1234567890123456789,NewUser123
-RG09,NewUser123,0123456789,Pass12345678901234567890,Pass12345678901234567890,NewUser123
+T001,NewUser123,0123456789,Pass1234,Pass1234,NewUser123
+T002,,0123456789,Pass1234,Pass1234,Vui lòng điền vào trường này
+T003,AnhDuong11,0123456789,Pass1234,Pass1234,tài khoản đã tồn tại trong hệ thống
+T004,NewUser123,,Pass1234,Pass1234,Vui lòng điền vào trường này
+T005,NewUser123,012345678,Pass1234,Pass1234,Số điện thoại không hợp lệ
+T006,NewUser123,01234567890,Pass1234,Pass1234,Số điện thoại không hợp lệ
+T007,NewUser123,1234567890,Pass1234,Pass1234,Số điện thoại không hợp lệ
+T008,NewUser123,01234a6789,Pass1234,Pass1234,Số điện thoại không hợp lệ
+T009,NewUser123,01234!6789,Pass1234,Pass1234,Số điện thoại không hợp lệ
+T010,NewUser123,01234 6789,Pass1234,Pass1234,Số điện thoại không hợp lệ
+T011,NewUser123,0123456789,,Pass1234,Vui lòng điền vào trường này
+T012,NewUser123,0123456789,Pass123,Pass123,Mật khẩu phải từ 8 đến 20 ký tự
+T013,NewUser123,0123456789,Pass12345678901234567,Pass12345678901234567,Mật khẩu phải từ 8 đến 20 ký tự
+T014,NewUser123,0123456789,Pass1234,,Vui lòng điền vào trường này
+T015,NewUser123,0123456789,Pass1234,Pass12345678901,Mật khẩu không khớp

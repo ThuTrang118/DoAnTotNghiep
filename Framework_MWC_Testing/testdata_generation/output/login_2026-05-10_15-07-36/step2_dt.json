@@ -1,0 +1,158 @@
+{
+  "feature": "login",
+  "description": "Chức năng đăng nhập cho phép người dùng truy cập vào hệ thống bằng tài khoản đã tồn tại.",
+  "conditions": [
+    {
+      "id": "C1",
+      "name": "Username không rỗng",
+      "source_fields": [
+        "Username"
+      ],
+      "values": [
+        "Y",
+        "N"
+      ],
+      "meaning_when_y": "Username được nhập",
+      "meaning_when_n": "Username rỗng"
+    },
+    {
+      "id": "C2",
+      "name": "Username hợp lệ",
+      "source_fields": [
+        "Username"
+      ],
+      "values": [
+        "Y",
+        "N"
+      ],
+      "meaning_when_y": "Username tồn tại trong hệ thống",
+      "meaning_when_n": "Username không tồn tại trong hệ thống"
+    },
+    {
+      "id": "C3",
+      "name": "Password không rỗng",
+      "source_fields": [
+        "Password"
+      ],
+      "values": [
+        "Y",
+        "N"
+      ],
+      "meaning_when_y": "Password được nhập",
+      "meaning_when_n": "Password rỗng"
+    },
+    {
+      "id": "C4",
+      "name": "Password hợp lệ",
+      "source_fields": [
+        "Password"
+      ],
+      "values": [
+        "Y",
+        "N"
+      ],
+      "meaning_when_y": "Password khớp với Username tương ứng",
+      "meaning_when_n": "Password không khớp với Username tương ứng"
+    }
+  ],
+  "actions": [
+    {
+      "id": "A1",
+      "name": "Thông báo lỗi rỗng",
+      "expected": "Vui lòng điền vào trường này"
+    },
+    {
+      "id": "A2",
+      "name": "Thông báo lỗi không khớp",
+      "expected": "Username hoặc Password không đúng!"
+    },
+    {
+      "id": "A3",
+      "name": "Thông báo thành công",
+      "expected": "Username"
+    }
+  ],
+  "decision_rules": [
+    {
+      "id": "DT_001",
+      "type": "happy_path",
+      "condition_states": {
+        "C1": "Y",
+        "C2": "Y",
+        "C3": "Y",
+        "C4": "Y"
+      },
+      "action_refs": [
+        "A3"
+      ],
+      "expected": "Username",
+      "reduction_note": "Các điều kiện chính đều thỏa mãn nên rule dẫn tới expected thành công."
+    },
+    {
+      "id": "DT_002",
+      "type": "single_fault",
+      "condition_states": {
+        "C1": "N",
+        "C2": "-",
+        "C3": "-",
+        "C4": "-"
+      },
+      "action_refs": [
+        "A1"
+      ],
+      "expected": "Vui lòng điền vào trường này",
+      "reduction_note": "C1=N (Username không rỗng) quyết định expected của rule."
+    },
+    {
+      "id": "DT_003",
+      "type": "single_fault",
+      "condition_states": {
+        "C1": "Y",
+        "C2": "N",
+        "C3": "Y",
+        "C4": "-"
+      },
+      "action_refs": [
+        "A2"
+      ],
+      "expected": "Username hoặc Password không đúng!",
+      "reduction_note": "C2=N (Username hợp lệ) quyết định expected của rule."
+    },
+    {
+      "id": "DT_004",
+      "type": "single_fault",
+      "condition_states": {
+        "C1": "Y",
+        "C2": "Y",
+        "C3": "N",
+        "C4": "-"
+      },
+      "action_refs": [
+        "A1"
+      ],
+      "expected": "Vui lòng điền vào trường này",
+      "reduction_note": "C3=N (Password không rỗng) quyết định expected của rule."
+    },
+    {
+      "id": "DT_005",
+      "type": "single_fault",
+      "condition_states": {
+        "C1": "Y",
+        "C2": "Y",
+        "C3": "Y",
+        "C4": "N"
+      },
+      "action_refs": [
+        "A2"
+      ],
+      "expected": "Username hoặc Password không đúng!",
+      "reduction_note": "C4=N (Password hợp lệ) quyết định expected của rule."
+    }
+  ],
+  "decision_summary": {
+    "condition_count": 4,
+    "action_count": 3,
+    "full_combination_count": 16,
+    "reduced_rule_count": 5
+  }
+}

@@ -1,0 +1,134 @@
+{
+  "feature": "login",
+  "required_output_fields": [
+    "Testcase",
+    "Username",
+    "Password",
+    "Expected"
+  ],
+  "input_fields": [
+    "Username",
+    "Password"
+  ],
+  "default_valid_values": {
+    "Username": "AnhDuong11",
+    "Password": "AnhDuong@123"
+  },
+  "relation_groups": [],
+  "mapping_plan": [
+    {
+      "group": "Happy path",
+      "decision_rule_id": "DT_001",
+      "coverage_item_ids": [],
+      "testdata_count": 1
+    },
+    {
+      "group": "Username không rỗng",
+      "decision_rule_id": "DT_002",
+      "coverage_item_ids": [
+        "1"
+      ],
+      "testdata_count": 1
+    },
+    {
+      "group": "Username hợp lệ",
+      "decision_rule_id": "DT_003",
+      "coverage_item_ids": [
+        "3"
+      ],
+      "testdata_count": 1
+    },
+    {
+      "group": "Password không rỗng",
+      "decision_rule_id": "DT_004",
+      "coverage_item_ids": [
+        "4"
+      ],
+      "testdata_count": 1
+    },
+    {
+      "group": "Password hợp lệ",
+      "decision_rule_id": "DT_005",
+      "coverage_item_ids": [
+        "6"
+      ],
+      "testdata_count": 1
+    }
+  ],
+  "testcase_templates": [
+    {
+      "template_id": "T001",
+      "group": "Happy path",
+      "decision_rule_id": "DT_001",
+      "rule_type": "happy_path",
+      "selected_invalid_field": null,
+      "selected_invalid_candidate": null,
+      "dependent_field_overrides": {},
+      "expected": "Username"
+    },
+    {
+      "template_id": "T002",
+      "group": "Username không rỗng",
+      "decision_rule_id": "DT_002",
+      "rule_type": "single_fault",
+      "selected_invalid_field": "Username",
+      "selected_invalid_candidate": {
+        "coverage_item_id": "1",
+        "field": "Username",
+        "value": "",
+        "description": "Username rỗng",
+        "expected_class": "Vui lòng điền vào trường này"
+      },
+      "dependent_field_overrides": {},
+      "expected": "Vui lòng điền vào trường này"
+    },
+    {
+      "template_id": "T003",
+      "group": "Username hợp lệ",
+      "decision_rule_id": "DT_003",
+      "rule_type": "single_fault",
+      "selected_invalid_field": "Username",
+      "selected_invalid_candidate": {
+        "coverage_item_id": "3",
+        "field": "Username",
+        "value": "wronguser",
+        "description": "Username không tồn tại",
+        "expected_class": "Username hoặc Password không đúng!"
+      },
+      "dependent_field_overrides": {},
+      "expected": "Username hoặc Password không đúng!"
+    },
+    {
+      "template_id": "T004",
+      "group": "Password không rỗng",
+      "decision_rule_id": "DT_004",
+      "rule_type": "single_fault",
+      "selected_invalid_field": "Password",
+      "selected_invalid_candidate": {
+        "coverage_item_id": "4",
+        "field": "Password",
+        "value": "",
+        "description": "Password rỗng",
+        "expected_class": "Vui lòng điền vào trường này"
+      },
+      "dependent_field_overrides": {},
+      "expected": "Vui lòng điền vào trường này"
+    },
+    {
+      "template_id": "T005",
+      "group": "Password hợp lệ",
+      "decision_rule_id": "DT_005",
+      "rule_type": "single_fault",
+      "selected_invalid_field": "Password",
+      "selected_invalid_candidate": {
+        "coverage_item_id": "6",
+        "field": "Password",
+        "value": "wrongpass",
+        "description": "Password không khớp với Username",
+        "expected_class": "Username hoặc Password không đúng!"
+      },
+      "dependent_field_overrides": {},
+      "expected": "Username hoặc Password không đúng!"
+    }
+  ]
+}

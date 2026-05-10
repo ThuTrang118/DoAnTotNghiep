@@ -93,7 +93,7 @@ LƯU Ý QUAN TRỌNG (LOGIC UI)
 - Chỉ kiểm tra tính hợp lệ của dữ liệu đã được chọn
 
 ==================================================================================
-EXPECTED
+KỲ VỌNG NGHIỆP VỤ
 ==================================================================================
 
 1. Nếu bất kỳ field nào trong FullName, Phone, Address, Province, District, Ward rỗng

@@ -16,6 +16,7 @@ framework:
     search: true
     profile: true
     register: true
+    product_review: true
 
 ai:
   provider: ollama

@@ -1,46 +1,6 @@
 <items>
   <item>
-    <Testcase>RG01</Testcase>
-    <Username></Username>
-    <Phone>0123456789</Phone>
-    <Password>Pass1234567890</Password>
-    <ConfirmPassword>Pass1234567890</ConfirmPassword>
-    <Expected>Vui lòng điền vào trường này</Expected>
-  </item>
-  <item>
-    <Testcase>RG02</Testcase>
-    <Username>NewUser123</Username>
-    <Phone></Phone>
-    <Password>Pass1234567890</Password>
-    <ConfirmPassword>Pass1234567890</ConfirmPassword>
-    <Expected>Vui lòng điền vào trường này</Expected>
-  </item>
-  <item>
-    <Testcase>RG03</Testcase>
-    <Username>NewUser123</Username>
-    <Phone>0123456789</Phone>
-    <Password></Password>
-    <ConfirmPassword>Pass1234567890</ConfirmPassword>
-    <Expected>Vui lòng điền vào trường này</Expected>
-  </item>
-  <item>
-    <Testcase>RG04</Testcase>
-    <Username>NewUser123</Username>
-    <Phone>0123456789</Phone>
-    <Password>Pass1234567890</Password>
-    <ConfirmPassword></ConfirmPassword>
-    <Expected>Vui lòng điền vào trường này</Expected>
-  </item>
-  <item>
-    <Testcase>RG05</Testcase>
-    <Username>NewUser123</Username>
-    <Phone>0123456789</Phone>
-    <Password>Pass1234567890</Password>
-    <ConfirmPassword>Pass1234567890</ConfirmPassword>
-    <Expected>NewUser123</Expected>
-  </item>
-  <item>
-    <Testcase>RG06</Testcase>
+    <Testcase>T001</Testcase>
     <Username>NewUser123</Username>
     <Phone>0123456789</Phone>
     <Password>Pass1234</Password>
@@ -48,27 +8,115 @@
     <Expected>NewUser123</Expected>
   </item>
   <item>
-    <Testcase>RG07</Testcase>
-    <Username>NewUser123</Username>
+    <Testcase>T002</Testcase>
+    <Username></Username>
     <Phone>0123456789</Phone>
-    <Password>Pass12345</Password>
-    <ConfirmPassword>Pass12345</ConfirmPassword>
-    <Expected>NewUser123</Expected>
+    <Password>Pass1234</Password>
+    <ConfirmPassword>Pass1234</ConfirmPassword>
+    <Expected>Vui lòng điền vào trường này</Expected>
   </item>
   <item>
-    <Testcase>RG08</Testcase>
-    <Username>NewUser123</Username>
+    <Testcase>T003</Testcase>
+    <Username>AnhDuong11</Username>
     <Phone>0123456789</Phone>
-    <Password>Pass1234567890123456789</Password>
-    <ConfirmPassword>Pass1234567890123456789</ConfirmPassword>
-    <Expected>NewUser123</Expected>
+    <Password>Pass1234</Password>
+    <ConfirmPassword>Pass1234</ConfirmPassword>
+    <Expected>tài khoản đã tồn tại trong hệ thống</Expected>
   </item>
   <item>
-    <Testcase>RG09</Testcase>
+    <Testcase>T004</Testcase>
+    <Username>NewUser123</Username>
+    <Phone></Phone>
+    <Password>Pass1234</Password>
+    <ConfirmPassword>Pass1234</ConfirmPassword>
+    <Expected>Vui lòng điền vào trường này</Expected>
+  </item>
+  <item>
+    <Testcase>T005</Testcase>
+    <Username>NewUser123</Username>
+    <Phone>012345678</Phone>
+    <Password>Pass1234</Password>
+    <ConfirmPassword>Pass1234</ConfirmPassword>
+    <Expected>Số điện thoại không hợp lệ</Expected>
+  </item>
+  <item>
+    <Testcase>T006</Testcase>
+    <Username>NewUser123</Username>
+    <Phone>01234567890</Phone>
+    <Password>Pass1234</Password>
+    <ConfirmPassword>Pass1234</ConfirmPassword>
+    <Expected>Số điện thoại không hợp lệ</Expected>
+  </item>
+  <item>
+    <Testcase>T007</Testcase>
+    <Username>NewUser123</Username>
+    <Phone>1234567890</Phone>
+    <Password>Pass1234</Password>
+    <ConfirmPassword>Pass1234</ConfirmPassword>
+    <Expected>Số điện thoại không hợp lệ</Expected>
+  </item>
+  <item>
+    <Testcase>T008</Testcase>
+    <Username>NewUser123</Username>
+    <Phone>01234a6789</Phone>
+    <Password>Pass1234</Password>
+    <ConfirmPassword>Pass1234</ConfirmPassword>
+    <Expected>Số điện thoại không hợp lệ</Expected>
+  </item>
+  <item>
+    <Testcase>T009</Testcase>
+    <Username>NewUser123</Username>
+    <Phone>01234!6789</Phone>
+    <Password>Pass1234</Password>
+    <ConfirmPassword>Pass1234</ConfirmPassword>
+    <Expected>Số điện thoại không hợp lệ</Expected>
+  </item>
+  <item>
+    <Testcase>T010</Testcase>
+    <Username>NewUser123</Username>
+    <Phone>01234 6789</Phone>
+    <Password>Pass1234</Password>
+    <ConfirmPassword>Pass1234</ConfirmPassword>
+    <Expected>Số điện thoại không hợp lệ</Expected>
+  </item>
+  <item>
+    <Testcase>T011</Testcase>
     <Username>NewUser123</Username>
     <Phone>0123456789</Phone>
-    <Password>Pass12345678901234567890</Password>
-    <ConfirmPassword>Pass12345678901234567890</ConfirmPassword>
-    <Expected>NewUser123</Expected>
+    <Password></Password>
+    <ConfirmPassword>Pass1234</ConfirmPassword>
+    <Expected>Vui lòng điền vào trường này</Expected>
+  </item>
+  <item>
+    <Testcase>T012</Testcase>
+    <Username>NewUser123</Username>
+    <Phone>0123456789</Phone>
+    <Password>Pass123</Password>
+    <ConfirmPassword>Pass123</ConfirmPassword>
+    <Expected>Mật khẩu phải từ 8 đến 20 ký tự</Expected>
+  </item>
+  <item>
+    <Testcase>T013</Testcase>
+    <Username>NewUser123</Username>
+    <Phone>0123456789</Phone>
+    <Password>Pass12345678901234567</Password>
+    <ConfirmPassword>Pass12345678901234567</ConfirmPassword>
+    <Expected>Mật khẩu phải từ 8 đến 20 ký tự</Expected>
+  </item>
+  <item>
+    <Testcase>T014</Testcase>
+    <Username>NewUser123</Username>
+    <Phone>0123456789</Phone>
+    <Password>Pass1234</Password>
+    <ConfirmPassword></ConfirmPassword>
+    <Expected>Vui lòng điền vào trường này</Expected>
+  </item>
+  <item>
+    <Testcase>T015</Testcase>
+    <Username>NewUser123</Username>
+    <Phone>0123456789</Phone>
+    <Password>Pass1234</Password>
+    <ConfirmPassword>Pass12345678901</ConfirmPassword>
+    <Expected>Mật khẩu không khớp</Expected>
   </item>
 </items>

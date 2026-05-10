@@ -1,0 +1,16 @@
+Testcase,Username,Phone,Password,PasswordConfirm,Expected
+DK1,NguyenAnh_3,0359693333,Abcde12345,Abcde12345,NguyenAnh_3
+DK2,user_demo_2,,Abcde12345,Abcde12345,Vui lòng điền vào trường này.
+DK3,,0912345678,Abcde12345,Abcde12345,Vui lòng điền vào trường này.
+DK4,user_demo_3,0912345678,,Abcde12345,Vui lòng điền vào trường này.
+DK5,user_demo_4,0912345678,Abcde12345,,Vui lòng điền vào trường này.
+DK6,user_demo_5,1234567890,Abcde12345,Abcde12345,Số điện thoại không đúng định dạng!
+DK7,user_demo_6,091234567,Abcde12345,Abcde12345,Số điện thoại không đúng định dạng!
+DK8,user_demo_7,09123456789,Abcde12345,Abcde12345,Số điện thoại không đúng định dạng!
+DK9,user_demo_8,09!2345678,Abcde12345,Abcde12345,Số điện thoại không đúng định dạng!
+DK10,user_demo_9,03 4521678,Abcde12345,Abcde12345,Số điện thoại không đúng định dạng!
+DK11,user_demo_10,09a2345678,Abcde12345,Abcde12345,Số điện thoại không đúng định dạng!
+DK12,user_demo_11,0912345678,abcd123,abcd123,Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!
+DK13,user_demo_12,0912345678,abcd12345678901234567,abcd12345678901234567,Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!
+DK14,user_demo_13,0912345679,12345678,123,mật khẩu không giống nhau
+DK15,Ánh Dương Phạm,035214679,123456789,123456789,tài khoản đã tồn tại trong hệ thống

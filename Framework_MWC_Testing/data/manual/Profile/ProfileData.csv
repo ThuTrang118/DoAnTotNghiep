@@ -1,0 +1,14 @@
+Testcase,FullName,Email,Phone,Gender,Day,Month,Year,Province,District,Ward,Address,Expected
+TT1,Phạm Thị Ánh Dương,anh1@gmail.com,0332115678,Nữ,1,5,2000,Hậu Giang,Thị xã Ngã Bảy,Phường Lái Hiếu,Xóm 1,Cập nhập tài khoản thành công!
+TT2,,duongduong@gmail.com,0332115680,Nữ,11,11,2001,TP Cần Thơ,Quận Ninh Kiều,Phường An Bình,Xóm 2,Cập nhập tài khoản thành công!
+TT3,Ánh Dương,,0332115681,Khác,2,2,2003,Đồng Nai,Quận Ô Môn,Phường Long Hưng,Xóm 3,Cập nhập tài khoản thành công!
+TT4,Phạm Dương,anhanh@gmail.com,0332115682,Nữ,2,2,2005,Hậu Giang,Thị xã Ngã Bảy,Phường Lái Hiếu,,Cập nhập tài khoản thành công!
+TT5,Ánh Dương Phạm,anh1@,0332115684,Khác,2,2,1995,Tây Ninh,Thành phố Tây Ninh,Phường 1,Xóm 4,Vui lòng nhập phần đứng sau '@'. 'anh1@' không hoàn chỉnh.
+TT6,Phạm Ánh Dương,anh1@@,0332115685,Nam,1,1,1997,Vĩnh Long,Huyện Trà Ôn,Thị trấn Trà Ôn,Xóm 5,Phần đứng sau '@' không được chứa biểu tượng '@'.
+TT7,Ánh Dương,anh1@gmail.com,,Khác,1,1,2004,Bình Phước,Huyện Lộc Ninh,Xã Lộc An,Xóm 6,Vui lòng điền vào trường này.
+TT8,Phạm Dương,anhduong@gmail.com,033a115678,Nam,1,1,2005,Hậu Giang,Huyện Châu Thành,Xã Đông Phước A,Xóm 7,Số điện thoại không hợp lệ.
+TT9,Phạm Ánh Dương,phamanh1@gmail.com,033!115678,Nữ,2,2,2006,Tiền Giang,Thành phố Mỹ Tho,Phường 10,Xóm 8,Số điện thoại không hợp lệ.
+TT10,Phạm Ánh,phamanh@gmail.com,033 115678,Nam,3,3,2007,Hậu Giang,Huyện Châu Thành,Xã Đông Phước A,Xóm 9,Số điện thoại không hợp lệ.
+TT11,Phạm Thị Ánh Dương,anh1@gmail.com,033111567,Nữ,4,5,2000,TP Hồ Chí Minh,Quận 2,Phường Bến Nghé,Xóm 10,Số điện thoại không hợp lệ.
+TT12,Phạm Ánh,anhanh@gmail.com,03311567899,Nam,23,2,2000,Bình Phước,Huyện Lộc Ninh,Xã Lộc An,Xóm 11,Số điện thoại không hợp lệ.
+TT13,Phạm Thị Ánh Dương,anh1@gmail.com,3311567890,Nữ,26,2,2023,Đồng Nai,Quận Ô Môn,Phường Long Hưng,Xóm 12,Số điện thoại không hợp lệ.

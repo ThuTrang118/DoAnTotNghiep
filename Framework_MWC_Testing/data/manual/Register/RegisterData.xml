@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TestData>
+  <TestCase>
+    <Testcase>DK1</Testcase>
+    <Username>NguyenAnh_7</Username>
+    <Phone>0359693333</Phone>
+    <Password>Abcde12345</Password>
+    <PasswordConfirm>Abcde12345</PasswordConfirm>
+    <Expected>NguyenAnh_7</Expected>
+  </TestCase>
+
+  <TestCase>
+    <Testcase>DK2</Testcase>
+    <Username>user_demo_2</Username>
+    <Phone></Phone>
+    <Password>Abcde12345</Password>
+    <PasswordConfirm>Abcde12345</PasswordConfirm>
+    <Expected>Vui lòng điền vào trường này.</Expected>
+  </TestCase>
+
+  <TestCase>
+    <Testcase>DK3</Testcase>
+    <Username></Username>
+    <Phone>0912345678</Phone>
+    <Password>Abcde12345</Password>
+    <PasswordConfirm>Abcde12345</PasswordConfirm>
+    <Expected>Vui lòng điền vào trường này.</Expected>
+  </TestCase>
+
+  <TestCase>
+    <Testcase>DK4</Testcase>
+    <Username>user_demo_3</Username>
+    <Phone>0912345678</Phone>
+    <Password></Password>
+    <PasswordConfirm>Abcde12345</PasswordConfirm>
+    <Expected>Vui lòng điền vào trường này.</Expected>
+  </TestCase>
+
+  <TestCase>
+    <Testcase>DK5</Testcase>
+    <Username>user_demo_4</Username>
+    <Phone>0912345678</Phone>
+    <Password>Abcde12345</Password>
+    <PasswordConfirm></PasswordConfirm>
+    <Expected>Vui lòng điền vào trường này.</Expected>
+  </TestCase>
+
+  <TestCase>
+    <Testcase>DK6</Testcase>
+    <Username>user_demo_5</Username>
+    <Phone>1234567890</Phone>
+    <Password>Abcde12345</Password>
+    <PasswordConfirm>Abcde12345</PasswordConfirm>
+    <Expected>Số điện thoại không đúng định dạng!</Expected>
+  </TestCase>
+
+  <TestCase>
+    <Testcase>DK7</Testcase>
+    <Username>user_demo_6</Username>
+    <Phone>091234567</Phone>
+    <Password>Abcde12345</Password>
+    <PasswordConfirm>Abcde12345</PasswordConfirm>
+    <Expected>Số điện thoại không đúng định dạng!</Expected>
+  </TestCase>
+
+  <TestCase>
+    <Testcase>DK8</Testcase>
+    <Username>user_demo_7</Username>
+    <Phone>09123456789</Phone>
+    <Password>Abcde12345</Password>
+    <PasswordConfirm>Abcde12345</PasswordConfirm>
+    <Expected>Số điện thoại không đúng định dạng!</Expected>
+  </TestCase>
+
+  <TestCase>
+    <Testcase>DK9</Testcase>
+    <Username>user_demo_8</Username>
+    <Phone>09!2345678</Phone>
+    <Password>Abcde12345</Password>
+    <PasswordConfirm>Abcde12345</PasswordConfirm>
+    <Expected>Số điện thoại không đúng định dạng!</Expected>
+  </TestCase>
+
+  <TestCase>
+    <Testcase>DK10</Testcase>
+    <Username>user_demo_9</Username>
+    <Phone>03 4521678</Phone>
+    <Password>Abcde12345</Password>
+    <PasswordConfirm>Abcde12345</PasswordConfirm>
+    <Expected>Số điện thoại không đúng định dạng!</Expected>
+  </TestCase>
+
+  <TestCase>
+    <Testcase>DK11</Testcase>
+    <Username>user_demo_10</Username>
+    <Phone>09a2345678</Phone>
+    <Password>Abcde12345</Password>
+    <PasswordConfirm>Abcde12345</PasswordConfirm>
+    <Expected>Số điện thoại không đúng định dạng!</Expected>
+  </TestCase>
+
+  <TestCase>
+    <Testcase>DK12</Testcase>
+    <Username>user_demo_11</Username>
+    <Phone>0912345678</Phone>
+    <Password>abcd123</Password>
+    <PasswordConfirm>abcd123</PasswordConfirm>
+    <Expected>Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!</Expected>
+  </TestCase>
+
+  <TestCase>
+    <Testcase>DK13</Testcase>
+    <Username>user_demo_12</Username>
+    <Phone>0912345678</Phone>
+    <Password>abcd12345678901234567</Password>
+    <PasswordConfirm>abcd12345678901234567</PasswordConfirm>
+    <Expected>Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!</Expected>
+  </TestCase>
+
+  <TestCase>
+    <Testcase>DK14</Testcase>
+    <Username>user_demo_13</Username>
+    <Phone>0912345679</Phone>
+    <Password>12345678</Password>
+    <PasswordConfirm>123</PasswordConfirm>
+    <Expected>mật khẩu không giống nhau</Expected>
+  </TestCase>
+
+  <TestCase>
+    <Testcase>DK15</Testcase>
+    <Username>Ánh Dương Phạm</Username>
+    <Phone>035214679</Phone>
+    <Password>123456789</Password>
+    <PasswordConfirm>123456789</PasswordConfirm>
+    <Expected>tài khoản đã tồn tại trong hệ thống</Expected>
+  </TestCase>
+</TestData>

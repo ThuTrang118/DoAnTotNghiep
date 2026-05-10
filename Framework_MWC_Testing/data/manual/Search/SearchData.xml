@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TestData>
+  <TestCase><Testcase>TK1</Testcase><Keyword>Giày Sandal Nữ MWC E196 - Sandal Nữ Hai Quai Ngang Kết Hợp Quai Dán Tiện Lợi, Cá Tính, Thoải Mái, Bền Đẹp.</Keyword><Expected>Giày Sandal Nữ MWC E196 - Sandal Nữ Hai Quai Ngang Kết Hợp Quai Dán Tiện Lợi, Cá Tính, Thoải Mái, Bền Đẹp.</Expected></TestCase>
+  <TestCase><Testcase>TK2</Testcase><Keyword>E196</Keyword><Expected>Giày Sandal Nữ MWC E196 - Sandal Nữ Hai Quai Ngang Kết Hợp Quai Dán Tiện Lợi, Cá Tính, Thoải Mái, Bền Đẹp.</Expected></TestCase>
+  <TestCase><Testcase>TK3</Testcase><Keyword>Giày</Keyword><Expected>Giày</Expected></TestCase>
+  <TestCase><Testcase>TK4</Testcase><Keyword>Giay the thao nam</Keyword><Expected>Giày thể thao nam</Expected></TestCase>
+  <TestCase><Testcase>TK5</Testcase><Keyword>Bánh bao</Keyword><Expected>Không tìm thấy sản phẩm</Expected></TestCase>
+  <TestCase><Testcase>TK6</Testcase><Keyword></Keyword><Expected>Không tìm thấy sản phẩm</Expected></TestCase>
+  <TestCase><Testcase>TK7</Testcase><Keyword>Giay!#$%</Keyword><Expected>Không tìm thấy sản phẩm</Expected></TestCase>
+  <TestCase><Testcase>TK8</Testcase><Keyword>Màu đen</Keyword><Expected>Màu đen</Expected></TestCase>
+</TestData>

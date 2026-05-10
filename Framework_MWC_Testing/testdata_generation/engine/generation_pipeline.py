@@ -628,9 +628,121 @@ class GenerationPipeline:
             normalized_items.append(normalized)
 
         step1_data["coverage_items"] = self._ensure_required_empty_coverage(normalized_items)
+        step1_data = self._repair_step1_bva_representative_lengths(step1_data)
         return step1_data
 
 
+    # --------------------------------------------------------------------------
+    # STEP 1 BVA REPRESENTATIVE VALUE LENGTH REPAIR
+    # --------------------------------------------------------------------------
+    def _expected_bva_representative_length(
+        self,
+        point: Any,
+        reference: Any,
+    ) -> int | None:
+        """
+        Tính độ dài representative_value bắt buộc theo boundary.point và boundary.reference.
+
+        Dùng chung cho mọi feature/field:
+        - N-1, MIN-1, MAX-1 => reference - 1
+        - N, MIN, MAX       => reference
+        - N+1, MIN+1, MAX+1 => reference + 1
+        """
+        point_clean = self._normalize_boundary_point(point)
+
+        if not isinstance(reference, (int, float)):
+            return None
+
+        ref = int(reference)
+
+        if point_clean in {"N-1", "MIN-1", "MAX-1"}:
+            return ref - 1
+
+        if point_clean in {"N", "MIN", "MAX"}:
+            return ref
+
+        if point_clean in {"N+1", "MIN+1", "MAX+1"}:
+            return ref + 1
+
+        return None
+
+    @staticmethod
+    def _resize_bva_representative_value(value: Any, target_len: int) -> str:
+        """
+        Sửa độ dài representative_value nhưng giữ tối đa chuỗi AI đã sinh.
+
+        - Nếu đúng độ dài: giữ nguyên.
+        - Nếu dài hơn: cắt còn target_len ký tự.
+        - Nếu ngắn hơn: thêm bằng ký tự cuối cùng của chuỗi hiện tại.
+        - Nếu chuỗi rỗng: thêm 'X' cho đủ độ dài.
+
+        Không hardcode theo field/feature.
+        """
+        text = "" if value is None else str(value)
+
+        if target_len <= 0:
+            return ""
+
+        actual_len = len(text)
+
+        if actual_len == target_len:
+            return text
+
+        if actual_len > target_len:
+            return text[:target_len]
+
+        if not text:
+            return "X" * target_len
+
+        pad_char = text[-1]
+        return text + (pad_char * (target_len - actual_len))
+
+    def _repair_step1_bva_representative_lengths(
+        self,
+        step1_data: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        """
+        Đọc kết quả AI sinh ở Step 1, kiểm tra các item BVA:
+        - tính expected length từ boundary.point + boundary.reference;
+        - đếm len(representative_value);
+        - đúng thì giữ nguyên;
+        - sai thì cắt bớt hoặc thêm ký tự cho đúng độ dài.
+
+        Đây là repair cơ học, dùng chung, không phụ thuộc register/login hay tên field.
+        """
+        items = step1_data.get("coverage_items")
+        if not isinstance(items, list):
+            return step1_data
+
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+
+            if self._clean_text(item.get("technique")).upper() != "BVA":
+                continue
+
+            boundary = item.get("boundary")
+            if not isinstance(boundary, dict):
+                continue
+
+            expected_len = self._expected_bva_representative_length(
+                point=boundary.get("point"),
+                reference=boundary.get("reference"),
+            )
+
+            if expected_len is None:
+                continue
+
+            old_value = item.get("representative_value")
+            new_value = self._resize_bva_representative_value(
+                value=old_value,
+                target_len=expected_len,
+            )
+
+            item["representative_value"] = new_value
+
+        return step1_data
+    
     # --------------------------------------------------------------------------
     # STEP 1 REQUIRED/EMPTY COVERAGE REPAIR
     # --------------------------------------------------------------------------
@@ -1982,6 +2094,59 @@ class GenerationPipeline:
             "same",
             "equal",
             "equals",
+            "đúng với",
+            "dung voi",
+            "tương ứng",
+            "tuong ung",
+        )
+
+    @staticmethod
+    def _step3_same_value_relation_markers() -> Tuple[str, ...]:
+        """
+        Marker cho quan hệ ĐỒNG GIÁ TRỊ:
+        VD:
+        - ConfirmPassword phải trùng Password
+        - ConfirmPassword khớp Password
+        - Nhập lại mật khẩu giống Password
+
+        Chỉ nhóm này mới được copy value giữa các field.
+        """
+        return (
+            "trùng",
+            "trung",
+            "trùng hoàn toàn",
+            "trung hoan toan",
+            "giống",
+            "giong",
+            "bằng",
+            "bang",
+            "same",
+            "equal",
+            "equals",
+        )
+
+    @staticmethod
+    def _step3_credential_relation_markers() -> Tuple[str, ...]:
+        """
+        Marker cho quan hệ XÁC THỰC/TƯƠNG ỨNG:
+        VD:
+        - Password đúng với Username tương ứng
+        - Password thuộc tài khoản Username
+        - Password khớp với tài khoản của Username
+
+        Nhóm này KHÔNG được copy value giữa các field.
+        """
+        return (
+            "tương ứng",
+            "tuong ung",
+            "đúng với",
+            "dung voi",
+            "thuộc tài khoản",
+            "thuoc tai khoan",
+            "tài khoản của",
+            "tai khoan cua",
+            "đăng ký",
+            "dang ky",
         )
 
     @staticmethod
@@ -2001,6 +2166,68 @@ class GenerationPipeline:
     def _step3_text_has_any_marker(self, text: Any, markers: Tuple[str, ...]) -> bool:
         normalized = self._clean_text(text).lower()
         return any(marker in normalized for marker in markers)
+
+    def _step3_condition_text(self, condition: Dict[str, Any]) -> str:
+        return " ".join([
+            self._clean_text(condition.get("name")),
+            self._clean_text(condition.get("meaning_when_y")),
+            self._clean_text(condition.get("meaning_when_n")),
+        ])
+
+    def _is_step3_relation_condition(self, condition: Dict[str, Any]) -> bool:
+        """
+        Nhận diện điều kiện quan hệ giữa nhiều field.
+
+        Bao gồm cả:
+        - same-value relation: ConfirmPassword trùng Password
+        - credential relation: Password đúng với Username tương ứng
+        """
+        source_fields = condition.get("source_fields")
+        if not isinstance(source_fields, list) or len(source_fields) < 2:
+            return False
+
+        text = self._step3_condition_text(condition)
+        return self._step3_text_has_any_marker(text, self._step3_relation_markers())
+
+    def _is_step3_credential_relation_condition(self, condition: Dict[str, Any]) -> bool:
+        """
+        Quan hệ tương ứng/xác thực cặp tài khoản.
+
+        VD login:
+        - Password đúng với Username tương ứng
+        - Password khớp với tài khoản của Username
+
+        Quan hệ này KHÔNG có nghĩa là 2 field phải bằng nhau.
+        """
+        source_fields = condition.get("source_fields")
+        if not isinstance(source_fields, list) or len(source_fields) < 2:
+            return False
+
+        text = self._step3_condition_text(condition)
+        return self._step3_text_has_any_marker(text, self._step3_credential_relation_markers())
+
+    def _is_step3_same_value_relation_condition(self, condition: Dict[str, Any]) -> bool:
+        """
+        Quan hệ đồng giá trị giữa nhiều field.
+
+        VD register:
+        - ConfirmPassword phải trùng Password
+        - ConfirmPassword khớp Password
+
+        Chỉ loại quan hệ này mới được:
+        - repair default_valid_values bằng cách copy value;
+        - tạo relation_groups;
+        - sinh dependent_field_overrides.
+        """
+        source_fields = condition.get("source_fields")
+        if not isinstance(source_fields, list) or len(source_fields) < 2:
+            return False
+
+        if self._is_step3_credential_relation_condition(condition):
+            return False
+
+        text = self._step3_condition_text(condition)
+        return self._step3_text_has_any_marker(text, self._step3_same_value_relation_markers())
 
     def _is_step3_relation_condition(self, condition: Dict[str, Any]) -> bool:
         """
@@ -2069,7 +2296,7 @@ class GenerationPipeline:
         for condition in condition_index.values():
             if not isinstance(condition, dict):
                 continue
-            if not self._is_step3_relation_condition(condition):
+            if not self._is_step3_same_value_relation_condition(condition):
                 continue
 
             source_fields = condition.get("source_fields")
@@ -2089,6 +2316,278 @@ class GenerationPipeline:
                 repaired[field] = base_value
 
         return repaired
+
+
+    def _build_step3_relation_groups(
+        self,
+        *,
+        condition_index: Dict[str, Dict[str, Any]],
+        default_valid_values: Dict[str, Any],
+    ) -> List[Dict[str, Any]]:
+        """
+        Tạo danh sách nhóm field có quan hệ so khớp/bằng/trùng từ Step 2.
+
+        Dùng chung cho mọi feature:
+        - chỉ dựa vào condition.source_fields và mô tả condition của Step 2;
+        - không hardcode Password/ConfirmPassword hay bất kỳ field cụ thể nào;
+        - base_field là field gốc, các field còn lại là dependent_fields.
+        """
+        groups: List[Dict[str, Any]] = []
+        seen: Set[Tuple[str, ...]] = set()
+
+        for condition in condition_index.values():
+            if not isinstance(condition, dict):
+                continue
+            if not self._is_step3_same_value_relation_condition(condition):
+                continue
+
+            source_fields = condition.get("source_fields")
+            if not isinstance(source_fields, list) or len(source_fields) < 2:
+                continue
+
+            clean_fields = [
+                self._clean_text(field)
+                for field in source_fields
+                if self._clean_text(field) in default_valid_values
+            ]
+            if len(clean_fields) < 2:
+                continue
+
+            relation_key = tuple(sorted(clean_fields))
+            if relation_key in seen:
+                continue
+            seen.add(relation_key)
+
+            base_field = self._choose_relation_base_field(clean_fields, default_valid_values)
+            if not base_field:
+                continue
+
+            dependent_fields = [field for field in clean_fields if field != base_field]
+            if not dependent_fields:
+                continue
+
+            groups.append({
+                "condition_id": self._clean_text(condition.get("id")),
+                "condition_name": self._clean_text(condition.get("name")),
+                "source_fields": clean_fields,
+                "base_field": base_field,
+                "dependent_fields": dependent_fields,
+            })
+
+        return groups
+
+    def _is_step3_current_rule_relation_fault(
+        self,
+        invalid_conditions: List[Dict[str, Any]],
+    ) -> bool:
+        """
+        Xác định decision_rule hiện tại có đang kiểm tra chính lỗi quan hệ hay không.
+
+        Nếu rule hiện tại là lỗi quan hệ, Step 3 giữ nguyên cách map hiện tại:
+        field được chọn invalid sẽ khác field còn lại để tạo lỗi quan hệ.
+        """
+        for condition in invalid_conditions:
+            if isinstance(condition, dict) and self._is_step3_relation_condition(condition):
+                return True
+        return False
+
+    def _build_step3_dependent_field_overrides(
+        self,
+        *,
+        selected_invalid_field: str,
+        selected_invalid_value: Any,
+        relation_groups: List[Dict[str, Any]],
+        is_current_rule_relation_fault: bool,
+    ) -> Dict[str, Any]:
+        """
+        Sinh override cho field phụ thuộc khi testcase đang làm lỗi ở field gốc.
+
+        Luật dùng chung:
+        - Nếu rule hiện tại là rule kiểm tra lỗi quan hệ: không override, giữ logic cũ.
+        - Nếu selected_invalid_field là base_field của một quan hệ so khớp:
+          các dependent_fields phải copy theo selected_invalid_value để không phát sinh
+          thêm lỗi quan hệ ngoài ý muốn.
+        - Không override khi selected_invalid_value rỗng, vì có thể vô tình tạo thêm lỗi
+          required/empty trên field phụ thuộc.
+        """
+        selected_field = self._clean_text(selected_invalid_field)
+        if not selected_field or is_current_rule_relation_fault:
+            return {}
+
+        if selected_invalid_value is None or str(selected_invalid_value) == "":
+            return {}
+
+        overrides: Dict[str, Any] = {}
+        for group in relation_groups:
+            if not isinstance(group, dict):
+                continue
+            if self._clean_text(group.get("base_field")) != selected_field:
+                continue
+
+            dependent_fields = group.get("dependent_fields")
+            if not isinstance(dependent_fields, list):
+                continue
+
+            for field in dependent_fields:
+                field_name = self._clean_text(field)
+                if field_name and field_name != selected_field:
+                    overrides[field_name] = selected_invalid_value
+
+        return overrides
+
+    def _resolve_step3_expected_from_template(
+        self,
+        *,
+        expected: Any,
+        row: Dict[str, Any],
+        input_fields: List[str],
+    ) -> str:
+        """
+        Resolve Expected đã khóa trong testcase_template.
+
+        Nếu expected là tên field trong input_fields thì Expected cuối cùng bằng
+        giá trị thực tế của field đó trong row. Ngược lại giữ nguyên message đã khóa.
+        """
+        expected_text = self._clean_text(expected)
+        if expected_text in input_fields:
+            return "" if row.get(expected_text) is None else str(row.get(expected_text))
+        return expected_text
+
+    def _apply_step3_packet_contract_to_final_data(
+        self,
+        *,
+        final_data: Dict[str, Any],
+        packet: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        """
+        Ép final_data bám tuyệt đối STEP 3 MAPPING PACKET trước khi validate.
+
+        Mục tiêu:
+        - chặn AI đổi Expected thành placeholder như success/valid/error;
+        - chặn AI quên dependent_field_overrides;
+        - đảm bảo mỗi testcase_template sinh đúng 1 item;
+        - vẫn giữ Step 3 là AI-light, nhưng logic quyết định nằm ở code mapper.
+        """
+        if not isinstance(final_data, dict):
+            raise RuntimeError("Step3 final_data must be a JSON object.")
+        if not isinstance(packet, dict):
+            raise RuntimeError("Step3 packet must be a JSON object.")
+
+        input_fields = packet.get("input_fields")
+        if not isinstance(input_fields, list) or not input_fields:
+            raise RuntimeError("Step3 packet input_fields must be a non-empty list.")
+        input_fields = [self._clean_text(field) for field in input_fields if self._clean_text(field)]
+
+        default_valid_values = packet.get("default_valid_values")
+        if not isinstance(default_valid_values, dict):
+            default_valid_values = {}
+
+        templates = packet.get("testcase_templates")
+        if not isinstance(templates, list) or not templates:
+            raise RuntimeError("Step3 packet testcase_templates must be a non-empty list.")
+
+        locked_items: List[Dict[str, Any]] = []
+
+        for index, template in enumerate(templates, start=1):
+            if not isinstance(template, dict):
+                continue
+
+            template_id = self._clean_text(template.get("template_id")) or f"T{index:03d}"
+            row: Dict[str, Any] = {"Testcase": template_id}
+
+            for field in input_fields:
+                value = default_valid_values.get(field, "")
+                row[field] = "" if value is None else value
+
+            selected_field = self._clean_text(template.get("selected_invalid_field"))
+            candidate = template.get("selected_invalid_candidate")
+            if selected_field and selected_field in input_fields and isinstance(candidate, dict):
+                value = candidate.get("value")
+                row[selected_field] = "" if value is None else value
+
+            overrides = template.get("dependent_field_overrides")
+            if isinstance(overrides, dict):
+                for field, value in overrides.items():
+                    field_name = self._clean_text(field)
+                    if field_name in input_fields:
+                        row[field_name] = "" if value is None else value
+
+            row["Expected"] = self._resolve_step3_expected_from_template(
+                expected=template.get("expected"),
+                row=row,
+                input_fields=input_fields,
+            )
+            locked_items.append(row)
+
+        final_data["items"] = locked_items
+        return final_data
+
+    def _choose_step3_fault_field_for_condition(
+        self,
+        condition: Dict[str, Any],
+        source_fields: List[str],
+    ) -> str:
+        """
+        Chọn field chính gây lỗi cho một condition.
+
+        Mục tiêu:
+        - Với ConfirmPassword khớp Password -> field lỗi chính là ConfirmPassword.
+        - Với Password khớp Username tương ứng -> field lỗi chính là Password.
+        - Với condition 1 field -> lấy chính field đó.
+
+        Không hardcode theo feature.
+        """
+        clean_fields = [self._clean_text(f) for f in source_fields if self._clean_text(f)]
+        if not clean_fields:
+            return ""
+
+        if len(clean_fields) == 1:
+            return clean_fields[0]
+
+        condition_name = self._clean_text(condition.get("name")).lower()
+
+        # Ưu tiên field xuất hiện ở đầu tên condition.
+        for field in clean_fields:
+            if condition_name.startswith(field.lower()):
+                return field
+
+        # Với same-value relation, ưu tiên field xác nhận/nhập lại nếu có.
+        if self._is_step3_same_value_relation_condition(condition):
+            confirm_markers = self._step3_confirmation_field_markers()
+            for field in clean_fields:
+                if self._step3_text_has_any_marker(field, confirm_markers):
+                    return field
+
+        # Fallback: lấy field đầu tiên trong source_fields do Step 2 sinh.
+        return clean_fields[0]
+
+    def _filter_step3_candidates_by_fault_field(
+        self,
+        *,
+        condition: Dict[str, Any],
+        candidates: List[Dict[str, Any]],
+        source_fields: List[str],
+    ) -> List[Dict[str, Any]]:
+        """
+        Với condition nhiều field, chỉ giữ candidate thuộc field chính gây lỗi.
+
+        Tránh lỗi login:
+        - Condition: Password khớp Username tương ứng
+        - Không được lấy candidate Username invalid cho rule Password sai.
+        """
+        if not isinstance(candidates, list) or not candidates:
+            return []
+
+        target_field = self._choose_step3_fault_field_for_condition(condition, source_fields)
+        if not target_field:
+            return candidates
+
+        filtered = [
+            candidate for candidate in candidates
+            if self._clean_text(candidate.get("field")) == target_field
+        ]
+
+        return filtered if filtered else candidates
 
     def _find_invalid_candidates_for_condition(
         self,
@@ -2125,8 +2624,8 @@ class GenerationPipeline:
             self._clean_text(condition.get("meaning_when_n")),
         ])
 
-        is_relation_condition = self._is_step3_relation_condition(condition)
-        relation_markers = self._step3_relation_markers()
+        is_same_value_relation_condition = self._is_step3_same_value_relation_condition(condition)
+        relation_markers = self._step3_same_value_relation_markers()
 
         out: List[Dict[str, Any]] = []
         seen_ids: Set[str] = set()
@@ -2151,7 +2650,7 @@ class GenerationPipeline:
 
                 strict_expected_match = item_expected == expected
                 relation_match = (
-                    is_relation_condition
+                    is_same_value_relation_condition
                     and self._step3_text_has_any_marker(condition_text, relation_markers)
                     and self._step3_text_has_any_marker(item_text, relation_markers)
                 )
@@ -2168,7 +2667,11 @@ class GenerationPipeline:
                     "expected_class": item_expected,
                 })
 
-        return out
+        return self._filter_step3_candidates_by_fault_field(
+            condition=condition,
+            candidates=out,
+            source_fields=clean_source_fields,
+        )
 
     def _build_step3_mapping_plan_from_templates(
         self,
@@ -2259,6 +2762,10 @@ class GenerationPipeline:
             default_valid_values,
             condition_index,
         )
+        relation_groups = self._build_step3_relation_groups(
+            condition_index=condition_index,
+            default_valid_values=default_valid_values,
+        )
 
         testcase_templates: List[Dict[str, Any]] = []
         template_counter = 1
@@ -2296,12 +2803,14 @@ class GenerationPipeline:
                     "rule_type": rule_type,
                     "selected_invalid_field": None,
                     "selected_invalid_candidate": None,
+                    "dependent_field_overrides": {},
                     "expected": expected,
                 })
                 template_counter += 1
                 continue
 
             produced_for_rule = 0
+            is_current_rule_relation_fault = self._is_step3_current_rule_relation_fault(invalid_conditions)
 
             for condition in invalid_conditions:
                 candidates = self._find_invalid_candidates_for_condition(
@@ -2311,6 +2820,13 @@ class GenerationPipeline:
                 )
 
                 for candidate in candidates:
+                    dependent_field_overrides = self._build_step3_dependent_field_overrides(
+                        selected_invalid_field=candidate["field"],
+                        selected_invalid_value=candidate.get("value"),
+                        relation_groups=relation_groups,
+                        is_current_rule_relation_fault=is_current_rule_relation_fault,
+                    )
+
                     testcase_templates.append({
                         "template_id": f"T{template_counter:03d}",
                         "group": self._clean_text(condition.get("name")) or rule_id,
@@ -2318,6 +2834,7 @@ class GenerationPipeline:
                         "rule_type": rule_type,
                         "selected_invalid_field": candidate["field"],
                         "selected_invalid_candidate": candidate,
+                        "dependent_field_overrides": dependent_field_overrides,
                         "expected": expected,
                     })
                     template_counter += 1
@@ -2343,6 +2860,7 @@ class GenerationPipeline:
             "required_output_fields": ["Testcase", *fields, "Expected"],
             "input_fields": fields,
             "default_valid_values": default_valid_values,
+            "relation_groups": relation_groups,
             "mapping_plan": mapping_plan,
             "testcase_templates": testcase_templates,
         }
@@ -2547,6 +3065,10 @@ class GenerationPipeline:
 
         final_data = self._force_step3_feature(final_data, feature_key)
         final_data = self._normalize_step3_data(feature_key, final_data)
+        final_data = self._apply_step3_packet_contract_to_final_data(
+            final_data=final_data,
+            packet=packet,
+        )
 
         exporter.write_raw_json(
             {

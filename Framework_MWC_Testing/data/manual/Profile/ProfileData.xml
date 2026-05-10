@@ -1,0 +1,17 @@
+<TestCase><Testcase>TT5</Testcase><FullName>Ánh Dương Phạm</FullName><Email>anh1@</Email><Phone>0332115684</Phone><Gender>Khác</Gender><Day>2</Day><Month>2</Month><Year>1995</Year><Province>Tây Ninh</Province><District>Thành phố Tây Ninh</District><Ward>Phường 1</Ward><Address>Xóm 4</Address><Expected>Vui lòng nhập phần đứng sau '@'. 'anh1@' không hoàn chỉnh.</Expected></TestCase>
+
+<TestCase><Testcase>TT6</Testcase><FullName>Phạm Ánh Dương</FullName><Email>anh1@@</Email><Phone>0332115685</Phone><Gender>Nam</Gender><Day>1</Day><Month>1</Month><Year>1997</Year><Province>Vĩnh Long</Province><District>Huyện Trà Ôn</District><Ward>Thị trấn Trà Ôn</Ward><Address>Xóm 5</Address><Expected>Phần đứng sau '@' không được chứa biểu tượng '@'.</Expected></TestCase>
+
+<TestCase><Testcase>TT7</Testcase><FullName>Ánh Dương</FullName><Email>anh1@gmail.com</Email><Phone></Phone><Gender>Khác</Gender><Day>1</Day><Month>1</Month><Year>2004</Year><Province>Bình Phước</Province><District>Huyện Lộc Ninh</District><Ward>Xã Lộc An</Ward><Address>Xóm 6</Address><Expected>Vui lòng điền vào trường này.</Expected></TestCase>
+
+<TestCase><Testcase>TT8</Testcase><FullName>Phạm Dương</FullName><Email>anhduong@gmail.com</Email><Phone>033a115678</Phone><Gender>Nam</Gender><Day>1</Day><Month>1</Month><Year>2005</Year><Province>Hậu Giang</Province><District>Huyện Châu Thành</District><Ward>Xã Đông Phước A</Ward><Address>Xóm 7</Address><Expected>Số điện thoại không hợp lệ.</Expected></TestCase>
+
+<TestCase><Testcase>TT9</Testcase><FullName>Phạm Ánh Dương</FullName><Email>phamanh1@gmail.com</Email><Phone>033!115678</Phone><Gender>Nữ</Gender><Day>2</Day><Month>2</Month><Year>2006</Year><Province>Tiền Giang</Province><District>Thành phố Mỹ Tho</District><Ward>Phường 10</Ward><Address>Xóm 8</Address><Expected>Số điện thoại không hợp lệ.</Expected></TestCase>
+
+<TestCase><Testcase>TT10</Testcase><FullName>Phạm Ánh</FullName><Email>phamanh@gmail.com</Email><Phone>033 115678</Phone><Gender>Nam</Gender><Day>3</Day><Month>3</Month><Year>2007</Year><Province>Hậu Giang</Province><District>Huyện Châu Thành</District><Ward>Xã Đông Phước A</Ward><Address>Xóm 9</Address><Expected>Số điện thoại không hợp lệ.</Expected></TestCase>
+
+<TestCase><Testcase>TT11</Testcase><FullName>Phạm Thị Ánh Dương</FullName><Email>anh1@gmail.com</Email><Phone>033111567</Phone><Gender>Nữ</Gender><Day>4</Day><Month>5</Month><Year>2000</Year><Province>TP Hồ Chí Minh</Province><District>Quận 2</District><Ward>Phường Bến Nghé</Ward><Address>Xóm 10</Address><Expected>Số điện thoại không hợp lệ.</Expected></TestCase>
+
+<TestCase><Testcase>TT12</Testcase><FullName>Phạm Ánh</FullName><Email>anhanh@gmail.com</Email><Phone>03311567899</Phone><Gender>Nam</Gender><Day>23</Day><Month>2</Month><Year>2000</Year><Province>Bình Phước</Province><District>Huyện Lộc Ninh</District><Ward>Xã Lộc An</Ward><Address>Xóm 11</Address><Expected>Số điện thoại không hợp lệ.</Expected></TestCase>
+
+<TestCase><Testcase>TT13</Testcase><FullName>Phạm Thị Ánh Dương</FullName><Email>anh1@gmail.com</Email><Phone>3311567890</Phone><Gender>Nữ</Gender><Day>26</Day><Month>2</Month><Year>2023</Year><Province>Đồng Nai</Province><District>Quận Ô Môn</District><Ward>Phường Long Hưng</Ward><Address>Xóm 12</Address><Expected>Số điện thoại không hợp lệ.</Expected></TestCase>

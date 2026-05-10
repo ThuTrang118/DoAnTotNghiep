@@ -123,11 +123,11 @@ if "%DATA_SOURCE%"=="manual" (
         REM set DATA_FILE=data\manual\%BASE_NAME%.%DATA_MODE%
     )
 ) else (
-    REM ✅ AI naming convention (FLAT): data\ai_generated\<BaseName>.<ext>
+    REM AI naming convention (FLAT): data\ai_processed\<BaseName>.<ext>
     if /I "%DATA_MODE%"=="db" (
-        set DATA_FILE=data\ai_generated\%BASE_NAME%.db
+        set DATA_FILE=data\ai_processed\%BASE_NAME%.db
     ) else (
-        set DATA_FILE=data\ai_generated\%BASE_NAME%.%DATA_MODE%
+        set DATA_FILE=data\ai_processed\%BASE_NAME%.%DATA_MODE%
     )
 )
 

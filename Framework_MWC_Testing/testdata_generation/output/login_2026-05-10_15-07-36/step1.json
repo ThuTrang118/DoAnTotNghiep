@@ -1,0 +1,83 @@
+{
+  "feature": "login",
+  "description": "Chức năng đăng nhập cho phép người dùng truy cập vào hệ thống bằng tài khoản đã tồn tại.",
+  "coverage_items": [
+    {
+      "id": "1",
+      "field": "Username",
+      "technique": "EP",
+      "description": "Username rỗng",
+      "validity": "invalid",
+      "partition_type": "invalid",
+      "boundary": null,
+      "representative_value": "",
+      "rule": "Bắt buộc nhập",
+      "expected_class": "Vui lòng điền vào trường này"
+    },
+    {
+      "id": "2",
+      "field": "Username",
+      "technique": "EP",
+      "description": "Username hợp lệ",
+      "validity": "valid",
+      "partition_type": "valid",
+      "boundary": null,
+      "representative_value": "AnhDuong11",
+      "rule": "Chỉ hợp lệ khi bằng đúng Username đã đăng ký",
+      "expected_class": "Dữ liệu hợp lệ"
+    },
+    {
+      "id": "3",
+      "field": "Username",
+      "technique": "EP",
+      "description": "Username không tồn tại",
+      "validity": "invalid",
+      "partition_type": "invalid",
+      "boundary": null,
+      "representative_value": "wronguser",
+      "rule": "Chỉ hợp lệ khi bằng đúng Username đã đăng ký",
+      "expected_class": "Username hoặc Password không đúng!"
+    },
+    {
+      "id": "4",
+      "field": "Password",
+      "technique": "EP",
+      "description": "Password rỗng",
+      "validity": "invalid",
+      "partition_type": "invalid",
+      "boundary": null,
+      "representative_value": "",
+      "rule": "Bắt buộc nhập",
+      "expected_class": "Vui lòng điền vào trường này"
+    },
+    {
+      "id": "5",
+      "field": "Password",
+      "technique": "EP",
+      "description": "Password hợp lệ",
+      "validity": "valid",
+      "partition_type": "valid",
+      "boundary": null,
+      "representative_value": "AnhDuong@123",
+      "rule": "Chỉ hợp lệ khi bằng đúng Password tương ứng với Username đã đăng ký",
+      "expected_class": "Dữ liệu hợp lệ"
+    },
+    {
+      "id": "6",
+      "field": "Password",
+      "technique": "EP",
+      "description": "Password không khớp với Username",
+      "validity": "invalid",
+      "partition_type": "invalid",
+      "boundary": null,
+      "representative_value": "wrongpass",
+      "rule": "Chỉ hợp lệ khi bằng đúng Password tương ứng với Username đã đăng ký",
+      "expected_class": "Username hoặc Password không đúng!"
+    }
+  ],
+  "coverage_summary": {
+    "EP_count": 6,
+    "BVA_count": 0,
+    "TOTAL": 6
+  }
+}

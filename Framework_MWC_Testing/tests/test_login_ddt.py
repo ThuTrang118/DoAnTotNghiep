@@ -23,7 +23,6 @@ def _auto_log_data_source(pytestconfig):
 # =========================
 # PATH CONFIG
 # =========================
-# tests/ -> project root
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 FEATURE_NAME = "login"
@@ -31,41 +30,38 @@ SHEET = "Login"
 
 DATA_ROOT_DIR = os.path.join(BASE_DIR, "data")
 
-# manual root (Excel shared here)
+# Manual data:
+# - Excel dùng chung: data/manual/TestData.xlsx hoặc TestData.xls
+# - Các định dạng khác: data/manual/Login/LoginData.*
 MANUAL_ROOT_DIR = os.path.join(DATA_ROOT_DIR, "manual")
-# manual feature folder (non-excel per feature)
 MANUAL_FEATURE_DIR = os.path.join(MANUAL_ROOT_DIR, "Login")
 
-# AI processed
-AI_PROCESSED_DIR = os.path.join(DATA_ROOT_DIR, "ai_generated")
+# AI processed data:
+# - data/ai_processed/login/LoginData.*
+AI_PROCESSED_DIR = os.path.join(DATA_ROOT_DIR, "ai_processed", "login")
 
-# ---- Default file mapping ----
-# Manual:
-#   - xlsx/xls: shared file at data/manual/
-#   - others : per-feature file at data/manual/Login/
+
 DEFAULT_MANUAL_FILES = {
     "xlsx": "TestData.xlsx",
-    "xls":  "TestData.xls",
-    "csv":  "LoginData.csv",
+    "xls": "TestData.xls",
+    "csv": "LoginData.csv",
     "json": "LoginData.json",
     "yaml": "LoginData.yaml",
-    "yml":  "LoginData.yml",
-    "xml":  "LoginData.xml",
-    "db":   "LoginData.db",
+    "yml": "LoginData.yml",
+    "xml": "LoginData.xml",
+    "db": "LoginData.db",
     "sqlite": "LoginData.db",
 }
 
-# AI:
-#   Convention: data/ai_generated/<feature>.<ext>
 DEFAULT_AI_FILES = {
-    "csv":  "LoginData.csv",
+    "csv": "LoginData.csv",
     "json": "LoginData.json",
-    "xlsx": "LoginData.xlsx",   
-    "xls":  "LoginData.xls",    
+    "xlsx": "LoginData.xlsx",
+    "xls": "LoginData.xls",
     "yaml": "LoginData.yaml",
-    "yml":  "LoginData.yml",
-    "xml":  "LoginData.xml",
-    "db":   "LoginData.db",
+    "yml": "LoginData.yml",
+    "xml": "LoginData.xml",
+    "db": "LoginData.db",
     "sqlite": "LoginData.db",
     "excel": "LoginData.xlsx",
 }
@@ -75,21 +71,10 @@ DEFAULT_AI_FILES = {
 # DATA PROVIDER
 # =========================
 def get_test_data(pytestconfig):
-    """
-    Resolve data path based on:
-      --data-source: manual | ai
-      --data-mode  : xlsx|xls|csv|json|yaml|yml|xml|db|sqlite|excel
-      --data-file  : optional filename override (chỉ tên file, không cần path)
-
-    Extra options (cho XML/DB):
-      --db-table     : tên table trong sqlite (default: testdata)
-      --xml-item-tag : tag item trong xml (default: item)
-    """
     source = (pytestconfig.getoption("--data-source") or "manual").lower().strip()
     mode = (pytestconfig.getoption("--data-mode") or "xlsx").lower().strip()
     data_file = (pytestconfig.getoption("--data-file") or "").strip()
 
-    # normalize some aliases
     if mode == "excel":
         mode = "xlsx"
     if mode == "sqlite":
@@ -105,13 +90,12 @@ def get_test_data(pytestconfig):
     # Build base_dir + file_name
     # =========================
     if source == "manual":
-        # Manual Excel uses shared files under data/manual/
         if mode in ("xlsx", "xls"):
             base_dir = MANUAL_ROOT_DIR
         else:
             base_dir = MANUAL_FEATURE_DIR
 
-        file_name = os.path.basename(data_file) if data_file else DEFAULT_MANUAL_FILES.get(mode)
+        file_name = DEFAULT_MANUAL_FILES.get(mode)
 
         if not file_name:
             raise pytest.UsageError(
@@ -120,34 +104,48 @@ def get_test_data(pytestconfig):
             )
 
     else:
-        # AI data in processed/<format>/
         base_dir = AI_PROCESSED_DIR
 
-        file_name = os.path.basename(data_file) if data_file else DEFAULT_AI_FILES.get(mode)
+        file_name = DEFAULT_AI_FILES.get(mode)
+
         if not file_name:
             raise pytest.UsageError(
                 f"--data-mode không hợp lệ: {mode}. "
                 f"Chỉ chấp nhận: {', '.join(sorted(DEFAULT_AI_FILES.keys()))}"
             )
 
-    full_path = os.path.join(base_dir, file_name)
+    # Nếu run.bat có truyền --data-file thì ưu tiên đúng đường dẫn đó.
+    # Nếu không truyền thì tự ghép theo cấu trúc thư mục chuẩn.
+    if data_file:
+        if os.path.isabs(data_file):
+            full_path = data_file
+        else:
+            full_path = os.path.join(BASE_DIR, data_file)
+    else:
+        full_path = os.path.join(base_dir, file_name)
 
     # =========================
     # Fail-fast if missing
     # =========================
     if not os.path.exists(full_path):
-        # helpful hints for manual excel
         hints = []
+
         if source == "manual" and mode in ("xlsx", "xls"):
-            hints.append(f"- Bạn đang chọn Excel dùng chung, cần có file: {os.path.join(MANUAL_ROOT_DIR, file_name)}")
-            hints.append(f"- File phải có sheet: {SHEET}")
+            hints.append(f"- Manual Excel cần có file: {os.path.join(MANUAL_ROOT_DIR, file_name)}")
+            hints.append(f"- File Excel phải có sheet: {SHEET}")
+
+        if source == "manual" and mode not in ("xlsx", "xls"):
+            hints.append(f"- Manual {mode} cần có file trong: {MANUAL_FEATURE_DIR}")
+
+        if source == "ai":
+            hints.append(f"- AI {mode} cần có file trong: {AI_PROCESSED_DIR}")
 
         raise pytest.UsageError(
             "Không tìm thấy file data:\n"
             f"  {full_path}\n\n"
             "Gợi ý kiểm tra:\n"
             + ("\n".join(hints) + "\n\n" if hints else "")
-            + "Kiểm tra lại lựa chọn trong run_login.bat hoặc --data-file (nếu override)."
+            + "Kiểm tra lại lựa chọn trong run.bat hoặc --data-file."
         )
 
     # =========================
@@ -169,10 +167,6 @@ def get_test_data(pytestconfig):
 
 
 def _normalize_row(row: dict) -> dict:
-    """
-    Chuẩn hóa key để tránh mismatch do file csv/json/yaml/xml/db khác cột.
-    Expect keys: testcase, username, password, expected
-    """
     if not isinstance(row, dict):
         return {}
 
@@ -266,7 +260,6 @@ def test_login_ddt(driver, result_writer, request, tc, username, password, expec
     status, actual = "FAIL", ""
 
     try:
-        # 1) HTML5 validation
         html5_msgs = []
         for locator in [page.USERNAME, page.PASSWORD]:
             msg = page.get_validation_message(locator)
@@ -278,14 +271,12 @@ def test_login_ddt(driver, result_writer, request, tc, username, password, expec
             if expected_raw and str(expected_raw).lower() in actual.lower():
                 status = "PASS"
         else:
-            # 2) alert/toast
             alert = page.get_alert_text()
             if alert:
                 actual = alert
                 if expected_raw and str(expected_raw).lower() in alert.lower():
                     status = "PASS"
 
-        # 3) success
         if status == "FAIL" and page.at_home():
             profile = ProfilePage(driver)
             profile.open_profile()
