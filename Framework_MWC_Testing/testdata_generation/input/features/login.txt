@@ -46,8 +46,11 @@ KỲ VỌNG NGHIỆP VỤ
 1. Nếu bất kỳ field nào rỗng
 → Expected = "Vui lòng điền vào trường này"
 
-2. Nếu Username hoặc Password không hợp lệ 
-   → Expected = "Username hoặc Password không đúng!"
+2. Nếu Username khác Username đã đăng ký trong hệ thống
+→ Expected = "Tên đăng nhập hoặc mật khẩu không đúng!"
 
-3. Nếu Username = AnhDuong11 và Password = AnhDuong@123
+3. Nếu Username đúng nhưng Password khác Password tương ứng với Username đó
+→ Expected = "Tên đăng nhập hoặc mật khẩu không đúng!"
+
+4. Nếu Username = AnhDuong11 và Password = AnhDuong@123
    → Expected = Username

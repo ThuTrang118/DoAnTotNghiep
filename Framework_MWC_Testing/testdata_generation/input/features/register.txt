@@ -55,14 +55,14 @@ KỲ VỌNG NGHIỆP VỤ
 2. Nếu Username trùng với Username đã đăng ký
 → Expected = "tài khoản đã tồn tại trong hệ thống"
 
-3. Nếu Phone sai định dạng
-→ Expected = "Số điện thoại không hợp lệ"
+3. Nếu Phone không thỏa mãn đầy đủ các ràng buộc của Phone
+→ Expected = "Số điện thoại không đúng định dạng!"
 
-4. Nếu Password sai độ dài
-→ Expected = "Mật khẩu phải từ 8 đến 20 ký tự"
+4. Nếu Password không thỏa mãn ràng buộc độ dài từ 8 đến 20 ký tự
+→ Expected = "Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!"
 
-5. Nếu ConfirmPassword không trùng Password
-→ Expected = "Mật khẩu không khớp"
+5. Nếu ConfirmPassword không trùng hoàn toàn với Password
+→ Expected = "mật khẩu không giống nhau"
 
 6. Nếu toàn bộ dữ liệu hợp lệ
 → Expected = Username

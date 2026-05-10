@@ -63,9 +63,25 @@ def get_test_data(pytestconfig):
         raise pytest.UsageError(f"Không tìm thấy file data:\n  {full_path}")
 
     if full_path.endswith((".xlsx", ".xls")):
-        return load_data(full_path, sheet_name=SHEET, db_table=db_table, xml_item_tag=xml_item_tag)
+        if source == "manual":
+            return load_data(
+                full_path,
+                sheet_name=SHEET,
+                db_table=db_table,
+                xml_item_tag=xml_item_tag
+            )
 
-    return load_data(full_path, db_table=db_table, xml_item_tag=xml_item_tag)
+        return load_data(
+            full_path,
+            db_table=db_table,
+            xml_item_tag=xml_item_tag
+        )
+
+    return load_data(
+        full_path,
+        db_table=db_table,
+        xml_item_tag=xml_item_tag
+    )
 
 def pytest_generate_tests(metafunc):
     if {"tc", "username", "phone", "password", "repass", "expected_raw"}.issubset(metafunc.fixturenames):

@@ -26,7 +26,7 @@ def _auto_log_data_source(pytestconfig):
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 FEATURE_NAME = "login"
-SHEET = "Login"
+SHEET = "LoginData"
 
 DATA_ROOT_DIR = os.path.join(BASE_DIR, "data")
 
@@ -164,7 +164,6 @@ def get_test_data(pytestconfig):
         db_table=db_table,
         xml_item_tag=xml_item_tag
     )
-
 
 def _normalize_row(row: dict) -> dict:
     if not isinstance(row, dict):

@@ -1,6 +1,6 @@
 ﻿Testcase,Username,Password,Expected
 T001,AnhDuong11,AnhDuong@123,AnhDuong11
 T002,,AnhDuong@123,Vui lòng điền vào trường này
-T003,wronguser,AnhDuong@123,Username hoặc Password không đúng!
-T004,AnhDuong11,,Vui lòng điền vào trường này
-T005,AnhDuong11,wrongpass,Username hoặc Password không đúng!
+T003,AnhDuong11,,Vui lòng điền vào trường này
+T004,User123,AnhDuong@123,Tên đăng nhập hoặc mật khẩu không đúng!
+T005,AnhDuong11,AnhDuong@456,Tên đăng nhập hoặc mật khẩu không đúng!

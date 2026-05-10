@@ -8,14 +8,14 @@ items:
   Password: AnhDuong@123
   Expected: Vui lòng điền vào trường này
 - Testcase: T003
-  Username: wronguser
-  Password: AnhDuong@123
-  Expected: Username hoặc Password không đúng!
-- Testcase: T004
   Username: AnhDuong11
   Password: ''
   Expected: Vui lòng điền vào trường này
+- Testcase: T004
+  Username: User123
+  Password: AnhDuong@123
+  Expected: Tên đăng nhập hoặc mật khẩu không đúng!
 - Testcase: T005
   Username: AnhDuong11
-  Password: wrongpass
-  Expected: Username hoặc Password không đúng!
+  Password: AnhDuong@456
+  Expected: Tên đăng nhập hoặc mật khẩu không đúng!

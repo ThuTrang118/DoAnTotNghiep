@@ -28,18 +28,6 @@
     },
     {
       "id": "3",
-      "field": "Username",
-      "technique": "EP",
-      "description": "Username không tồn tại",
-      "validity": "invalid",
-      "partition_type": "invalid",
-      "boundary": null,
-      "representative_value": "wronguser",
-      "rule": "Chỉ hợp lệ khi bằng đúng Username đã đăng ký",
-      "expected_class": "Username hoặc Password không đúng!"
-    },
-    {
-      "id": "4",
       "field": "Password",
       "technique": "EP",
       "description": "Password rỗng",
@@ -51,7 +39,7 @@
       "expected_class": "Vui lòng điền vào trường này"
     },
     {
-      "id": "5",
+      "id": "4",
       "field": "Password",
       "technique": "EP",
       "description": "Password hợp lệ",
@@ -59,8 +47,20 @@
       "partition_type": "valid",
       "boundary": null,
       "representative_value": "AnhDuong@123",
-      "rule": "Chỉ hợp lệ khi bằng đúng Password tương ứng với Username đã đăng ký",
+      "rule": "Chỉ hợp lệ khi bằng đúng Password tương ứng",
       "expected_class": "Dữ liệu hợp lệ"
+    },
+    {
+      "id": "5",
+      "field": "Username",
+      "technique": "EP",
+      "description": "Username không tồn tại",
+      "validity": "invalid",
+      "partition_type": "invalid",
+      "boundary": null,
+      "representative_value": "User123",
+      "rule": "Chỉ hợp lệ khi bằng đúng Username đã đăng ký",
+      "expected_class": "Tên đăng nhập hoặc mật khẩu không đúng!"
     },
     {
       "id": "6",
@@ -70,9 +70,9 @@
       "validity": "invalid",
       "partition_type": "invalid",
       "boundary": null,
-      "representative_value": "wrongpass",
-      "rule": "Chỉ hợp lệ khi bằng đúng Password tương ứng với Username đã đăng ký",
-      "expected_class": "Username hoặc Password không đúng!"
+      "representative_value": "AnhDuong@456",
+      "rule": "Password phải đúng với Username tương ứng",
+      "expected_class": "Tên đăng nhập hoặc mật khẩu không đúng!"
     }
   ]
 }

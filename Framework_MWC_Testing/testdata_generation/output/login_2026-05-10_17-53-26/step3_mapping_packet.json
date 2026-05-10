@@ -31,7 +31,7 @@
       "testdata_count": 1
     },
     {
-      "group": "Username hợp lệ",
+      "group": "Password không rỗng",
       "decision_rule_id": "DT_003",
       "coverage_item_ids": [
         "3"
@@ -39,15 +39,15 @@
       "testdata_count": 1
     },
     {
-      "group": "Password không rỗng",
+      "group": "Username tồn tại trong hệ thống",
       "decision_rule_id": "DT_004",
       "coverage_item_ids": [
-        "4"
+        "5"
       ],
       "testdata_count": 1
     },
     {
-      "group": "Password hợp lệ",
+      "group": "Password khớp với Username",
       "decision_rule_id": "DT_005",
       "coverage_item_ids": [
         "6"
@@ -84,28 +84,12 @@
     },
     {
       "template_id": "T003",
-      "group": "Username hợp lệ",
-      "decision_rule_id": "DT_003",
-      "rule_type": "single_fault",
-      "selected_invalid_field": "Username",
-      "selected_invalid_candidate": {
-        "coverage_item_id": "3",
-        "field": "Username",
-        "value": "wronguser",
-        "description": "Username không tồn tại",
-        "expected_class": "Username hoặc Password không đúng!"
-      },
-      "dependent_field_overrides": {},
-      "expected": "Username hoặc Password không đúng!"
-    },
-    {
-      "template_id": "T004",
       "group": "Password không rỗng",
-      "decision_rule_id": "DT_004",
+      "decision_rule_id": "DT_003",
       "rule_type": "single_fault",
       "selected_invalid_field": "Password",
       "selected_invalid_candidate": {
-        "coverage_item_id": "4",
+        "coverage_item_id": "3",
         "field": "Password",
         "value": "",
         "description": "Password rỗng",
@@ -115,20 +99,36 @@
       "expected": "Vui lòng điền vào trường này"
     },
     {
+      "template_id": "T004",
+      "group": "Username tồn tại trong hệ thống",
+      "decision_rule_id": "DT_004",
+      "rule_type": "single_fault",
+      "selected_invalid_field": "Username",
+      "selected_invalid_candidate": {
+        "coverage_item_id": "5",
+        "field": "Username",
+        "value": "User123",
+        "description": "Username không tồn tại",
+        "expected_class": "Tên đăng nhập hoặc mật khẩu không đúng!"
+      },
+      "dependent_field_overrides": {},
+      "expected": "Tên đăng nhập hoặc mật khẩu không đúng!"
+    },
+    {
       "template_id": "T005",
-      "group": "Password hợp lệ",
+      "group": "Password khớp với Username",
       "decision_rule_id": "DT_005",
       "rule_type": "single_fault",
       "selected_invalid_field": "Password",
       "selected_invalid_candidate": {
         "coverage_item_id": "6",
         "field": "Password",
-        "value": "wrongpass",
+        "value": "AnhDuong@456",
         "description": "Password không khớp với Username",
-        "expected_class": "Username hoặc Password không đúng!"
+        "expected_class": "Tên đăng nhập hoặc mật khẩu không đúng!"
       },
       "dependent_field_overrides": {},
-      "expected": "Username hoặc Password không đúng!"
+      "expected": "Tên đăng nhập hoặc mật khẩu không đúng!"
     }
   ]
 }

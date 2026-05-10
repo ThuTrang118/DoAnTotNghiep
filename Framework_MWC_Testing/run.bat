@@ -1,13 +1,6 @@
 @echo off
-chcp 65001 >nul
 setlocal EnableDelayedExpansion
-
-set REPORTS_DIR=reports
-set ALLURE_RESULTS=%REPORTS_DIR%\allure-results
-set ALLURE_REPORT=%REPORTS_DIR%\allure-report
-
-if not exist "%ALLURE_RESULTS%" mkdir "%ALLURE_RESULTS%"
-if not exist "%ALLURE_REPORT%" mkdir "%ALLURE_REPORT%"
+chcp 65001 >nul
 
 :MENU
 cls
@@ -23,43 +16,80 @@ echo [5] Profile Update
 echo [6] Product Review
 echo [0] Exit
 echo.
+set /p CHOICE=Chon chuc nang (0-6):
 
-set /p FEATURE_CHOICE=Chon chuc nang (0-6):
-
-if "%FEATURE_CHOICE%"=="1" set FEATURE=login
-if "%FEATURE_CHOICE%"=="2" set FEATURE=register
-if "%FEATURE_CHOICE%"=="3" set FEATURE=search
-if "%FEATURE_CHOICE%"=="4" set FEATURE=order
-if "%FEATURE_CHOICE%"=="5" set FEATURE=profile_update
-if "%FEATURE_CHOICE%"=="6" set FEATURE=product_review
-if "%FEATURE_CHOICE%"=="0" goto END
+if "%CHOICE%"=="0" exit /b
+if "%CHOICE%"=="1" (
+    set "FEATURE=login"
+    set "TEST_FILE=tests/test_login_ddt.py"
+    set "BASE_NAME=LoginData"
+    set "MANUAL_FOLDER=Login"
+    set "AI_FOLDER=login"
+)
+if "%CHOICE%"=="2" (
+    set "FEATURE=register"
+    set "TEST_FILE=tests/test_register_ddt.py"
+    set "BASE_NAME=RegisterData"
+    set "MANUAL_FOLDER=Register"
+    set "AI_FOLDER=register"
+    set "DB_TABLE=register"
+)
+if "%CHOICE%"=="3" (
+    set "FEATURE=search"
+    set "TEST_FILE=tests/test_search_ddt.py"
+    set "BASE_NAME=SearchData"
+    set "MANUAL_FOLDER=Search"
+    set "AI_FOLDER=search"
+    set "DB_TABLE=testdata"
+)
+if "%CHOICE%"=="4" (
+    set "FEATURE=order"
+    set "TEST_FILE=tests/test_order_ddt.py"
+    set "BASE_NAME=OrderData"
+    set "MANUAL_FOLDER=Order"
+    set "AI_FOLDER=order"
+    set "DB_TABLE=testdata"
+)
+if "%CHOICE%"=="5" (
+    set "FEATURE=profile_update"
+    set "TEST_FILE=tests/test_profile_update_ddt.py"
+    set "BASE_NAME=ProfileData"
+    set "MANUAL_FOLDER=Profile"
+    set "AI_FOLDER=profile"
+    set "DB_TABLE=testdata"
+)
+if "%CHOICE%"=="6" (
+    set "FEATURE=product_review"
+    set "TEST_FILE=tests/test_product_review_ddt.py"
+    set "BASE_NAME=ProductReviewData"
+    set "MANUAL_FOLDER=ProductReview"
+    set "AI_FOLDER=productreview"
+    set "DB_TABLE=testdata"
+)
 
 if not defined FEATURE (
-    echo Lua chon khong hop le.
+    echo.
+    echo Lua chon khong hop le!
     pause
     goto MENU
 )
 
-REM ============================
-REM DATA SOURCE
-REM ============================
 echo.
 echo [1] Manual data
 echo [2] AI data
-set /p DATA_SOURCE_CHOICE=Chon nguon du lieu (1-2):
+set /p SOURCE_CHOICE=Chon nguon du lieu (1-2):
 
-if "%DATA_SOURCE_CHOICE%"=="1" set DATA_SOURCE=manual
-if "%DATA_SOURCE_CHOICE%"=="2" set DATA_SOURCE=ai
-
-if not defined DATA_SOURCE (
-    echo Lua chon khong hop le.
+if "%SOURCE_CHOICE%"=="1" (
+    set "DATA_SOURCE=manual"
+) else if "%SOURCE_CHOICE%"=="2" (
+    set "DATA_SOURCE=ai"
+) else (
+    echo.
+    echo Lua chon nguon du lieu khong hop le!
     pause
     goto MENU
 )
 
-REM ============================
-REM DATA FORMAT
-REM ============================
 echo.
 echo [1] CSV
 echo [2] JSON
@@ -69,78 +99,79 @@ echo [5] YAML
 echo [6] YML
 echo [7] XML
 echo [8] DB
-set /p FORMAT_CHOICE=Chon dinh dang du lieu (1-8):
+set /p MODE_CHOICE=Chon dinh dang du lieu (1-8):
 
-if "%FORMAT_CHOICE%"=="1" set DATA_MODE=csv
-if "%FORMAT_CHOICE%"=="2" set DATA_MODE=json
-if "%FORMAT_CHOICE%"=="3" set DATA_MODE=xlsx
-if "%FORMAT_CHOICE%"=="4" set DATA_MODE=xls
-if "%FORMAT_CHOICE%"=="5" set DATA_MODE=yaml
-if "%FORMAT_CHOICE%"=="6" set DATA_MODE=yml
-if "%FORMAT_CHOICE%"=="7" set DATA_MODE=xml
-if "%FORMAT_CHOICE%"=="8" set DATA_MODE=db
+if "%MODE_CHOICE%"=="1" set "DATA_MODE=csv"
+if "%MODE_CHOICE%"=="2" set "DATA_MODE=json"
+if "%MODE_CHOICE%"=="3" set "DATA_MODE=xlsx"
+if "%MODE_CHOICE%"=="4" set "DATA_MODE=xls"
+if "%MODE_CHOICE%"=="5" set "DATA_MODE=yaml"
+if "%MODE_CHOICE%"=="6" set "DATA_MODE=yml"
+if "%MODE_CHOICE%"=="7" set "DATA_MODE=xml"
+if "%MODE_CHOICE%"=="8" set "DATA_MODE=db"
 
 if not defined DATA_MODE (
-    echo Lua chon khong hop le.
+    echo.
+    echo Lua chon dinh dang khong hop le!
     pause
     goto MENU
 )
 
-REM ============================
-REM BUILD DATA FILE NAME
-REM ============================
+REM ===========================================
+REM BUILD DATA FILE PATH
+REM ===========================================
 
-REM Helper: Capitalize first letter of FEATURE (login -> Login)
-set FEATURE_CAP=%FEATURE:~0,1%%FEATURE:~1%
-REM Uppercase first letter (Windows batch doesn't have built-in upper; but your folder uses LoginData not loginData)
-REM So we hard-map the basename for AI by feature
-
-REM AI/Manual basename mapping
-set BASE_NAME=
-
-if /I "%FEATURE%"=="login" set BASE_NAME=LoginData
-if /I "%FEATURE%"=="register" set BASE_NAME=RegisterData
-if /I "%FEATURE%"=="search" set BASE_NAME=SearchData
-if /I "%FEATURE%"=="order" set BASE_NAME=OrderData
-if /I "%FEATURE%"=="profile_update" set BASE_NAME=ProfileUpdateData
-if /I "%FEATURE%"=="product_review" set BASE_NAME=ProductReviewData
-
-REM Fallback if not mapped
-if not defined BASE_NAME set BASE_NAME=%FEATURE_CAP%Data
-
-if "%DATA_SOURCE%"=="manual" (
-    REM Manual naming convention
-    if "%DATA_MODE%"=="xlsx" (
-        set DATA_FILE=data\manual\TestData.xlsx
-    ) else if "%DATA_MODE%"=="xls" (
-        set DATA_FILE=data\manual\TestData.xls
+if /I "%DATA_SOURCE%"=="manual" (
+    if /I "%DATA_MODE%"=="xlsx" (
+        set "DATA_FILE=data\manual\TestData.xlsx"
+    ) else if /I "%DATA_MODE%"=="xls" (
+        set "DATA_FILE=data\manual\TestData.xls"
     ) else (
-        REM Example: data\manual\LoginData.csv or data\manual\RegisterData.json (if you store like that)
-        REM If your manual files are actually in data\manual\<Feature>\..., keep your old line.
-        set DATA_FILE=data\manual\%FEATURE_CAP%\%BASE_NAME%.%DATA_MODE%
-        REM If your current structure is data\manual\<FeatureFolder>\LoginData.csv then line above is correct.
-        REM If you store manual flat directly under data\manual\, use:
-        REM set DATA_FILE=data\manual\%BASE_NAME%.%DATA_MODE%
+        set "DATA_FILE=data\manual\!MANUAL_FOLDER!\!BASE_NAME!.!DATA_MODE!"
     )
 ) else (
-    REM AI naming convention (FLAT): data\ai_processed\<BaseName>.<ext>
-    if /I "%DATA_MODE%"=="db" (
-        set DATA_FILE=data\ai_processed\%BASE_NAME%.db
+    set "DATA_FILE=data\ai_processed\!AI_FOLDER!\!BASE_NAME!.!DATA_MODE!"
+)
+
+REM DB extension
+if /I "%DATA_MODE%"=="db" (
+    if /I "%DATA_SOURCE%"=="manual" (
+        set "DATA_FILE=data\manual\!MANUAL_FOLDER!\!BASE_NAME!.db"
     ) else (
-        set DATA_FILE=data\ai_processed\%BASE_NAME%.%DATA_MODE%
+        set "DATA_FILE=data\ai_processed\!AI_FOLDER!\!BASE_NAME!.db"
     )
 )
 
-REM ============================
-REM ALLURE
-REM ============================
+REM ===========================================
+REM BUILD DB TABLE NAME
+REM Manual DB dùng bảng testdata
+REM AI DB dùng bảng theo feature/folder AI
+REM ===========================================
 
-set FEATURE_KEY=%FEATURE%_%DATA_SOURCE%
-set FEATURE_RESULTS=%ALLURE_RESULTS%\%FEATURE_KEY%
-set FEATURE_REPORT=%ALLURE_REPORT%\%FEATURE_KEY%
+if /I "%DATA_MODE%"=="db" (
+    if /I "%DATA_SOURCE%"=="manual" (
+        set "DB_TABLE=testdata"
+    ) else (
+        set "DB_TABLE=!AI_FOLDER!"
+    )
+) else (
+    set "DB_TABLE="
+)
 
-if exist "%FEATURE_RESULTS%" rmdir /s /q "%FEATURE_RESULTS%"
-mkdir "%FEATURE_RESULTS%"
+set "ALLURE_RESULTS=reports\allure-results\%FEATURE%_%DATA_SOURCE%"
+set "ALLURE_REPORT=reports\allure-report\%FEATURE%_%DATA_SOURCE%"
+set "BUILD_ORDER_DIR=reports\allure-history"
+set "BUILD_ORDER_FILE=%BUILD_ORDER_DIR%\%FEATURE%_%DATA_SOURCE%_build_order.txt"
+
+if not exist "%BUILD_ORDER_DIR%" mkdir "%BUILD_ORDER_DIR%"
+
+if exist "%BUILD_ORDER_FILE%" (
+    set /p BUILD_ORDER=<"%BUILD_ORDER_FILE%"
+    set /a BUILD_ORDER+=1
+) else (
+    set "BUILD_ORDER=1"
+)
+
 
 echo.
 echo ===========================================
@@ -148,28 +179,49 @@ echo FEATURE        = %FEATURE%
 echo DATA_SOURCE    = %DATA_SOURCE%
 echo DATA_MODE      = %DATA_MODE%
 echo DATA_FILE      = %DATA_FILE%
+echo DB_TABLE       = %DB_TABLE%
 echo ===========================================
 echo.
 
-REM ============================
-REM RUN PYTEST
-REM ============================
+set "HISTORY_BACKUP=%BUILD_ORDER_DIR%\%FEATURE%_%DATA_SOURCE%_history"
 
-pytest -v tests\test_%FEATURE%_ddt.py ^
+if exist "%HISTORY_BACKUP%" rmdir /s /q "%HISTORY_BACKUP%"
+
+if exist "%ALLURE_REPORT%\history" (
+    xcopy /E /I /Y "%ALLURE_REPORT%\history" "%HISTORY_BACKUP%" >nul
+)
+
+if exist "%ALLURE_RESULTS%" rmdir /s /q "%ALLURE_RESULTS%"
+mkdir "%ALLURE_RESULTS%"
+
+if exist "%HISTORY_BACKUP%" (
+    xcopy /E /I /Y "%HISTORY_BACKUP%" "%ALLURE_RESULTS%\history" >nul
+)
+
+pytest -v %TEST_FILE% ^
   --data-source=%DATA_SOURCE% ^
   --data-mode=%DATA_MODE% ^
-  --data-file=%DATA_FILE% ^
-  --alluredir=%FEATURE_RESULTS%
+  --data-file="%DATA_FILE%" ^
+  --db-table=%DB_TABLE% ^
+  --alluredir="%ALLURE_RESULTS%"
 
-REM ============================
-REM GENERATE REPORT
-REM ============================
+(
+echo {
+echo   "name": "Local Pytest",
+echo   "type": "local",
+echo   "buildName": "%FEATURE%_%DATA_SOURCE% Run #%BUILD_ORDER%",
+echo   "buildOrder": %BUILD_ORDER%,
+echo   "reportName": "%FEATURE%_%DATA_SOURCE% Report"
+echo }
+) > "%ALLURE_RESULTS%\executor.json"
 
-allure generate %FEATURE_RESULTS% -o %FEATURE_REPORT% --clean
-start "" %FEATURE_REPORT%\index.html
+echo %BUILD_ORDER%>"%BUILD_ORDER_FILE%"
+
+allure generate "%ALLURE_RESULTS%" -o "%ALLURE_REPORT%" --clean
+
+echo.
+echo Report successfully generated to %ALLURE_REPORT%
+echo.
 
 pause
 goto MENU
-
-:END
-exit
