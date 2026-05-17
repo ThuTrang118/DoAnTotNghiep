@@ -50,9 +50,9 @@
         "reference": 10,
         "point": "N-1"
       },
-      "representative_value": "012345678",
+      "representative_value": "032345678",
       "rule": "Đúng 10 ký tự",
-      "expected_class": "Số điện thoại không hợp lệ"
+      "expected_class": "Số điện thoại không đúng định dạng!"
     },
     {
       "id": "5",
@@ -66,7 +66,7 @@
         "reference": 10,
         "point": "N"
       },
-      "representative_value": "0123456789",
+      "representative_value": "0323456789",
       "rule": "Đúng 10 ký tự",
       "expected_class": "Dữ liệu hợp lệ"
     },
@@ -82,9 +82,9 @@
         "reference": 10,
         "point": "N+1"
       },
-      "representative_value": "01234567890",
+      "representative_value": "03234567890",
       "rule": "Đúng 10 ký tự",
-      "expected_class": "Số điện thoại không hợp lệ"
+      "expected_class": "Số điện thoại không đúng định dạng!"
     },
     {
       "id": "7",
@@ -96,7 +96,7 @@
       "boundary": null,
       "representative_value": "1234567890",
       "rule": "Bắt buộc bắt đầu bằng số 0",
-      "expected_class": "Số điện thoại không hợp lệ"
+      "expected_class": "Số điện thoại không đúng định dạng!"
     },
     {
       "id": "8",
@@ -106,9 +106,9 @@
       "validity": "invalid",
       "partition_type": "invalid",
       "boundary": null,
-      "representative_value": "01234a6789",
+      "representative_value": "03234a6789",
       "rule": "Chỉ được chứa ký tự số (0-9)",
-      "expected_class": "Số điện thoại không hợp lệ"
+      "expected_class": "Số điện thoại không đúng định dạng!"
     },
     {
       "id": "9",
@@ -118,9 +118,9 @@
       "validity": "invalid",
       "partition_type": "invalid",
       "boundary": null,
-      "representative_value": "01234!6789",
+      "representative_value": "03234!6789",
       "rule": "Không được chứa ký tự đặc biệt (!@#$%^&*)",
-      "expected_class": "Số điện thoại không hợp lệ"
+      "expected_class": "Số điện thoại không đúng định dạng!"
     },
     {
       "id": "10",
@@ -130,9 +130,9 @@
       "validity": "invalid",
       "partition_type": "invalid",
       "boundary": null,
-      "representative_value": "01234 6789",
+      "representative_value": "03234 6789",
       "rule": "Không được chứa khoảng trắng",
-      "expected_class": "Số điện thoại không hợp lệ"
+      "expected_class": "Số điện thoại không đúng định dạng!"
     },
     {
       "id": "11",
@@ -142,7 +142,7 @@
       "validity": "valid",
       "partition_type": "valid",
       "boundary": null,
-      "representative_value": "0123456789",
+      "representative_value": "0323456789",
       "rule": "Bắt buộc nhập",
       "expected_class": "Dữ liệu hợp lệ"
     },
@@ -160,7 +160,7 @@
       },
       "representative_value": "Pass123",
       "rule": "Độ dài từ 8 đến 20 ký tự",
-      "expected_class": "Mật khẩu phải từ 8 đến 20 ký tự"
+      "expected_class": "Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!"
     },
     {
       "id": "13",
@@ -240,7 +240,7 @@
       },
       "representative_value": "Pass12345678901234567",
       "rule": "Độ dài từ 8 đến 20 ký tự",
-      "expected_class": "Mật khẩu phải từ 8 đến 20 ký tự"
+      "expected_class": "Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!"
     },
     {
       "id": "18",
@@ -268,9 +268,9 @@
     },
     {
       "id": "20",
-      "field": "ConfirmPassword",
+      "field": "PasswordConfirm",
       "technique": "EP",
-      "description": "ConfirmPassword rỗng",
+      "description": "PasswordConfirm rỗng",
       "validity": "invalid",
       "partition_type": "invalid",
       "boundary": null,
@@ -280,21 +280,21 @@
     },
     {
       "id": "21",
-      "field": "ConfirmPassword",
+      "field": "PasswordConfirm",
       "technique": "EP",
-      "description": "ConfirmPassword không khớp với Password",
+      "description": "PasswordConfirm không khớp với Password",
       "validity": "invalid",
       "partition_type": "invalid",
       "boundary": null,
       "representative_value": "Pass12345678901",
       "rule": "Phải khớp với Password",
-      "expected_class": "Số điện thoại không hợp lệ"
+      "expected_class": "mật khẩu không giống nhau"
     },
     {
       "id": "22",
-      "field": "ConfirmPassword",
+      "field": "PasswordConfirm",
       "technique": "EP",
-      "description": "ConfirmPassword khớp với Password",
+      "description": "PasswordConfirm khớp với Password",
       "validity": "valid",
       "partition_type": "valid",
       "boundary": null,

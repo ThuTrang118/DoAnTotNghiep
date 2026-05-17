@@ -1,3 +1,4 @@
+/no_think
 VAI TRÒ:
 Sinh STEP 2 Reduced Decision Logic Table phục vụ cho Step 3 code-only mapping.
 

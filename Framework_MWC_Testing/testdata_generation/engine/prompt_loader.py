@@ -13,21 +13,6 @@ from testdata_generation.engine.feature_item_schema import (
 class PromptLoader:
     """
     Prompt loader cho pipeline 3 bước.
-
-    Cấu trúc input chuẩn:
-
-    input/
-    ├── features/
-    │   ├── login.txt
-    │   ├── register.txt
-    │   └── ...
-    └── generation_rules/
-        ├── step1_prompt.txt
-        ├── step2_prompt.txt
-        ├── step3_prompt.txt
-        ├── intermediate_format.txt
-        ├── decision_table_format.txt
-        └── final_output_format.txt
     """
 
     STEP1_PROMPT_FILE = "step1_prompt.txt"

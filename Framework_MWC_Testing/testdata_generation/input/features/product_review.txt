@@ -1,55 +1,132 @@
-==================================================================================
+CHỨC NĂNG: ĐÁNH GIÁ SẢN PHẨM
+
+================================================================================
 MÔ TẢ
-==================================================================================
-Chức năng đánh giá sản phẩm cho phép người dùng gửi nhận xét và đánh giá
-mức độ hài lòng đối với sản phẩm đang xem trên website.
+================================================================================
+Chức năng cho phép người dùng gửi đánh giá và nhận xét về sản phẩm.
 
-Người dùng nhập thông tin vào form đánh giá và nhấn nút "Gửi".
-Hệ thống sẽ kiểm tra dữ liệu đầu vào theo các ràng buộc của từng field.
+Người dùng:
+- nhập FullName
+- nhập Phone
+- nhập Email
+- nhập Title
+- chọn Rating
+- nhập Content
 
-Nếu dữ liệu hợp lệ, hệ thống gửi đánh giá thành công.
-Nếu dữ liệu không hợp lệ, hệ thống hiển thị thông báo lỗi tương ứng.
+Hệ thống kiểm tra:
+- field bắt buộc
+- định dạng dữ liệu
+- tính hợp lệ của từng field
+- tính hợp lệ của Rating
 
-==================================================================================
-INPUT: gồm 6 field
-==================================================================================
-1. FullName: bắt buộc
-2. Phone: bắt buộc
-3. Email: bắt buộc
-4. Title: bắt buộc
-5. Rating: bắt buộc
-6. Content: bắt buộc
+Chỉ gửi đánh giá thành công khi:
+- Phone hợp lệ
+- Email hợp lệ
+- Rating được chọn
+- Content hợp lệ
 
-==================================================================================
+================================================================================
+THÀNH PHẦN GIAO DIỆN (UI COMPONENT)
+================================================================================
+
+1. FullName
+- UI Type: Textbox
+- Data Type: String
+- Required: Yes
+
+2. Phone
+- UI Type: Textbox
+- Data Type: Number/String
+- Required: Yes
+
+3. Email
+- UI Type: Textbox
+- Data Type: Email/String
+- Required: Yes
+
+4. Title
+- UI Type: Textbox
+- Data Type: String
+- Required: Yes
+
+5. Rating
+- UI Type: Star Rating Selection
+- Data Type: Enum {1,2,3,4,5}
+- Required: Yes
+- Chọn bằng click UI
+- Không nhập text tự do
+
+6. Content
+- UI Type: Textarea
+- Data Type: String
+- Required: Yes
+
+================================================================================
+INPUT: gồm đúng 6 field
+================================================================================
+
+1. FullName: Textbox, String, bắt buộc
+2. Phone: Textbox, Number, bắt buộc
+3. Email: Textbox, Email/String, bắt buộc
+4. Title: Textbox, String, bắt buộc
+5. Rating: Star Rating Selection, Enum, bắt buộc
+6. Content: Textarea, String, bắt buộc
+
+================================================================================
 CONSTRAINT
-==================================================================================
+================================================================================
 
-FullName: gồm 1 yêu cầu
+FullName:
 1. Bắt buộc nhập
+2. Là họ tên người đánh giá
 
-Phone: gồm 6 yêu cầu
+Phone:
+Phone:
 1. Bắt buộc nhập
-2. Đúng 10 ký tự (đây là giá trị cố định N = 10)
-3. Bắt buộc bắt đầu bằng số 0
-4. Chỉ được chứa ký tự số (0-9)
-5. Không được chứa ký tự chữ (a-z, A-Z) hoặc ký tự đặc biệt (!@#$%^&*)
-6. Không được chứa khoảng trắng
+2. Là số điện thoại di động Việt Nam
+3. Đúng 10 số (N = 10)
+4. Đầu số phải thuộc nhóm đầu số di động Việt Nam hiện hành, bao gồm các nhóm đầu số di động phổ biến như 03, 05, 07, 08, 09.
+5. Không chứa chữ cái
+6. Không chứa ký tự đặc biệt
+7. Không chứa khoảng trắng
 
-Email: gồm 4 yêu cầu
+Email:
 1. Bắt buộc nhập
-2. Đúng định dạng email: Chỉ bao gồm chữ cái (a-z, A-Z), chữ số (0-9) và dấu chấm (.)
-3. Phải có đuôi "@gmail.com"
-4. Ký tự không được dùng: Không chứa ký hiệu &, =, _, ', -, +, ,, <, > hoặc nhiều dấu chấm liên tiếp.
+2. Phải có đuôi "@gmail.com"
 
-Rating: gồm 1 yêu cầu
-1. Giá trị nằm trong khoảng từ 1 đến 5
+Title:
+1. Bắt buộc nhập
+2. Là tiêu đề đánh giá sản phẩm
 
-Content:  gồm 1 yêu cầu
-1. Không được để trống
+Rating:
+1. Bắt buộc chọn
+2. Chỉ thuộc tập {1,2,3,4,5}
+3. Chọn bằng click UI
+4. Không nhập bằng bàn phím
 
-==================================================================================
+Content:
+1. Bắt buộc nhập
+2. Là nội dung đánh giá sản phẩm
+
+================================================================================
+QUAN HỆ DỮ LIỆU
+================================================================================
+
+Rating là field dạng lựa chọn UI.
+
+Người dùng:
+- chỉ được chọn giá trị từ 1 đến 5
+- không nhập text tự do
+
+VD hợp lệ:
+Rating = 5
+
+VD không hợp lệ:
+Rating = null
+
+================================================================================
 KỲ VỌNG NGHIỆP VỤ
-==================================================================================
+================================================================================
 
 1. Nếu bất kỳ field nào rỗng
 → Expected = "Vui lòng điền vào trường này"
@@ -60,5 +137,8 @@ KỲ VỌNG NGHIỆP VỤ
 3. Nếu Email sai định dạng
 → Expected = "Email không hợp lệ"
 
-4. Nếu tất cả dữ liệu hợp lệ
+4. Nếu Rating chưa được chọn
+→ Expected = "Vui lòng điền vào trường này"
+
+5. Nếu toàn bộ dữ liệu hợp lệ
 → Expected = "Gửi đánh giá thành công"

@@ -1,0 +1,83 @@
+{
+  "feature": "login",
+  "description": "Kiểm tra Username và Password để xác thực người dùng",
+  "coverage_items": [
+    {
+      "id": "1",
+      "field": "Username",
+      "technique": "EP",
+      "description": "Username rỗng",
+      "validity": "invalid",
+      "partition_type": "invalid",
+      "boundary": null,
+      "representative_value": "",
+      "rule": "Username bắt buộc",
+      "expected_class": "Vui lòng điền vào trường này"
+    },
+    {
+      "id": "2",
+      "field": "Username",
+      "technique": "EP",
+      "description": "Username tồn tại",
+      "validity": "valid",
+      "partition_type": "valid",
+      "boundary": null,
+      "representative_value": "AnhDuong11",
+      "rule": "Username hợp lệ",
+      "expected_class": "Dữ liệu hợp lệ"
+    },
+    {
+      "id": "3",
+      "field": "Password",
+      "technique": "EP",
+      "description": "Password rỗng",
+      "validity": "invalid",
+      "partition_type": "invalid",
+      "boundary": null,
+      "representative_value": "",
+      "rule": "Password bắt buộc",
+      "expected_class": "Vui lòng điền vào trường này"
+    },
+    {
+      "id": "4",
+      "field": "Password",
+      "technique": "EP",
+      "description": "Password hợp lệ",
+      "validity": "valid",
+      "partition_type": "valid",
+      "boundary": null,
+      "representative_value": "AnhDuong@123",
+      "rule": "Password hợp lệ",
+      "expected_class": "Dữ liệu hợp lệ"
+    },
+    {
+      "id": "5",
+      "field": "Password",
+      "technique": "EP",
+      "description": "Password sai",
+      "validity": "invalid",
+      "partition_type": "invalid",
+      "boundary": null,
+      "representative_value": "AnhDuong123",
+      "rule": "Password không đúng với Username",
+      "expected_class": "Tên đăng nhập hoặc mật khẩu không đúng!"
+    },
+    {
+      "id": "6",
+      "field": "Username",
+      "technique": "EP",
+      "description": "Username không tồn tại",
+      "validity": "invalid",
+      "partition_type": "invalid",
+      "boundary": null,
+      "representative_value": "AnhDuong12",
+      "rule": "Username không tồn tại",
+      "expected_class": "Tên đăng nhập hoặc mật khẩu không đúng!"
+    }
+  ],
+  "coverage_summary": {
+    "EP_count": 6,
+    "BVA_count": 0,
+    "TOTAL": 6
+  }
+}

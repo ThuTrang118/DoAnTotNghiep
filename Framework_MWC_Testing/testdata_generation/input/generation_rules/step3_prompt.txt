@@ -1,3 +1,4 @@
+/no_think
 VAI TRÒ:
 Bạn là bộ sinh STEP 3 trong pipeline sinh test data tự động dựa trên EP, BVA và Decision Table.
 

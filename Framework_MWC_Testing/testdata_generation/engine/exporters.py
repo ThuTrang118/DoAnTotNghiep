@@ -806,10 +806,6 @@ class Step1ExcelExporter:
         ws["A1"].alignment = LEFT
         ws.merge_cells("A1:H1")
 
-        ws["A3"] = "Bảng này trình bày Step 1 theo dạng gần giống mẫu bài giảng."
-        ws["A3"].alignment = LEFT
-        ws.merge_cells("A3:H3")
-
         ws["A5"] = "Test case"
         ws["B5"] = "Field"
         ws["C5"] = "Techniques"
@@ -1111,7 +1107,7 @@ class Step2DecisionTableExcelExporter:
         expected = self._clean(rule.get("expected"))
         note = self._clean(rule.get("reduction_note"))
 
-        details = note or expected or rule_type
+        details = expected or rule_type
 
         if details:
             return f"{rule_id}\n{details}"

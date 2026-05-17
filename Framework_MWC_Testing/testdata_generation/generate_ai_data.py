@@ -143,7 +143,9 @@ def _build_llm_client(config: Dict[str, Any]) -> OllamaLLMClient:
         temperature=temperature,
         top_p=top_p,
         num_predict=num_predict,
+        json_mode=ollama_cfg.get("json_mode", True),
         seed=seed,
+        think=ollama_cfg.get("think", False),
     )
 
 

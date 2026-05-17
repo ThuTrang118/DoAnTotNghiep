@@ -5,32 +5,32 @@
     "Username",
     "Phone",
     "Password",
-    "ConfirmPassword",
+    "PasswordConfirm",
     "Expected"
   ],
   "input_fields": [
     "Username",
     "Phone",
     "Password",
-    "ConfirmPassword"
+    "PasswordConfirm"
   ],
   "default_valid_values": {
     "Username": "NewUser123",
-    "Phone": "0123456789",
+    "Phone": "0323456789",
     "Password": "Pass1234",
-    "ConfirmPassword": "Pass1234"
+    "PasswordConfirm": "Pass1234"
   },
   "relation_groups": [
     {
       "condition_id": "C8",
-      "condition_name": "ConfirmPassword khớp Password",
+      "condition_name": "PasswordConfirm khớp Password",
       "source_fields": [
-        "ConfirmPassword",
+        "PasswordConfirm",
         "Password"
       ],
       "base_field": "Password",
       "dependent_fields": [
-        "ConfirmPassword"
+        "PasswordConfirm"
       ]
     }
   ],
@@ -96,7 +96,7 @@
       "testdata_count": 2
     },
     {
-      "group": "ConfirmPassword không rỗng",
+      "group": "PasswordConfirm không rỗng",
       "decision_rule_id": "DT_008",
       "coverage_item_ids": [
         "20"
@@ -104,7 +104,7 @@
       "testdata_count": 1
     },
     {
-      "group": "ConfirmPassword khớp Password",
+      "group": "PasswordConfirm khớp Password",
       "decision_rule_id": "DT_009",
       "coverage_item_ids": [
         "21"
@@ -180,12 +180,12 @@
       "selected_invalid_candidate": {
         "coverage_item_id": "4",
         "field": "Phone",
-        "value": "012345678",
+        "value": "032345678",
         "description": "Phone có độ dài 9 ký tự",
-        "expected_class": "Số điện thoại không hợp lệ"
+        "expected_class": "Số điện thoại không đúng định dạng!"
       },
       "dependent_field_overrides": {},
-      "expected": "Số điện thoại không hợp lệ"
+      "expected": "Số điện thoại không đúng định dạng!"
     },
     {
       "template_id": "T006",
@@ -196,12 +196,12 @@
       "selected_invalid_candidate": {
         "coverage_item_id": "6",
         "field": "Phone",
-        "value": "01234567890",
+        "value": "03234567890",
         "description": "Phone có độ dài 11 ký tự",
-        "expected_class": "Số điện thoại không hợp lệ"
+        "expected_class": "Số điện thoại không đúng định dạng!"
       },
       "dependent_field_overrides": {},
-      "expected": "Số điện thoại không hợp lệ"
+      "expected": "Số điện thoại không đúng định dạng!"
     },
     {
       "template_id": "T007",
@@ -214,10 +214,10 @@
         "field": "Phone",
         "value": "1234567890",
         "description": "Phone bắt đầu bằng ký tự không phải số 0",
-        "expected_class": "Số điện thoại không hợp lệ"
+        "expected_class": "Số điện thoại không đúng định dạng!"
       },
       "dependent_field_overrides": {},
-      "expected": "Số điện thoại không hợp lệ"
+      "expected": "Số điện thoại không đúng định dạng!"
     },
     {
       "template_id": "T008",
@@ -228,12 +228,12 @@
       "selected_invalid_candidate": {
         "coverage_item_id": "8",
         "field": "Phone",
-        "value": "01234a6789",
+        "value": "03234a6789",
         "description": "Phone chứa ký tự chữ",
-        "expected_class": "Số điện thoại không hợp lệ"
+        "expected_class": "Số điện thoại không đúng định dạng!"
       },
       "dependent_field_overrides": {},
-      "expected": "Số điện thoại không hợp lệ"
+      "expected": "Số điện thoại không đúng định dạng!"
     },
     {
       "template_id": "T009",
@@ -244,12 +244,12 @@
       "selected_invalid_candidate": {
         "coverage_item_id": "9",
         "field": "Phone",
-        "value": "01234!6789",
+        "value": "03234!6789",
         "description": "Phone chứa ký tự đặc biệt",
-        "expected_class": "Số điện thoại không hợp lệ"
+        "expected_class": "Số điện thoại không đúng định dạng!"
       },
       "dependent_field_overrides": {},
-      "expected": "Số điện thoại không hợp lệ"
+      "expected": "Số điện thoại không đúng định dạng!"
     },
     {
       "template_id": "T010",
@@ -260,12 +260,12 @@
       "selected_invalid_candidate": {
         "coverage_item_id": "10",
         "field": "Phone",
-        "value": "01234 6789",
+        "value": "03234 6789",
         "description": "Phone chứa khoảng trắng",
-        "expected_class": "Số điện thoại không hợp lệ"
+        "expected_class": "Số điện thoại không đúng định dạng!"
       },
       "dependent_field_overrides": {},
-      "expected": "Số điện thoại không hợp lệ"
+      "expected": "Số điện thoại không đúng định dạng!"
     },
     {
       "template_id": "T011",
@@ -294,12 +294,12 @@
         "field": "Password",
         "value": "Pass123",
         "description": "Password có độ dài 7 ký tự",
-        "expected_class": "Mật khẩu phải từ 8 đến 20 ký tự"
+        "expected_class": "Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!"
       },
       "dependent_field_overrides": {
-        "ConfirmPassword": "Pass123"
+        "PasswordConfirm": "Pass123"
       },
-      "expected": "Mật khẩu phải từ 8 đến 20 ký tự"
+      "expected": "Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!"
     },
     {
       "template_id": "T013",
@@ -312,24 +312,24 @@
         "field": "Password",
         "value": "Pass12345678901234567",
         "description": "Password có độ dài 21 ký tự",
-        "expected_class": "Mật khẩu phải từ 8 đến 20 ký tự"
+        "expected_class": "Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!"
       },
       "dependent_field_overrides": {
-        "ConfirmPassword": "Pass12345678901234567"
+        "PasswordConfirm": "Pass12345678901234567"
       },
-      "expected": "Mật khẩu phải từ 8 đến 20 ký tự"
+      "expected": "Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!"
     },
     {
       "template_id": "T014",
-      "group": "ConfirmPassword không rỗng",
+      "group": "PasswordConfirm không rỗng",
       "decision_rule_id": "DT_008",
       "rule_type": "single_fault",
-      "selected_invalid_field": "ConfirmPassword",
+      "selected_invalid_field": "PasswordConfirm",
       "selected_invalid_candidate": {
         "coverage_item_id": "20",
-        "field": "ConfirmPassword",
+        "field": "PasswordConfirm",
         "value": "",
-        "description": "ConfirmPassword rỗng",
+        "description": "PasswordConfirm rỗng",
         "expected_class": "Vui lòng điền vào trường này"
       },
       "dependent_field_overrides": {},
@@ -337,19 +337,19 @@
     },
     {
       "template_id": "T015",
-      "group": "ConfirmPassword khớp Password",
+      "group": "PasswordConfirm khớp Password",
       "decision_rule_id": "DT_009",
       "rule_type": "single_fault",
-      "selected_invalid_field": "ConfirmPassword",
+      "selected_invalid_field": "PasswordConfirm",
       "selected_invalid_candidate": {
         "coverage_item_id": "21",
-        "field": "ConfirmPassword",
+        "field": "PasswordConfirm",
         "value": "Pass12345678901",
-        "description": "ConfirmPassword không khớp với Password",
-        "expected_class": "Số điện thoại không hợp lệ"
+        "description": "PasswordConfirm không khớp với Password",
+        "expected_class": "mật khẩu không giống nhau"
       },
       "dependent_field_overrides": {},
-      "expected": "Mật khẩu không khớp"
+      "expected": "mật khẩu không giống nhau"
     }
   ]
 }

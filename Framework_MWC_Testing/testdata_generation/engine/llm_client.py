@@ -36,13 +36,14 @@ class OllamaLLMClient:
     def __init__(
         self,
         base_url: str = "http://127.0.0.1:11434",
-        model: str = "qwen3:14b",
+        model: str = "qwen3:8b",
         endpoint_mode: str = "generate",
         timeout_sec: int = 180,
         temperature: float = 0.1,
         top_p: float = 0.9,
-        num_predict: int = 1200,
+        num_predict: int = 4000,
         json_mode: bool = False,
+        think: bool = False,
         seed: Optional[int] = None,
     ) -> None:
         self.base_url = base_url.rstrip("/")
@@ -53,6 +54,7 @@ class OllamaLLMClient:
         self.top_p = float(top_p)
         self.num_predict = int(num_predict)
         self.json_mode = bool(json_mode)
+        self.think = bool(think)
         self.seed = seed
 
         if self.endpoint_mode not in {"generate", "chat", "auto"}:
@@ -133,6 +135,9 @@ class OllamaLLMClient:
 
     def _effective_json_mode(self, **kwargs: Any) -> bool:
         return bool(kwargs.pop("json_mode", self.json_mode))
+
+    def _effective_think_mode(self, **kwargs: Any) -> bool:
+        return bool(kwargs.pop("think", self.think))
 
     def _effective_timeout(self, **kwargs: Any) -> int:
         timeout_sec = int(kwargs.pop("timeout_sec", self.timeout_sec))
@@ -218,12 +223,14 @@ class OllamaLLMClient:
     def _build_generate_payload(self, prompt: str, **kwargs: Any) -> Dict[str, Any]:
         model = self._effective_model(**kwargs)
         json_mode = self._effective_json_mode(**kwargs)
+        think = self._effective_think_mode(**kwargs)
         options = self._effective_options(**kwargs)
 
         payload: Dict[str, Any] = {
             "model": model,
             "prompt": prompt,
             "stream": False,
+            "think": think,
             "options": options,
         }
 
@@ -237,6 +244,8 @@ class OllamaLLMClient:
         json_mode = self._effective_json_mode(**kwargs)
         options = self._effective_options(**kwargs)
 
+        think = self._effective_think_mode(**kwargs)
+
         payload: Dict[str, Any] = {
             "model": model,
             "messages": [
@@ -246,6 +255,7 @@ class OllamaLLMClient:
                 }
             ],
             "stream": False,
+            "think": think,
             "options": options,
         }
 

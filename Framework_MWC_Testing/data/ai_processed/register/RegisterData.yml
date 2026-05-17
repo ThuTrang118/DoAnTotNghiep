@@ -1,91 +1,91 @@
 items:
 - Testcase: T001
-  Username: NewUser123
-  Phone: 0123456789
+  Username: NewUser001
+  Phone: 0323456789
   Password: Pass1234
-  ConfirmPassword: Pass1234
-  Expected: NewUser123
+  PasswordConfirm: Pass1234
+  Expected: NewUser001
 - Testcase: T002
   Username: ''
-  Phone: 0123456789
+  Phone: 0323456789
   Password: Pass1234
-  ConfirmPassword: Pass1234
+  PasswordConfirm: Pass1234
   Expected: Vui lòng điền vào trường này
 - Testcase: T003
   Username: AnhDuong11
-  Phone: 0123456789
+  Phone: 0323456789
   Password: Pass1234
-  ConfirmPassword: Pass1234
+  PasswordConfirm: Pass1234
   Expected: tài khoản đã tồn tại trong hệ thống
 - Testcase: T004
-  Username: NewUser123
+  Username: NewUser004
   Phone: ''
   Password: Pass1234
-  ConfirmPassword: Pass1234
+  PasswordConfirm: Pass1234
   Expected: Vui lòng điền vào trường này
 - Testcase: T005
-  Username: NewUser123
-  Phone: 012345678
+  Username: NewUser005
+  Phone: 032345678
   Password: Pass1234
-  ConfirmPassword: Pass1234
-  Expected: Số điện thoại không hợp lệ
+  PasswordConfirm: Pass1234
+  Expected: Số điện thoại không đúng định dạng!
 - Testcase: T006
-  Username: NewUser123
-  Phone: 01234567890
+  Username: NewUser006
+  Phone: 03234567890
   Password: Pass1234
-  ConfirmPassword: Pass1234
-  Expected: Số điện thoại không hợp lệ
+  PasswordConfirm: Pass1234
+  Expected: Số điện thoại không đúng định dạng!
 - Testcase: T007
-  Username: NewUser123
+  Username: NewUser007
   Phone: '1234567890'
   Password: Pass1234
-  ConfirmPassword: Pass1234
-  Expected: Số điện thoại không hợp lệ
+  PasswordConfirm: Pass1234
+  Expected: Số điện thoại không đúng định dạng!
 - Testcase: T008
-  Username: NewUser123
-  Phone: 01234a6789
+  Username: NewUser008
+  Phone: 03234a6789
   Password: Pass1234
-  ConfirmPassword: Pass1234
-  Expected: Số điện thoại không hợp lệ
+  PasswordConfirm: Pass1234
+  Expected: Số điện thoại không đúng định dạng!
 - Testcase: T009
-  Username: NewUser123
-  Phone: 01234!6789
+  Username: NewUser009
+  Phone: 03234!6789
   Password: Pass1234
-  ConfirmPassword: Pass1234
-  Expected: Số điện thoại không hợp lệ
+  PasswordConfirm: Pass1234
+  Expected: Số điện thoại không đúng định dạng!
 - Testcase: T010
-  Username: NewUser123
-  Phone: 01234 6789
+  Username: NewUser010
+  Phone: 03234 6789
   Password: Pass1234
-  ConfirmPassword: Pass1234
-  Expected: Số điện thoại không hợp lệ
+  PasswordConfirm: Pass1234
+  Expected: Số điện thoại không đúng định dạng!
 - Testcase: T011
-  Username: NewUser123
-  Phone: 0123456789
+  Username: NewUser011
+  Phone: 0323456789
   Password: ''
-  ConfirmPassword: Pass1234
+  PasswordConfirm: Pass1234
   Expected: Vui lòng điền vào trường này
 - Testcase: T012
-  Username: NewUser123
-  Phone: 0123456789
+  Username: NewUser012
+  Phone: 0323456789
   Password: Pass123
-  ConfirmPassword: Pass123
-  Expected: Mật khẩu phải từ 8 đến 20 ký tự
+  PasswordConfirm: Pass123
+  Expected: Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!
 - Testcase: T013
-  Username: NewUser123
-  Phone: 0123456789
+  Username: NewUser013
+  Phone: 0323456789
   Password: Pass12345678901234567
-  ConfirmPassword: Pass12345678901234567
-  Expected: Mật khẩu phải từ 8 đến 20 ký tự
+  PasswordConfirm: Pass12345678901234567
+  Expected: Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!
 - Testcase: T014
-  Username: NewUser123
-  Phone: 0123456789
+  Username: NewUser014
+  Phone: 0323456789
   Password: Pass1234
-  ConfirmPassword: ''
+  PasswordConfirm: ''
   Expected: Vui lòng điền vào trường này
 - Testcase: T015
-  Username: NewUser123
-  Phone: 0123456789
+  Username: NewUser015
+  Phone: 0323456789
   Password: Pass1234
-  ConfirmPassword: Pass12345678901
-  Expected: Mật khẩu không khớp
+  PasswordConfirm: Pass12345678901
+  Expected: mật khẩu không giống nhau

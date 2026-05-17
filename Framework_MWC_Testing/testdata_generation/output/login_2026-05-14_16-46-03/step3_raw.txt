@@ -1,4 +1,6 @@
 {
+  "feature": "login",
+  "description": "Bộ test data cuối cùng cho chức năng đăng nhập",
   "items": [
     {
       "Testcase": "T001",

@@ -22,18 +22,18 @@ ai:
   provider: ollama
   ollama:
     base_url: http://127.0.0.1:11434
-    endpoint_mode: generate
-    model: "qwen3:14b"
-    timeout_sec: 7200
+    endpoint_mode: chat
+    model: "qwen3:8b"
+    timeout_sec: 1800
     temperature: 0.0
-    top_p: 0.1
-    num_predict: 6000
+    top_p: 0.7
+    num_predict: 4000
     seed: 42
+    think: false
+    json_mode: true
+
   generation:
     output_root: data/ai_generated
     keep_raw: true
     default_formats:
       - json
-      - csv
-      - xlsx
-      - yaml

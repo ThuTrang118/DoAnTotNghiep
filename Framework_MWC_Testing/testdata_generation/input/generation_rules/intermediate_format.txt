@@ -18,5 +18,34 @@
       "rule": "string",
       "expected_class": "string"
     }
-  ],
+  ]
 }
+
+JSON KEY RULE
+
+Tất cả JSON key phải giữ nguyên tuyệt đối.
+Không được:
+- đổi tên key
+- dịch key
+- viết key bằng ngôn ngữ khác
+- sinh ký tự Unicode lạ trong key
+
+Chỉ được dùng đúng các key sau:
+- feature
+- description
+- coverage_items
+- id
+- field
+- technique
+- validity
+- partition_type
+- boundary
+- representative_value
+- rule
+- expected_class
+
+JSON key chỉ được dùng ký tự ASCII:
+- a-z
+- A-Z
+- 0-9
+- _

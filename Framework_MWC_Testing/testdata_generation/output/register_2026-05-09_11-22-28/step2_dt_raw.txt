@@ -52,19 +52,19 @@
     },
     {
       "id": "C7",
-      "name": "ConfirmPassword không rỗng",
-      "source_fields": ["ConfirmPassword"],
+      "name": "PasswordConfirm không rỗng",
+      "source_fields": ["PasswordConfirm"],
       "values": ["Y", "N"],
-      "meaning_when_y": "ConfirmPassword được nhập",
-      "meaning_when_n": "ConfirmPassword rỗng"
+      "meaning_when_y": "PasswordConfirm được nhập",
+      "meaning_when_n": "PasswordConfirm rỗng"
     },
     {
       "id": "C8",
-      "name": "ConfirmPassword khớp Password",
-      "source_fields": ["ConfirmPassword", "Password"],
+      "name": "PasswordConfirm khớp Password",
+      "source_fields": ["PasswordConfirm", "Password"],
       "values": ["Y", "N"],
-      "meaning_when_y": "ConfirmPassword trùng với Password",
-      "meaning_when_n": "ConfirmPassword không khớp Password"
+      "meaning_when_y": "PasswordConfirm trùng với Password",
+      "meaning_when_n": "PasswordConfirm không khớp Password"
     }
   ],
   "actions": [
@@ -81,17 +81,17 @@
     {
       "id": "A3",
       "name": "Thông báo số điện thoại không hợp lệ",
-      "expected": "Số điện thoại không hợp lệ"
+      "expected": "Số điện thoại không đúng định dạng!"
     },
     {
       "id": "A4",
       "name": "Thông báo mật khẩu độ dài không hợp lệ",
-      "expected": "Mật khẩu phải từ 8 đến 20 ký tự"
+      "expected": "Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!"
     },
     {
       "id": "A5",
       "name": "Thông báo mật khẩu không khớp",
-      "expected": "Mật khẩu không khớp"
+      "expected": "mật khẩu không giống nhau"
     },
     {
       "id": "A6",
@@ -182,7 +182,7 @@
         "C8": "-"
       },
       "action_refs": ["A3"],
-      "expected": "Số điện thoại không hợp lệ",
+      "expected": "Số điện thoại không đúng định dạng!",
       "reduction_note": "Lỗi định dạng Phone khi C4=N"
     },
     {
@@ -216,7 +216,7 @@
         "C8": "-"
       },
       "action_refs": ["A4"],
-      "expected": "Mật khẩu phải từ 8 đến 20 ký tự",
+      "expected": "Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!",
       "reduction_note": "Lỗi độ dài Password khi C6=N"
     },
     {
@@ -250,8 +250,8 @@
         "C8": "N"
       },
       "action_refs": ["A5"],
-      "expected": "Mật khẩu không khớp",
-      "reduction_note": "Lỗi ConfirmPassword không khớp khi C8=N"
+      "expected": "mật khẩu không giống nhau",
+      "reduction_note": "Lỗi PasswordConfirm không khớp khi C8=N"
     }
   ],
   "decision_summary": {

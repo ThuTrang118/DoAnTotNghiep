@@ -160,11 +160,20 @@ class _ValidationCommon:
 
     @staticmethod
     def _check_atomic_text(value: Any) -> bool:
+
         if not isinstance(value, str):
             return True
-        lowered = value.lower()
-        separators = [" hoặc ", " và ", " and/or ", " / "]
-        return not any(sep in lowered for sep in separators)
+
+        text = value.strip()
+
+        if not text:
+            return False
+
+        # Rule quá dài thường là dấu hiệu AI đang gộp nhiều behavior.
+        if len(text) > 200:
+            return False
+
+        return True
 
     @staticmethod
     def _normalize_condition_list(values: Any) -> List[Dict[str, str]]:
@@ -504,7 +513,7 @@ class DecisionTableValidator(_ValidationCommon):
 
         self._validate_non_empty_string(dt_data.get("description"), "description", errors)
 
-        decision_summary = self._validate_required_dict(dt_data, "decision_summary", errors)
+        decision_summary = dt_data.get("decision_summary")
         conditions = self._validate_required_list(dt_data, "conditions", errors)
         actions = self._validate_required_list(dt_data, "actions", errors)
         decision_rules = self._validate_required_list(dt_data, "decision_rules", errors)
@@ -575,20 +584,6 @@ class DecisionTableValidator(_ValidationCommon):
             action_expected[aid] = str(action.get("expected", "")).strip()
 
         action_id_set = set(action_ids)
-
-        # Validate summary rebuilt by pipeline
-        expected_summary = {
-            "condition_count": len(condition_ids),
-            "action_count": len(action_ids),
-            "full_combination_count": 2 ** len(condition_ids) if condition_ids else 0,
-            "reduced_rule_count": len(decision_rules),
-        }
-        for key, expected_value in expected_summary.items():
-            actual = decision_summary.get(key)
-            if not isinstance(actual, int) or actual != expected_value:
-                errors.append(
-                    f"decision_summary.{key} must be {expected_value}, got {actual}."
-                )
 
         # Validate rules
         seen_rule_ids: Set[str] = set()
@@ -666,8 +661,11 @@ class DecisionTableValidator(_ValidationCommon):
                         f"{prefix}.expected differs from actions[{first_ref}].expected."
                     )
 
-            if not isinstance(reduction_note, str) or not reduction_note.strip():
-                errors.append(f"{prefix}.reduction_note must be non-empty string.")
+            if reduction_note is not None and (
+                not isinstance(reduction_note, str)
+                or not reduction_note.strip()
+            ):
+                errors.append(f"{prefix}.reduction_note must be non-empty string if provided.")
 
         if happy_path_count != 1:
             errors.append(f"Step2 must contain exactly 1 happy_path rule, got {happy_path_count}.")

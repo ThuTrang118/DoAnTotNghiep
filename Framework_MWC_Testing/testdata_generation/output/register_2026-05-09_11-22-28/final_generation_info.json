@@ -4,5 +4,5 @@
   "total_items_after_dedupe": 15,
   "packet": "C:\\Users\\HP\\Desktop\\ThuTrang\\Framework_MWC_Testing\\testdata_generation\\output\\register_2026-05-09_11-22-28\\step3_mapping_packet.json",
   "raw": "C:\\Users\\HP\\Desktop\\ThuTrang\\Framework_MWC_Testing\\testdata_generation\\output\\register_2026-05-09_11-22-28\\step3_raw.txt",
-  "prompt_length": 15601
+  "prompt_length": 13247
 }

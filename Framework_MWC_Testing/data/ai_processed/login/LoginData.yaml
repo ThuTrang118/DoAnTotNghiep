@@ -1,21 +1,21 @@
 items:
 - Testcase: T001
-  Username: AnhDuong11
-  Password: AnhDuong@123
-  Expected: AnhDuong11
-- Testcase: T002
   Username: ''
   Password: AnhDuong@123
   Expected: Vui lòng điền vào trường này
-- Testcase: T003
+- Testcase: T002
   Username: AnhDuong11
   Password: ''
   Expected: Vui lòng điền vào trường này
-- Testcase: T004
-  Username: User123
+- Testcase: T003
+  Username: AnhDuong12
   Password: AnhDuong@123
+  Expected: Tên đăng nhập hoặc mật khẩu không đúng!
+- Testcase: T004
+  Username: AnhDuong11
+  Password: AnhDuong123
   Expected: Tên đăng nhập hoặc mật khẩu không đúng!
 - Testcase: T005
   Username: AnhDuong11
-  Password: AnhDuong@456
-  Expected: Tên đăng nhập hoặc mật khẩu không đúng!
+  Password: AnhDuong@123
+  Expected: AnhDuong11

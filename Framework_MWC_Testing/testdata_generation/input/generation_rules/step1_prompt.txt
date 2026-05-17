@@ -1,125 +1,266 @@
+/no_think
+
 VAI TRÒ:
 Sinh coverage Step 1 bằng EP + BVA.
 
 NHIỆM VỤ:
-Đọc đặc tả → sinh coverage_items (atomic).
+Đọc FEATURE SPECIFICATION → sinh coverage_items atomic.
 
 PHẠM VI:
-- CHỈ Step 1
-- KHÔNG testcase
-- KHÔNG Decision Table
-- KHÔNG giải thích
+
+* CHỈ Step 1
+* KHÔNG testcase
+* KHÔNG Decision Table
+* KHÔNG giải thích
 
 OUTPUT:
-- Chỉ 1 JSON
-- Không text ngoài JSON
 
------------------------
+* Chỉ 1 JSON object hợp lệ
+* Không text ngoài JSON
+
+==================================================
+SCHEMA BẮT BUỘC
+===============
+
+Mỗi coverage_item bắt buộc có đủ key:
+
+* id
+* field
+* technique
+* description
+* validity
+* partition_type
+* boundary
+* representative_value
+* rule
+* expected_class
+
+Không được viết sai tên key.
+technique chỉ được là "EP" hoặc "BVA".
+
+==================================================
 RULE CHUNG
------------------------
-1. Mỗi coverage_item = 1 condition atomic
-2. Không gộp nhiều lỗi khác bản chất vào 1 item
-3. Không suy diễn rule ngoài đặc tả
-4. Mỗi field phải có coverage
-5. rule, validity, expected_class không được rỗng
+==========
 
------------------------
+1. Mỗi coverage_item = 1 condition atomic.
+2. Không gộp nhiều lỗi khác bản chất vào 1 item.
+3. Không suy diễn rule ngoài FEATURE SPECIFICATION.
+4. Mỗi field trong INPUT phải có coverage.
+5. rule, description, validity, expected_class không được rỗng.
+6. representative_value invalid chỉ được vi phạm đúng 1 rule.
+7. Nếu representative_value invalid vi phạm nhiều hơn 1 rule thì item đó sai.
+8. description phải mô tả rõ đúng trạng thái đang kiểm tra.
+9. Không dùng description chung chung nếu FEATURE SPECIFICATION có nêu lỗi cụ thể.
+
+==================================================
 VALID COVERAGE BẮT BUỘC
------------------------
-1. Nếu đặc tả cho phép xác định lớp hợp lệ cho field, phải sinh ít nhất 1 coverage_item valid cho field đó
-2. Không được chỉ sinh invalid mà bỏ qua valid
-3. valid coverage phải là item riêng
-4. valid coverage không được suy ra ngầm
-5. Nếu field có thể xác định trạng thái hợp lệ từ đặc tả, phải output rõ item valid
+=======================
 
------------------------
+Với mỗi field, nếu FEATURE SPECIFICATION xác định được trạng thái hợp lệ:
+
+* phải sinh đúng 1 EP valid tổng quát cho field đó.
+* valid coverage phải là item riêng.
+* không được chỉ sinh invalid mà bỏ valid.
+
+EP valid tổng quát:
+
+* technique = EP
+* validity = valid
+* partition_type = valid
+* boundary = null
+* expected_class = "Dữ liệu hợp lệ"
+* description = "<field> hợp lệ"
+* rule = "Toàn bộ constraint hợp lệ của <field>"
+
+EP invalid bắt buộc:
+
+* Với mỗi constraint không có N/MIN/MAX được nêu riêng trong FEATURE SPECIFICATION, phải sinh 1 coverage_item EP invalid riêng.
+* Không được chỉ sinh một item lỗi tổng quát nếu FEATURE SPECIFICATION đã nêu các lỗi con cụ thể.
+* Không được bỏ EP invalid của field chỉ vì field đó có BVA.
+
+==================================================
 CHỌN KỸ THUẬT
------------------------
-Dùng EP:
-- required / empty
-- format đúng / format sai
-- chứa ký tự / không chứa ký tự
-- trùng / không trùng
-- bắt đầu bằng / không bắt đầu bằng
-- quan hệ giữa field
-- mọi rule logic không có min/max/N rõ ràng
+=============
 
-Dùng BVA CHỈ khi có:
-- exact N
-- range MIN..MAX
+Với mỗi field, phải tách constraint của chính field đó thành 2 nhóm:
 
-CẤM:
-- dùng BVA khi không có min/max/N
-- dùng BVA cho field quan hệ
-- biến rule EP thành BVA
+1. Nhóm EP:
 
------------------------
+* required / empty
+* chứa chữ
+* chứa ký tự đặc biệt
+* chứa khoảng trắng
+* bắt đầu bằng / không bắt đầu bằng
+* thuộc tập giá trị / không thuộc tập giá trị
+* trùng / không trùng
+* tồn tại / không tồn tại
+* quan hệ giữa field
+* UI selection
+* mọi rule logic không có N/MIN/MAX
+
+2. Nhóm BVA:
+
+* exact N của chính field đó
+* range MIN..MAX của chính field đó
+
+QUY TẮC:
+
+* Một field có thể có cả EP và BVA nếu đặc tả của field đó có cả rule logic và rule biên.
+* Không được bỏ EP của field chỉ vì field đó có BVA.
+* N/MIN/MAX chỉ áp dụng cho đúng rule chứa N/MIN/MAX, không áp dụng cho toàn bộ field.
+* Không được dùng N/MIN/MAX của field khác.
+* Không được tự tạo range MIN..MAX nếu field chỉ có exact N.
+* Không được tự tạo exact N nếu field chỉ có range MIN..MAX.
+* Không được sinh EP invalid cho sai biên của rule có N/MIN/MAX.
+
+==================================================
 EP RULE
------------------------
-- technique = EP
-- partition_type = valid / invalid
-- validity = partition_type
-- boundary = null
-- representative_value phải đúng lớp valid hoặc invalid
-- expected_class phải đúng đặc tả
+=======
 
------------------------
+* technique = EP
+* boundary = null
+* partition_type = valid hoặc invalid
+* validity = partition_type
+* representative_value phải đúng lớp valid hoặc invalid
+* expected_class phải đúng FEATURE SPECIFICATION
+
+EP invalid:
+
+* Mỗi invalid rule là 1 coverage_item riêng.
+* Mỗi constraint con được nêu riêng trong FEATURE SPECIFICATION phải là 1 coverage_item riêng.
+* Không được gộp nhiều constraint con vào cùng 1 item dù chúng cùng expected_class.
+* Không được sinh item lỗi tổng quát nếu FEATURE SPECIFICATION đã có các constraint con riêng.
+
+Mỗi representative_value invalid:
+
+* chỉ được vi phạm đúng 1 constraint.
+* phải thỏa mãn toàn bộ constraint còn lại của field.
+
+==================================================
 BVA RULE
------------------------
-- technique = BVA
-- partition_type = null
-- boundary bắt buộc
+========
 
-exact:
-- N-1 (invalid)
-- N (valid)
-- N+1 (invalid)
+BVA chỉ sinh từ constraint N/MIN/MAX của chính field hiện tại.
 
-range:
-- MIN-1 (invalid)
-- MIN (valid)
-- MIN+1 (valid)
-- MAX-1 (valid)
-- MAX (valid)
-- MAX+1 (invalid)
+EXACT N:
+Dùng khi constraint yêu cầu đúng N / bằng N / chính xác N.
+Sinh đúng 3 item:
+
+* N-1 → invalid
+* N → valid
+* N+1 → invalid
+
+Với exact:
+
+* boundary.kind = exact
+* boundary.reference = N
+* boundary.point chỉ được là N-1, N, N+1
+* Không item nào được dùng boundary.kind = range.
+
+RANGE MIN..MAX:
+Dùng khi constraint có cả MIN và MAX.
+Sinh đúng 6 item:
+
+* MIN-1 → invalid
+* MIN → valid
+* MIN+1 → valid
+* MAX-1 → valid
+* MAX → valid
+* MAX+1 → invalid
+
+Với range:
+
+* boundary.kind = range
+* boundary.reference = MIN cho MIN-1, MIN, MIN+1
+* boundary.reference = MAX cho MAX-1, MAX, MAX+1
+* boundary.point chỉ được là MIN-1, MIN, MIN+1, MAX-1, MAX, MAX+1
+* Không item nào được dùng boundary.kind = exact.
 
 CẤM:
-- thiếu điểm
-- sai reference
-- gộp nhiều boundary point vào 1 item
 
------------------------
+* Không coi MIN hoặc MAX là exact N.
+* Không dùng boundary.kind = exact cho range MIN..MAX.
+* Không dùng boundary.kind = range cho exact N.
+* Không dùng N/MIN/MAX của field khác.
+* Không thiếu MIN+1 hoặc MAX-1.
+* BVA luôn có partition_type = null.
+
+DESCRIPTION BVA:
+
+* Description phải nêu rõ boundary cụ thể.
+* Nếu rule là độ dài: "<field> có độ dài X ký tự".
+* Nếu rule là giá trị/số lượng/mức chọn/điểm/ngày/tiền/phần trăm: mô tả đúng giá trị biên X.
+* Không dùng mô tả chung chung như "<field> hợp lệ", "<field> sai độ dài", "<field> sai định dạng".
+
+==================================================
 ATOMIC RULE
------------------------
-1. Nếu một rule chứa nhiều lỗi khác bản chất thì phải tách thành nhiều item
-2. Nếu có "hoặc", "/", "và" mà tạo ra nhiều invalid representative_value khác nhau thì phải tách
-3. Không được giữ 1 coverage_item gộp nhiều kiểu lỗi chỉ vì chúng cùng chung expected
-4. description phải mô tả đúng 1 trạng thái duy nhất
+===========
 
------------------------
+1. Nếu một rule chứa nhiều lỗi khác bản chất thì phải tách thành nhiều item.
+2. Nếu có "hoặc", "/", "và" mà tạo ra nhiều invalid representative_value khác nhau thì phải tách.
+3. Không được giữ 1 coverage_item gộp nhiều kiểu lỗi chỉ vì chúng cùng expected_class.
+4. description phải mô tả đúng 1 trạng thái duy nhất.
+
+Các lỗi invalid sau là khác bản chất nếu FEATURE SPECIFICATION có nêu riêng:
+
+* rỗng
+* chứa chữ cái
+* chứa ký tự đặc biệt
+* chứa khoảng trắng
+* sai tiền tố / sai đầu số
+* không thuộc tập giá trị hợp lệ
+* trùng dữ liệu đã tồn tại
+* không trùng field khác
+* không tồn tại
+* chưa chọn UI selection
+
+==================================================
 EXPECTED_CLASS
------------------------
-expected_class là kết quả/classification của coverage atomic, KHÔNG phải Expected cuối cùng của testcase hoàn chỉnh.
+==============
 
-Với coverage invalid:
-- expected_class phải là message lỗi đúng theo KỲ VỌNG NGHIỆP VỤ.
-- Không tự diễn giải lại message lỗi.
-- Không dùng: valid, invalid, error, success.
+expected_class là classification của coverage atomic, KHÔNG phải Expected cuối cùng của testcase hoàn chỉnh.
 
-Với coverage valid:
-- Nếu coverage chỉ kiểm tra riêng 1 field hoặc 1 rule atomic, expected_class = "Dữ liệu hợp lệ".
-- Không dùng representative_value làm expected_class.
-- Không dùng Expected nghiệp vụ cuối cùng cho coverage valid riêng lẻ.
+Coverage invalid:
 
------------------------
+* expected_class = đúng message lỗi trong FEATURE SPECIFICATION.
+* không tự diễn giải lại message lỗi.
+* không dùng: valid, invalid, error, success.
+
+Coverage valid:
+
+* expected_class = "Dữ liệu hợp lệ".
+* không dùng representative_value làm expected_class.
+* không dùng Expected nghiệp vụ cuối cùng cho coverage valid riêng lẻ.
+
+==================================================
 CHECK TRƯỚC OUTPUT
------------------------
-- Có thiếu field không?
-- Mỗi field có valid chưa, nếu đặc tả xác định được valid?
-- Mỗi field có invalid chưa?
-- BVA đủ điểm chưa?
-- Có dùng sai BVA không?
-- Có item gộp lỗi không?
-- Có rule nào chứa "hoặc", "/", "và" mà chưa tách không?
+==================
 
-Nếu có lỗi → KHÔNG output
+Trước khi output, bắt buộc kiểm tra:
+
+1. JSON có hợp lệ không?
+2. Mọi coverage_item đã đủ key bắt buộc chưa?
+3. technique chỉ là "EP" hoặc "BVA" chưa?
+4. Mỗi field đã có đúng 1 EP valid tổng quát chưa?
+5. Mỗi constraint EP invalid không có N/MIN/MAX đã có coverage_item riêng chưa?
+6. Có constraint con nào bị gộp thành lỗi tổng quát không?
+7. Có sinh EP invalid cho sai biên của rule có N/MIN/MAX không? Nếu có thì bỏ.
+8. exact N đã đủ N-1, N, N+1 và đều có boundary.kind = exact chưa?
+9. range MIN..MAX đã đủ MIN-1, MIN, MIN+1, MAX-1, MAX, MAX+1 và đều có boundary.kind = range chưa?
+10. Có thiếu MIN+1 hoặc MAX-1 không?
+11. Có dùng N/MIN/MAX của field khác không?
+12. Có dùng exact/range sai loại không?
+13. BVA có partition_type = null chưa?
+14. EP có boundary = null chưa?
+15. Description của BVA đã mô tả rõ boundary cụ thể chưa?
+16. Description có mô tả rõ đúng 1 trạng thái không?
+17. representative_value invalid có chỉ sai đúng 1 rule không?
+18. Có representative_value invalid nào đang vi phạm nhiều hơn 1 constraint không?
+19. Có item nào gộp lỗi không?
+
+Nếu có lỗi:
+
+* sửa trực tiếp JSON hiện tại.
+* không sinh lại toàn bộ từ đầu.
+
+Cuối cùng chỉ output đúng 1 JSON object hợp lệ.

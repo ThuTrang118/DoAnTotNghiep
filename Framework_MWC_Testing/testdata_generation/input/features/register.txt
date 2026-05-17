@@ -1,68 +1,123 @@
 CHỨC NĂNG: ĐĂNG KÝ
 
-==================================================================================
+================================================================================
 MÔ TẢ
-==================================================================================
-Chức năng đăng ký cho phép người dùng tạo tài khoản mới bằng cách nhập đầy đủ
-thông tin trên form đăng ký. Sau khi người dùng gửi form, hệ thống kiểm tra dữ liệu
-đầu vào theo các ràng buộc của từng field và quan hệ giữa các field.
-Nếu dữ liệu hợp lệ, hệ thống đăng ký thành công.
-Nếu dữ liệu không hợp lệ, hệ thống hiển thị thông báo lỗi tương ứng.
+================================================================================
+Chức năng đăng ký cho phép người dùng tạo tài khoản mới trên hệ thống.
 
-==================================================================================
+Người dùng:
+- nhập Username
+- nhập Phone
+- nhập Password
+- nhập PasswordConfirm
+
+Hệ thống kiểm tra:
+- field bắt buộc
+- định dạng dữ liệu
+- tính hợp lệ của từng field
+- quan hệ giữa các field
+
+Chỉ đăng ký thành công khi:
+- Username chưa tồn tại
+- Phone đúng định dạng
+- Password hợp lệ
+- PasswordConfirm trùng Password
+
+================================================================================
+THÀNH PHẦN GIAO DIỆN (UI COMPONENT)
+================================================================================
+
+1. Username
+- UI Type: Textbox
+- Data Type: String
+- Required: Yes
+
+2. Phone
+- UI Type: Textbox
+- Data Type: Number
+- Required: Yes
+
+3. Password
+- UI Type: Password Textbox
+- Data Type: String
+- Required: Yes
+
+4. PasswordConfirm
+- UI Type: Password Textbox
+- Data Type: String
+- Required: Yes
+
+================================================================================
 INPUT: gồm đúng 4 field
-==================================================================================
-1. Username: bắt buộc
-2. Phone: bắt buộc
-3. Password: bắt buộc
-4. ConfirmPassword: bắt buộc
+================================================================================
 
-Lưu ý:
-- Step 1 phải phân tích coverage cho đầy đủ cả 4 field trên.
-- Không được bỏ sót ConfirmPassword.
-- Rule quan hệ "ConfirmPassword phải trùng Password" phải được gắn cho field ConfirmPassword.
+1. Username: Textbox, String, bắt buộc
+2. Phone: Textbox, Number, bắt buộc
+3. Password: Password Textbox, String, bắt buộc
+4. PasswordConfirm: Password Textbox, String, bắt buộc
 
-==================================================================================
+================================================================================
 CONSTRAINT
-==================================================================================
-Username: gồm 2 yêu cầu
-1. Bắt buộc nhập
-2. Không được trùng với Username đã đăng ký trước đó.
-VD Username đã đăng ký: "AnhDuong11"
+================================================================================
 
-Phone: gồm 6 yêu cầu
+Username:
 1. Bắt buộc nhập
-2. Đúng 10 ký tự (đây là giá trị cố định N = 10)
-3. Bắt buộc bắt đầu bằng số 0
-4. Chỉ được chứa ký tự số (0-9)
-5. Không được chứa ký tự chữ (a-z, A-Z) hoặc ký tự đặc biệt (!@#$%^&*)
-6. Không được chứa khoảng trắng
+2. Không được trùng với Username đã tồn tại trong hệ thống
 
-Password: gồm 2 yêu cầu
+VD Username đã tồn tại:
+- AnhDuong11
+
+Phone:
 1. Bắt buộc nhập
-2. Độ dài từ 8 đến 20 ký tự (min = 8, max = 20)
+2. Độ dài phải đúng 10 ký tự (N = 10)
+3. Không được chứa chữ cái
+4. Không được chứa ký tự đặc biệt
+5. Không được chứa khoảng trắng
+6. Phải bắt đầu bằng 03, 05, 07, 08 hoặc 09
 
-ConfirmPassword: gồm 2 yêu cầu
+Password:
+1. Bắt buộc nhập
+2. Độ dài từ 8 đến 20 ký tự (MIN = 8, MAX = 20)
+
+PasswordConfirm:
 1. Bắt buộc nhập
 2. Phải trùng hoàn toàn với Password
 
-==================================================================================
+================================================================================
+QUAN HỆ DỮ LIỆU
+================================================================================
+
+PasswordConfirm phải trùng Password.
+
+VD:
+Password = "AnhDuong@123"
+PasswordConfirm = "AnhDuong@123"
+
+================================================================================
 KỲ VỌNG NGHIỆP VỤ
-==================================================================================
+================================================================================
+
 1. Nếu bất kỳ field nào rỗng
 → Expected = "Vui lòng điền vào trường này"
 
-2. Nếu Username trùng với Username đã đăng ký
+2. Nếu Username đã tồn tại
 → Expected = "tài khoản đã tồn tại trong hệ thống"
 
-3. Nếu Phone không thỏa mãn đầy đủ các ràng buộc của Phone
+3. Nếu Phone sai định dạng
 → Expected = "Số điện thoại không đúng định dạng!"
 
-4. Nếu Password không thỏa mãn ràng buộc độ dài từ 8 đến 20 ký tự
+4. Nếu Password sai độ dài
 → Expected = "Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!"
 
-5. Nếu ConfirmPassword không trùng hoàn toàn với Password
+5. Nếu PasswordConfirm không trùng Password
 → Expected = "mật khẩu không giống nhau"
 
 6. Nếu toàn bộ dữ liệu hợp lệ
-→ Expected = Username
+
+VD:
+Username = "TrangThu99"
+Phone = "0912345678"
+Password = "TrangThu@123"
+PasswordConfirm = "TrangThu@123"
+
+→ Expected = "TrangThu99"

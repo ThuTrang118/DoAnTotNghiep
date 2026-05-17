@@ -1,70 +1,84 @@
 CHỨC NĂNG: TÌM KIẾM
 
-==================================================================================
+================================================================================
 MÔ TẢ
-==================================================================================
-Chức năng tìm kiếm sản phẩm cho phép người dùng nhập từ khóa vào ô tìm kiếm để tìm
-các sản phẩm đang được bán trên website MWC - website bán giày/dép.
+================================================================================
+Chức năng cho phép người dùng tìm kiếm sản phẩm trên website.
 
-Hệ thống sẽ tìm kiếm sản phẩm dựa trên:
-- tên sản phẩm
-- một phần tên sản phẩm
-- mã sản phẩm
-- màu sắc sản phẩm
-- loại sản phẩm
+Người dùng:
+- nhập Keyword
 
-Sau khi người dùng nhập Keyword và nhấn Enter:
+Hệ thống kiểm tra:
+- field bắt buộc
+- định dạng dữ liệu
+- domain sản phẩm giày/dép
+- sự tồn tại của sản phẩm phù hợp
 
-- nếu tìm thấy sản phẩm phù hợp → hiển thị danh sách sản phẩm
-- nếu không tìm thấy sản phẩm phù hợp → hiển thị kết quả rỗng
+Chỉ tìm kiếm thành công khi:
+- Keyword hợp lệ
+- Keyword thuộc domain sản phẩm giày/dép
+- Keyword tồn tại trong hệ thống
 
-==================================================================================
-INPUT: gồm 1 field
-==================================================================================
-1. Keyword: bắt buộc
+================================================================================
+THÀNH PHẦN GIAO DIỆN (UI COMPONENT)
+================================================================================
 
-Lưu ý:
-- Step 1 phải phân tích coverage đầy đủ cho field Keyword.
-- Keyword chỉ hợp lệ khi thuộc domain sản phẩm giày/dép của hệ thống.
-- Rule "Keyword thuộc domain sản phẩm giày/dép" phải được xem là rule nghiệp vụ chính.
+1. Keyword
+- UI Type: Search Textbox
+- Data Type: String
+- Required: Yes
 
-==================================================================================
+================================================================================
+INPUT: gồm đúng 1 field
+================================================================================
+
+1. Keyword: Search Textbox, String, bắt buộc
+
+================================================================================
 CONSTRAINT
-==================================================================================
+================================================================================
 
-Keyword: gồm 5 yêu cầu
-
+Keyword:
 1. Bắt buộc nhập
+2. Là chuỗi tìm kiếm sản phẩm
+3. Phải thuộc domain sản phẩm giày/dép
+4. Có thể là tên sản phẩm, một phần tên sản phẩm (Sandal Gót Vuông), mã sản phẩm (G169), màu sắc(đen) hoặc loại sản phẩm (sandal)
+5. Có thể tồn tại hoặc không tồn tại trong hệ thống
 
-2. Keyword hợp lệ là chuỗi tìm kiếm sản phẩm và có thể thuộc một trong các loại sau:
-   - Tên sản phẩm (VD: Giày Cao Gót MWC G169 - Sandal Gót Vuông 8cm Tôn Dáng, Quai Ngang Phối Quai Chéo Nhẹ Tinh Tế, Thanh Lịch Thời Trang)
-   - Một phần tên sản phẩm (VD: Gót Vuông 8cm, Quai Ngang...)
-   - Mã sản phẩm (VD: G169, MWC A403, MWC 5888)
-   - Màu sắc (VD: đen, trắng, be)
-   - Loại sản phẩm (VD: cao gót, sandal, sneaker)
+VD không hợp lệ:
+- điện thoại
+- tủ lạnh
+- máy giặt
+- sandal@@@
 
-3. Không được chứa ký tự đặc biệt
+================================================================================
+QUAN HỆ DỮ LIỆU
+================================================================================
 
-4. Keyword chỉ được thuộc domain sản phẩm giày/dép của hệ thống.
-   Ví dụ:
-- Hợp lệ: "sandal", "sneaker", "cao gót"
-- Không hợp lệ: "điện thoại", "tủ lạnh", "máy giặt"
+Keyword thuộc domain sản phẩm giày/dép nhưng không tồn tại trong hệ thống:
+→ Expected = "Không tìm thấy sản phẩm"
 
-5. Keyword có thể tồn tại hoặc không tồn tại trong hệ thống.
-- Nếu tồn tại → trả về danh sách sản phẩm
-- Nếu không tồn tại → trả về kết quả rỗng
+Keyword không thuộc domain sản phẩm giày/dép:
+→ Expected = "Không tìm thấy sản phẩm"
 
-==================================================================================
+================================================================================
 KỲ VỌNG NGHIỆP VỤ
-==================================================================================
+================================================================================
 
 1. Nếu Keyword rỗng
-   → Expected = "Vui lòng điền vào trường này"
+→ Expected = "Vui lòng điền vào trường này"
 
-2. Nếu Keyword chứa ký tự đặc biệt
-   → Expected = "Không tìm thấy sản phẩm"
+2. Nếu Keyword không thuộc domain sản phẩm giày/dép
+→ Expected = "Không tìm thấy sản phẩm"
 
-3. Nếu Keyword không thuộc domain sản phẩm giày/dép
-   → Expected = "Không tìm thấy sản phẩm"
+3. Nếu Keyword hợp lệ nhưng không tồn tại trong hệ thống
+→ Expected = "Không tìm thấy sản phẩm"
+
 4. Nếu Keyword hợp lệ và tồn tại trong hệ thống
-   → Expected = Keyword
+→ Expected = chính giá trị Keyword đã nhập
+VD:
+Keyword = "G169"
+→ Expected = "G169"
+
+Keyword = "sandal"
+→ Expected = "sandal"

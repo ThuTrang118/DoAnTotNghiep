@@ -1,7 +1,5 @@
 {
   "feature": "string",
-  "description": "string",
-
   "conditions": [
     {
       "id": "C1",
@@ -35,11 +33,4 @@
       "reduction_note": "string"
     }
   ],
-
-  "decision_summary": {
-    "condition_count": 0,
-    "action_count": 0,
-    "full_combination_count": 0,
-    "reduced_rule_count": 0
-  }
 }

@@ -1,56 +1,74 @@
 CHỨC NĂNG: ĐĂNG NHẬP
 
-==================================================================================
+================================================================================
 MÔ TẢ
-==================================================================================
-Chức năng đăng nhập cho phép người dùng truy cập vào hệ thống bằng tài khoản đã tồn tại.
+================================================================================
+Chức năng đăng nhập cho phép người dùng truy cập hệ thống bằng tài khoản đã đăng ký.
 
-Sau khi người dùng nhập Username và Password rồi nhấn nút Đăng nhập,
-hệ thống sẽ kiểm tra:
-- dữ liệu bắt buộc của từng field
-- tính tồn tại của tài khoản
-- tính đúng đắn của cặp Username và Password
+Người dùng:
+- nhập Username
+- nhập Password
 
-Hệ thống chỉ cho phép đăng nhập thành công khi:
-- Username tồn tại trong hệ thống
+Hệ thống kiểm tra:
+- field bắt buộc
+- Username có tồn tại hay không
+- Password có đúng với Username tương ứng hay không
+
+Chỉ đăng nhập thành công khi:
+- Username tồn tại
 - Password đúng với Username tương ứng
-Nếu dữ liệu không hợp lệ, hệ thống hiển thị thông báo lỗi tương ứng.
 
-==================================================================================
+================================================================================
+THÀNH PHẦN GIAO DIỆN (UI COMPONENT)
+================================================================================
+
+1. Username
+- UI Type: Textbox
+- Data Type: String
+- Required: Yes
+
+2. Password
+- UI Type: Password Textbox
+- Data Type: String
+- Required: Yes
+- Dữ liệu được che ký tự
+
+================================================================================
 INPUT: gồm đúng 2 field
-==================================================================================
-1. Username: bắt buộc
-2. Password: bắt buộc
-Lưu ý:
-- Step 1 phải phân tích coverage đầy đủ cho cả Username và Password.
-- Rule "Password phải đúng với Username tương ứng" phải được xem là rule quan hệ giữa Username và Password.
+================================================================================
 
-==================================================================================
-CONSTRAINT
-==================================================================================
+1. Username: Textbox, String, bắt buộc
+2. Password: Textbox, String, bắt buộc
 
-Username: gồm 2 yêu cầu
-1. Bắt buộc nhập
-2. Chỉ hợp lệ khi bằng đúng Username đã đăng ký trong hệ thống
-VD: Username hợp lệ: "AnhDuong11"
+VD:
+Username = "AnhDuong11"
+Password hợp lệ = "AnhDuong@123"
 
-Password: gồm 2 yêu cầu
-1. Bắt buộc nhập
-2. Chỉ hợp lệ khi bằng đúng Password tương ứng với Username đã đăng ký
-VD: Password hợp lệ của Username "AnhDuong11" là: "AnhDuong@123"
+================================================================================
+QUAN HỆ DỮ LIỆU
+================================================================================
 
-==================================================================================
+Password phải đúng với Username tương ứng.
+
+VD:
+Username = "AnhDuong11"
+Password = "AnhDuong@123"
+
+================================================================================
 KỲ VỌNG NGHIỆP VỤ
-==================================================================================
+================================================================================
 
 1. Nếu bất kỳ field nào rỗng
 → Expected = "Vui lòng điền vào trường này"
 
-2. Nếu Username khác Username đã đăng ký trong hệ thống
+2. Nếu Username không tồn tại
 → Expected = "Tên đăng nhập hoặc mật khẩu không đúng!"
 
-3. Nếu Username đúng nhưng Password khác Password tương ứng với Username đó
+3. Nếu Username đúng nhưng Password sai
 → Expected = "Tên đăng nhập hoặc mật khẩu không đúng!"
 
-4. Nếu Username = AnhDuong11 và Password = AnhDuong@123
-   → Expected = Username
+4. Nếu:
+Username = "AnhDuong11"
+Password = "AnhDuong@123"
+
+→ Expected = "AnhDuong11"

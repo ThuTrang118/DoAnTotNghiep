@@ -1,113 +1,186 @@
 CHỨC NĂNG: CẬP NHẬT THÔNG TIN CÁ NHÂN
 
-==================================================================================
+================================================================================
 MÔ TẢ
-==================================================================================
-Chức năng cập nhật thông tin cá nhân cho phép người dùng chỉnh sửa thông tin
-tài khoản và địa chỉ nhận hàng.
+================================================================================
+Chức năng cho phép người dùng cập nhật thông tin cá nhân và địa chỉ nhận hàng.
 
-Người dùng nhập hoặc thay đổi thông tin và nhấn nút "Lưu".
+Người dùng:
+- nhập/chọn thông tin
+- nhấn nút "Lưu"
 
-Hệ thống kiểm tra dữ liệu đầu vào theo các ràng buộc của từng field.
-Nếu dữ liệu hợp lệ, hệ thống cập nhật thành công.
-Nếu dữ liệu không hợp lệ, hệ thống hiển thị thông báo lỗi tương ứng.
+Hệ thống kiểm tra:
+- field bắt buộc
+- định dạng dữ liệu
+- tính hợp lệ của từng field
+- quan hệ giữa các field
 
-==================================================================================
-INPUT: gồm 11 field
-==================================================================================
-1. FullName: không bắt buộc
-2. Email: không bắt buộc
-3. Phone: bắt buộc
-4. Gender: không bắt buộc
-5. Day: không bắt buộc
-6. Month: không bắt buộc
-7. Year: không bắt buộc
-8. Province: không bắt buộc
-9. District: không bắt buộc
-10. Ward: không bắt buộc
-11. Address: không bắt buộc
+Chỉ cập nhật thành công khi:
+- Phone hợp lệ
+- Email hợp lệ (nếu có nhập)
+- Ngày sinh hợp lệ
+- District thuộc Province
+- Ward thuộc District
 
-==================================================================================
+================================================================================
+THÀNH PHẦN GIAO DIỆN (UI COMPONENT)
+================================================================================
+
+1. FullName
+- UI Type: Textbox
+- Data Type: String
+- Required: No
+
+2. Email
+- UI Type: Textbox
+- Data Type: Email/String
+- Required: No
+
+3. Phone
+- UI Type: Textbox
+- Data Type: Number/String
+- Required: Yes
+
+4. Gender
+- UI Type: Radio Button
+- Data Type: Enum {Nam, Nữ, Khác}
+- Required: No
+
+5. Day
+- UI Type: Combobox
+- Data Type: Number
+- Required: No
+
+6. Month
+- UI Type: Combobox
+- Data Type: Number
+- Required: No
+
+7. Year
+- UI Type: Combobox
+- Data Type: Number
+- Required: No
+
+8. Province
+- UI Type: Combobox
+- Data Type: String
+- Required: No
+
+9. District
+- UI Type: Combobox
+- Data Type: String
+- Required: No
+
+10. Ward
+- UI Type: Combobox
+- Data Type: String
+- Required: No
+
+11. Address
+- UI Type: Textbox
+- Data Type: String
+- Required: No
+
+12. Lưu
+- UI Type: Button
+
+================================================================================
+INPUT: gồm đúng 11 field
+================================================================================
+
+1. FullName: Textbox, String, không bắt buộc
+2. Email: Textbox, Email/String, không bắt buộc
+3. Phone: Textbox, Number, bắt buộc
+4. Gender: Radio Button, Enum, không bắt buộc
+5. Day: Combobox, Number, không bắt buộc
+6. Month: Combobox, Number, không bắt buộc
+7. Year: Combobox, Number, không bắt buộc
+8. Province: Combobox, String, không bắt buộc
+9. District: Combobox, String, không bắt buộc
+10. Ward: Combobox, String, không bắt buộc
+11. Address: Textbox, String, không bắt buộc
+
+================================================================================
 CONSTRAINT
-==================================================================================
+================================================================================
 
-FullName: gồm 1 yêu cầu
+FullName:
 1. Có thể rỗng hoặc có giá trị hợp lệ
 
-Phone: gồm 6 yêu cầu
+Email:
+1. Có thể rỗng
+2. Phải có đuôi "@gmail.com"
+
+Phone:
+Phone:
 1. Bắt buộc nhập
-2. Đúng 10 ký tự (N = 10)
-3. Bắt đầu bằng số 0
-4. Chỉ chứa số (0-9)
-5. Không chứa chữ hoặc ký tự đặc biệt
-6. Không chứa khoảng trắng
+2. Là số điện thoại di động Việt Nam
+3. Đúng 10 số (N = 10)
+4. Đầu số phải thuộc nhóm đầu số di động Việt Nam hiện hành, bao gồm các nhóm đầu số di động phổ biến như 03, 05, 07, 08, 09.
+5. Không chứa chữ cái
+6. Không chứa ký tự đặc biệt
+7. Không chứa khoảng trắng
 
-Email: gồm 3 yêu cầu
-1. Có thể rỗng
-2. Nếu nhập phải đúng định dạng email (HTML5)
-3. Phải có đuôi "@gmail.com"
+Gender:
+1. Có thể không chọn
+2. Nếu chọn phải thuộc {Nam, Nữ, Khác}
 
-Lưu ý:
-- Trường Email sử dụng validation HTML5 của trình duyệt
-- Không có thông báo lỗi cố định
-- Khi sai định dạng:
-  + Field bị đánh dấu invalid
-  + Trình duyệt hiển thị thông báo mặc định
+Day:
+1. Có thể không chọn
+2. Nếu chọn phải từ 1 đến 31
 
-Gender: gồm 2 yêu cầu
-1. Có thể rỗng
-2. Nếu chọn phải thuộc tập {Nam, Nữ, Khác}
+Month:
+1. Có thể không chọn
+2. Nếu chọn phải từ 1 đến 12
 
-Day: gồm 3 yêu cầu
-1. Có thể rỗng
-2. Nếu chọn phải nằm trong khoảng từ 1 đến 31
-3. Phải tạo thành ngày hợp lệ với Month và Year
-   (VD: không tồn tại 30/02, 31/04)
+Year:
+1. Có thể không chọn
+2. Nếu chọn phải nhỏ hơn hoặc bằng năm hiện tại
 
-Month: gồm 2 yêu cầu
-1. Có thể rỗng
-2. Nếu chọn phải nằm trong khoảng từ 1 đến 12
+Province:
+1. Có thể không chọn
+2. Nếu chọn phải thuộc danh sách tỉnh/thành ở Việt Nam
 
-Year: gồm 2 yêu cầu
-1. Có thể rỗng
-2. Nếu chọn phải ≤ năm hiện tại
-
-Province: gồm 2 yêu cầu
-1. Có thể rỗng
-2. Nếu chọn phải thuộc danh sách tỉnh/thành của hệ thống
-
-District: gồm 3 yêu cầu
-1. Có thể rỗng
-2. Nếu chọn phải thuộc danh sách quận/huyện
+District:
+1. Có thể không chọn
+2. Nếu chọn phải thuộc danh sách quận/huyện ở Việt Nam
 3. Phải thuộc Province đã chọn
 
-Ward: gồm 3 yêu cầu
-1. Có thể rỗng
-2. Nếu chọn phải thuộc danh sách xã/phường
+Ward:
+1. Có thể không chọn
+2. Nếu chọn phải thuộc danh sách xã/phường ở Việt Nam
 3. Phải thuộc District đã chọn
 
-Address: gồm 2 yêu cầu
+Address:
 1. Có thể rỗng
-2. Nếu nhập là địa chỉ chi tiết tại Việt Nam (số nhà, đường,...)
+2. Nếu nhập là địa chỉ chi tiết cấp dưới ward
 
-==================================================================================
-LƯU Ý LOGIC UI (QUAN TRỌNG)
-==================================================================================
-- Người dùng chọn địa chỉ theo thứ tự:
-  Province → District → Ward
+================================================================================
+QUAN HỆ DỮ LIỆU
+================================================================================
 
-- Nếu chưa chọn Province:
-  → Không hiển thị District
+1. Day + Month + Year phải tạo thành ngày hợp lệ
 
-- Nếu chưa chọn District:
-  → Không hiển thị Ward
+VD không hợp lệ:
+Day = 30
+Month = 2
+Year = 2024
 
-⇒ Không tồn tại test case "chọn sai thứ tự"
-⇒ Không cần Expected cho lỗi thứ tự
+2. District phải thuộc Province đã chọn
 
-==================================================================================
+VD:
+Province = "Kiên Giang"
+District = "Rạch Giá"
+
+3. Ward phải thuộc District đã chọn
+
+VD:
+District = "Rạch Giá"
+Ward = "Vĩnh Thanh"
+
+================================================================================
 KỲ VỌNG NGHIỆP VỤ
-==================================================================================
+================================================================================
 
 1. Nếu Phone rỗng
 → Expected = "Vui lòng điền vào trường này."
@@ -118,8 +191,11 @@ KỲ VỌNG NGHIỆP VỤ
 3. Nếu Email sai định dạng
 → Expected = "HTML5 validation error (invalid email format)"
 
-4. Nếu District không thuộc Province hoặc Ward không thuộc District
+4. Nếu Day + Month + Year không tạo thành ngày hợp lệ
+→ Expected = "Ngày sinh không hợp lệ"
+
+5. Nếu District không thuộc Province hoặc Ward không thuộc District
 → Expected = "Địa chỉ không hợp lệ"
 
-5. Nếu toàn bộ dữ liệu hợp lệ
+6. Nếu toàn bộ dữ liệu hợp lệ
 → Expected = "Cập nhật tài khoản thành công"

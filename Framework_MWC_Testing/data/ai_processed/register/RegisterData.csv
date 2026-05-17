@@ -1,16 +1,16 @@
-﻿Testcase,Username,Phone,Password,ConfirmPassword,Expected
-T001,NewUser123,0123456789,Pass1234,Pass1234,NewUser123
-T002,,0123456789,Pass1234,Pass1234,Vui lòng điền vào trường này
-T003,AnhDuong11,0123456789,Pass1234,Pass1234,tài khoản đã tồn tại trong hệ thống
-T004,NewUser123,,Pass1234,Pass1234,Vui lòng điền vào trường này
-T005,NewUser123,012345678,Pass1234,Pass1234,Số điện thoại không hợp lệ
-T006,NewUser123,01234567890,Pass1234,Pass1234,Số điện thoại không hợp lệ
-T007,NewUser123,1234567890,Pass1234,Pass1234,Số điện thoại không hợp lệ
-T008,NewUser123,01234a6789,Pass1234,Pass1234,Số điện thoại không hợp lệ
-T009,NewUser123,01234!6789,Pass1234,Pass1234,Số điện thoại không hợp lệ
-T010,NewUser123,01234 6789,Pass1234,Pass1234,Số điện thoại không hợp lệ
-T011,NewUser123,0123456789,,Pass1234,Vui lòng điền vào trường này
-T012,NewUser123,0123456789,Pass123,Pass123,Mật khẩu phải từ 8 đến 20 ký tự
-T013,NewUser123,0123456789,Pass12345678901234567,Pass12345678901234567,Mật khẩu phải từ 8 đến 20 ký tự
-T014,NewUser123,0123456789,Pass1234,,Vui lòng điền vào trường này
-T015,NewUser123,0123456789,Pass1234,Pass12345678901,Mật khẩu không khớp
+﻿Testcase,Username,Phone,Password,PasswordConfirm,Expected
+T001,NewUser001,0323456789,Pass1234,Pass1234,NewUser001
+T002,,0323456789,Pass1234,Pass1234,Vui lòng điền vào trường này
+T003,AnhDuong11,0323456789,Pass1234,Pass1234,tài khoản đã tồn tại trong hệ thống
+T004,NewUser004,,Pass1234,Pass1234,Vui lòng điền vào trường này
+T005,NewUser005,032345678,Pass1234,Pass1234,Số điện thoại không đúng định dạng!
+T006,NewUser006,03234567890,Pass1234,Pass1234,Số điện thoại không đúng định dạng!
+T007,NewUser007,1234567890,Pass1234,Pass1234,Số điện thoại không đúng định dạng!
+T008,NewUser008,03234a6789,Pass1234,Pass1234,Số điện thoại không đúng định dạng!
+T009,NewUser009,03234!6789,Pass1234,Pass1234,Số điện thoại không đúng định dạng!
+T010,NewUser010,03234 6789,Pass1234,Pass1234,Số điện thoại không đúng định dạng!
+T011,NewUser011,0323456789,,Pass1234,Vui lòng điền vào trường này
+T012,NewUser012,0323456789,Pass123,Pass123,Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!
+T013,NewUser013,0323456789,Pass12345678901234567,Pass12345678901234567,Mật khẩu phải lớn hơn 8 ký tự và nhỏ hơn 20 ký tự!
+T014,NewUser014,0323456789,Pass1234,,Vui lòng điền vào trường này
+T015,NewUser015,0323456789,Pass1234,Pass12345678901,mật khẩu không giống nhau
